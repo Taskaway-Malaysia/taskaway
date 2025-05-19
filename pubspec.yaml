@@ -1,0 +1,53 @@
+name: taskaway
+description: "A task outsourcing platform for Malaysia"
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.2.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.2
+  flutter_riverpod: ^2.4.9
+  riverpod_annotation: ^2.3.3
+  supabase_flutter: ^2.3.2
+  formz: ^0.6.1
+  flutter_svg: ^2.0.9
+  cached_network_image: ^3.3.1
+  shimmer: ^3.0.0
+  flutter_markdown: ^0.6.18
+  go_router: ^13.1.0
+  intl: ^0.19.0
+  url_launcher: ^6.2.4
+  image_picker: ^1.0.7
+  path: ^1.8.3
+  logger: ^2.0.2+1
+  geolocator: ^10.1.0
+  geocoding: ^2.1.1
+  http: ^1.2.0
+  google_fonts: ^6.1.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.1
+  riverpod_generator: ^2.3.9
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
+    - assets/icons/
+  fonts:
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter-Regular.woff2
+        - asset: assets/fonts/Inter-Medium.woff2
+          weight: 500
+        - asset: assets/fonts/Inter-SemiBold.woff2
+          weight: 600
+        - asset: assets/fonts/Inter-Bold.woff2
+          weight: 700

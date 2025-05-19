@@ -1,0 +1,18 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+project: backend-staging
+
+include_tables:
+  - taskaway_profiles
+  - taskaway_tasks
+  - taskaway_applications
+  - taskaway_messages
+  - taskaway_payments
+
+instructions:
+  - "Use only the tables listed above for generating queries, schema inference, and rule logic."
+  - "Scope all automation and context-based suggestions to the 'backend-staging' Supabase project."
+  - "Ignore any unrelated tables or projects unless explicitly specified."
