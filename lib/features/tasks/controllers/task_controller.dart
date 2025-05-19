@@ -97,9 +97,10 @@ class TaskController {
   Future<bool> updateTask(String id, Map<String, dynamic> updates) async {
     try {
       final repository = _ref.read(taskRepositoryProvider);
-      final updatedTask = await repository.updateTask(id, updates);
+      await repository.updateTask(id, updates);
       return true;
     } catch (error) {
+      print('Error updating task: $error');
       return false;
     }
   }

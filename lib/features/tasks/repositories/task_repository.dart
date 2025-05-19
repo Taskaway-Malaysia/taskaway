@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/task.dart';
+import '../../../core/constants/app_constants.dart';
 
 final taskRepositoryProvider = Provider<TaskRepository>((ref) {
   return TaskRepository(
@@ -10,7 +11,7 @@ final taskRepositoryProvider = Provider<TaskRepository>((ref) {
 
 class TaskRepository {
   final SupabaseClient supabase;
-  static const String _tableName = 'taskaway_tasks';
+  final String _tableName = AppConstants.tasksTable;
 
   TaskRepository({required this.supabase});
 
@@ -62,14 +63,38 @@ class TaskRepository {
   }
 
   Future<Task> updateTask(String id, Map<String, dynamic> data) async {
-    final response = await supabase
-        .from(_tableName)
-        .update(data)
-        .eq('id', id)
-        .select()
-        .single();
-    
-    return Task.fromJson(response as Map<String, dynamic>);
+    try {
+      // First verify the task exists and the user has permission
+      final currentTask = await supabase
+          .from(_tableName)
+          .select()
+          .eq('id', id)
+          .single();
+          
+      if (currentTask == null) {
+        throw Exception('Task not found');
+      }
+
+      // Perform the update
+      final response = await supabase
+          .from(_tableName)
+          .update(data)
+          .eq('id', id)
+          .select()
+          .single();
+      
+      if (response == null) {
+        throw Exception('Failed to update task: No response from server');
+      }
+      
+      return Task.fromJson(response as Map<String, dynamic>);
+    } on PostgrestException catch (e) {
+      print('PostgrestException in TaskRepository.updateTask: ${e.message}');
+      throw Exception('Database error: ${e.message}');
+    } catch (e) {
+      print('Error in TaskRepository.updateTask: $e');
+      throw Exception('Failed to update task: ${e.toString()}');
+    }
   }
 
   Future<void> deleteTask(String id) async {

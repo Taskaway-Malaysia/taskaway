@@ -94,4 +94,14 @@ class ApplicationController {
       return false;
     }
   }
+
+  Future<bool> acceptApplication(String applicationId) async {
+    try {
+      await repository.acceptApplication(applicationId);
+      return true;
+    } catch (e) {
+      print('Error accepting application: $e');
+      return false;
+    }
+  }
 } 

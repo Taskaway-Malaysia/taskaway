@@ -24,6 +24,8 @@ class TaskDetailsScreen extends ConsumerStatefulWidget {
 class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
   bool _isLoading = false;
   String? _errorMessage;
+  bool _isAccepting = false;
+  String? _acceptError;
 
   Future<void> _deleteTask() async {
     final confirmed = await showDialog<bool>(
@@ -77,6 +79,14 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
   }
 
   Future<void> _updateTaskStatus(String newStatus) async {
+    final user = ref.read(currentUserProvider);
+    if (user == null) {
+      setState(() {
+        _errorMessage = 'You must be logged in to update the task status.';
+      });
+      return;
+    }
+
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -85,15 +95,24 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
     try {
       final success = await ref.read(taskControllerProvider).updateTask(
         widget.taskId,
-        {'status': newStatus},
+        {
+          'status': newStatus,
+          'updated_at': DateTime.now().toIso8601String(),
+        },
       );
-      if (!success) {
-        throw Exception('Failed to update task status');
+      
+      if (!success && mounted) {
+        setState(() {
+          _errorMessage = 'Failed to update task status. Please try again.';
+        });
       }
     } catch (e) {
-      setState(() {
-        _errorMessage = 'Failed to update status: ${e.toString()}';
-      });
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Error updating status: ${e.toString()}';
+        });
+        print('Error updating task status: $e');
+      }
     } finally {
       if (mounted) {
         setState(() {
@@ -239,6 +258,42 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
                 ),
                 const SizedBox(height: 24),
 
+                // Assigned Tasker (for poster)
+                if (isTaskPoster && task.taskerId != null && task.status != 'open') ...[
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16.0),
+                    child: Row(
+                      children: [
+                        Icon(Icons.person, color: theme.colorScheme.primary),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Assigned to: ',
+                          style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        FutureBuilder<List<Application>>(
+                          future: ref.read(applicationControllerProvider).getApplications(
+                            taskId: task.id,
+                            status: 'accepted',
+                          ),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState == ConnectionState.waiting) {
+                              return const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2));
+                            }
+                            if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
+                              return const Text('Unknown');
+                            }
+                            final application = snapshot.data!.first;
+                            return Text(
+                              application.taskerName,
+                              style: theme.textTheme.bodyMedium,
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+
                 // Description
                 Text(
                   'Description',
@@ -301,12 +356,29 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
                                 maxLines: 3,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                              trailing: TextButton(
-                                onPressed: () {
-                                  // TODO: Implement accept application
-                                },
-                                child: const Text('Accept'),
-                              ),
+                              trailing: _isAccepting
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(strokeWidth: 2),
+                                    )
+                                  : TextButton(
+                                      onPressed: () async {
+                                        setState(() {
+                                          _isAccepting = true;
+                                          _acceptError = null;
+                                        });
+                                        final success = await ref.read(applicationControllerProvider).acceptApplication(application.id);
+                                        if (!mounted) return;
+                                        setState(() {
+                                          _isAccepting = false;
+                                          if (!success) {
+                                            _acceptError = 'Failed to accept application.';
+                                          }
+                                        });
+                                      },
+                                      child: const Text('Accept'),
+                                    ),
                             ),
                           );
                         },
@@ -329,25 +401,49 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
                   const SizedBox(height: 16),
                 ],
 
+                // Accept Error Message
+                if (_acceptError != null) ...[
+                  Text(
+                    _acceptError!,
+                    style: TextStyle(color: theme.colorScheme.error, fontSize: 12),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+
                 // Action Buttons
-                if (isTaskPoster && task.status == 'open') ...[
+                if (task.taskerId == user?.id && task.status == 'in_progress') ...[
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: _isLoading
                           ? null
-                          : () => _updateTaskStatus('in_progress'),
-                      child: const Text('Start Task'),
+                          : () => _updateTaskStatus('pending_approval'),
+                      child: const Text('Mark as Completed'),
                     ),
                   ),
-                ] else if (isTaskPoster && task.status == 'in_progress') ...[
+                ] else if (isTaskPoster && task.status == 'pending_approval') ...[
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: _isLoading
                           ? null
                           : () => _updateTaskStatus('completed'),
-                      child: const Text('Mark as Completed'),
+                      child: const Text('Approve Completion'),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: _isLoading
+                          ? null
+                          : () => _updateTaskStatus('in_progress'),
+                      child: Text(
+                        'Request Revision',
+                        style: TextStyle(
+                          color: theme.colorScheme.error,
+                        ),
+                      ),
                     ),
                   ),
                 ] else if (!isTaskPoster && task.status == 'open') ...[
@@ -393,6 +489,8 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
         return theme.colorScheme.primary;
       case 'in_progress':
         return theme.colorScheme.tertiary;
+      case 'pending_approval':
+        return Colors.orange;
       case 'completed':
         return theme.colorScheme.secondary;
       case 'cancelled':

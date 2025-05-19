@@ -81,6 +81,32 @@ class ApplicationRepository {
         .eq('id', id);
   }
 
+  Future<void> acceptApplication(String applicationId) async {
+    // Get the application to find the taskId and taskerId
+    final application = await getApplicationById(applicationId);
+    final taskId = application.taskId;
+    final taskerId = application.taskerId;
+
+    // Accept the selected application
+    await supabase
+        .from(_tableName)
+        .update({'status': 'accepted'})
+        .eq('id', applicationId);
+
+    // Reject all other applications for the same task
+    await supabase
+        .from(_tableName)
+        .update({'status': 'rejected'})
+        .eq('task_id', taskId)
+        .neq('id', applicationId);
+
+    // Update the task's tasker_id and status to 'in_progress'
+    await supabase
+        .from('taskaway_tasks')
+        .update({'tasker_id': taskerId, 'status': 'in_progress'})
+        .eq('id', taskId);
+  }
+
   Stream<List<Application>> watchApplications({
     String? taskId,
     String? taskerId,

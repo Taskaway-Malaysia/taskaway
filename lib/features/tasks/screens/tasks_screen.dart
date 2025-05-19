@@ -229,6 +229,8 @@ class TaskCard extends StatelessWidget {
         return theme.colorScheme.primary;
       case 'in_progress':
         return theme.colorScheme.tertiary;
+      case 'pending_approval':
+        return Colors.orange;
       case 'completed':
         return theme.colorScheme.secondary;
       case 'cancelled':
