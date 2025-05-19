@@ -4,6 +4,7 @@ globs:
 alwaysApply: true
 ---
 project: backend-staging
+project_id: aytxvyemlspkzzmwpqkz
 
 include_tables:
   - taskaway_profiles
@@ -11,8 +12,12 @@ include_tables:
   - taskaway_applications
   - taskaway_messages
   - taskaway_payments
+  - taskaway_channels
 
 instructions:
   - "Use only the tables listed above for generating queries, schema inference, and rule logic."
   - "Scope all automation and context-based suggestions to the 'backend-staging' Supabase project."
   - "Ignore any unrelated tables or projects unless explicitly specified."
+
+Note:
+  - All tables in this project start with "taskaway"

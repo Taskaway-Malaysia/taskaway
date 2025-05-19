@@ -8,6 +8,8 @@ import '../controllers/task_controller.dart';
 import '../controllers/application_controller.dart';
 import '../models/task.dart';
 import '../models/application.dart';
+import '../../messages/controllers/message_controller.dart';
+import '../../messages/screens/chat_screen.dart';
 
 class TaskDetailsScreen extends ConsumerStatefulWidget {
   final String taskId;
@@ -472,6 +474,66 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
                           color: theme.colorScheme.error,
                         ),
                       ),
+                    ),
+                  ),
+                ],
+
+                // Chat button (show only for poster and assigned tasker)
+                if ((isTaskPoster || task.taskerId == user?.id) && task.status != 'open') ...[
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () async {
+                        // Try to get existing channel
+                        final channel = await ref
+                            .read(messageControllerProvider)
+                            .getChannelByTaskId(task.id);
+
+                        if (channel != null) {
+                          if (mounted) {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => ChatScreen(channel: channel),
+                              ),
+                            );
+                          }
+                          return;
+                        }
+
+                        // Create new channel
+                        try {
+                          final newChannel = await ref
+                              .read(messageControllerProvider)
+                              .createChannel(
+                                taskId: task.id,
+                                taskTitle: task.title,
+                                posterId: task.posterId,
+                                posterName: task.posterName ?? 'Unknown',
+                                taskerId: task.taskerId!,
+                                taskerName: task.taskerName ?? 'Unknown',
+                              );
+
+                          if (mounted) {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => ChatScreen(channel: newChannel),
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Failed to create chat: ${e.toString()}'),
+                                backgroundColor: theme.colorScheme.error,
+                              ),
+                            );
+                          }
+                        }
+                      },
+                      icon: const Icon(Icons.chat),
+                      label: const Text('Chat'),
                     ),
                   ),
                 ],
