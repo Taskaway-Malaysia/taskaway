@@ -10,6 +10,7 @@ import '../models/task.dart';
 import '../models/application.dart';
 import '../../messages/controllers/message_controller.dart';
 import '../../messages/screens/chat_screen.dart';
+import '../../payments/controllers/payment_controller.dart';
 
 class TaskDetailsScreen extends ConsumerStatefulWidget {
   final String taskId;
@@ -23,11 +24,40 @@ class TaskDetailsScreen extends ConsumerStatefulWidget {
   ConsumerState<TaskDetailsScreen> createState() => _TaskDetailsScreenState();
 }
 
-class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
+class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> with WidgetsBindingObserver {
   bool _isLoading = false;
   String? _errorMessage;
   bool _isAccepting = false;
   String? _acceptError;
+  final _focusNode = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    // Initial data refresh
+    ref.refresh(taskStreamProvider);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // Refresh data when app comes back to foreground
+      ref.refresh(taskStreamProvider);
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleRefresh() async {
+    // Refresh the tasks stream and wait for the first value
+    await ref.refresh(taskStreamProvider.future);
+  }
 
   Future<void> _deleteTask() async {
     final confirmed = await showDialog<bool>(
@@ -81,13 +111,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
   }
 
   Future<void> _updateTaskStatus(String newStatus) async {
-    final user = ref.read(currentUserProvider);
-    if (user == null) {
-      setState(() {
-        _errorMessage = 'You must be logged in to update the task status.';
-      });
-      return;
-    }
+    if (_isLoading) return;
 
     setState(() {
       _isLoading = true;
@@ -95,31 +119,82 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
     });
 
     try {
-      final success = await ref.read(taskControllerProvider).updateTask(
-        widget.taskId,
-        {
-          'status': newStatus,
-          'updated_at': DateTime.now().toIso8601String(),
-        },
-      );
-      
-      if (!success && mounted) {
-        setState(() {
-          _errorMessage = 'Failed to update task status. Please try again.';
-        });
+      final user = ref.read(currentUserProvider);
+      if (user == null) throw Exception('User not authenticated');
+
+      // Get the task data first
+      final taskSnapshot = await ref.read(taskControllerProvider).watchTask(widget.taskId).first;
+
+      if (newStatus == 'completed') {
+        // Show confirmation dialog
+        final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Confirm Payment'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('You are about to approve this task and initiate payment:'),
+                const SizedBox(height: 8),
+                Text('Amount: RM ${taskSnapshot.price.toStringAsFixed(2)}',
+                    style: const TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 16),
+                const Text('You will be redirected to Billplz to complete the payment.'),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Proceed to Payment'),
+              ),
+            ],
+          ),
+        );
+
+        if (confirmed != true) {
+          setState(() {
+            _isLoading = false;
+          });
+          return;
+        }
+
+        // Trigger payment flow
+        await ref.read(paymentControllerProvider).handleTaskApproval(
+          taskId: widget.taskId,
+          posterId: user.id,
+          taskerId: taskSnapshot.taskerId!,
+          amount: taskSnapshot.price,
+          taskTitle: taskSnapshot.title,
+        );
+      } else {
+        // Regular status update
+        await ref.read(taskControllerProvider).updateTask(
+          widget.taskId,
+          {'status': newStatus},
+        );
       }
+
+      setState(() {
+        _isLoading = false;
+      });
     } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = e.toString();
+      });
+
       if (mounted) {
-        setState(() {
-          _errorMessage = 'Error updating status: ${e.toString()}';
-        });
-        print('Error updating task status: $e');
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
       }
     }
   }
@@ -131,416 +206,474 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
     final user = ref.watch(currentUserProvider);
     final isClient = user?.userMetadata?['role'] == 'client';
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Task Details'),
-        actions: [
-          if (_isLoading)
-            const Center(
-              child: SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                ),
-              ),
-            )
-          else if (isClient)
-            IconButton(
-              icon: const Icon(Icons.delete),
-              onPressed: _deleteTask,
-            ),
-        ],
-      ),
-      body: StreamBuilder<Task>(
-        stream: ref.watch(taskControllerProvider).watchTask(widget.taskId),
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return Center(
-              child: Text(
-                'Error: ${snapshot.error}',
-                style: TextStyle(color: theme.colorScheme.error),
-              ),
-            );
-          }
-
-          if (!snapshot.hasData) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
-          }
-
-          final task = snapshot.data!;
-          final isTaskPoster = user?.id == task.posterId;
-
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(AppConstants.defaultPadding),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Status Badge
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: _getStatusColor(task.status, theme),
-                    borderRadius: BorderRadius.circular(16),
+    return Focus(
+      focusNode: _focusNode,
+      onFocusChange: (hasFocus) {
+        if (hasFocus) {
+          ref.refresh(taskStreamProvider);
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Task Details'),
+          actions: [
+            if (_isLoading)
+              const Center(
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
                   ),
+                ),
+              )
+            else if (isClient)
+              IconButton(
+                icon: const Icon(Icons.delete),
+                onPressed: _deleteTask,
+              ),
+          ],
+        ),
+        body: RefreshIndicator(
+          onRefresh: _handleRefresh,
+          child: StreamBuilder<Task>(
+            stream: ref.watch(taskControllerProvider).watchTask(widget.taskId),
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return Center(
                   child: Text(
-                    task.status.toUpperCase(),
-                    style: theme.textTheme.labelLarge?.copyWith(
-                      color: theme.colorScheme.onPrimary,
-                    ),
+                    'Error: ${snapshot.error}',
+                    style: TextStyle(color: theme.colorScheme.error),
                   ),
-                ),
-                const SizedBox(height: 16),
+                );
+              }
 
-                // Title
-                Text(
-                  task.title,
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
+              if (!snapshot.hasData) {
+                return const Center(
+                  child: CircularProgressIndicator(),
+                );
+              }
 
-                // Price
-                Text(
-                  'RM ${task.price.toStringAsFixed(2)}',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    color: theme.colorScheme.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 16),
+              final task = snapshot.data!;
+              final isTaskPoster = user?.id == task.posterId;
 
-                // Category and Location
-                Row(
+              return SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(AppConstants.defaultPadding),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(
-                      Icons.category_outlined,
-                      size: 20,
-                      color: theme.colorScheme.secondary,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      task.category,
-                      style: theme.textTheme.bodyMedium,
-                    ),
-                    const SizedBox(width: 24),
-                    Icon(
-                      Icons.location_on_outlined,
-                      size: 20,
-                      color: theme.colorScheme.secondary,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
+                    // Status Badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: _getStatusColor(task.status, theme),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
                       child: Text(
-                        task.location,
-                        style: theme.textTheme.bodyMedium,
+                        task.status.toUpperCase(),
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          color: theme.colorScheme.onPrimary,
+                        ),
                       ),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 8),
+                    const SizedBox(height: 16),
 
-                // Scheduled Time
-                Row(
-                  children: [
-                    Icon(
-                      Icons.schedule,
-                      size: 20,
-                      color: theme.colorScheme.secondary,
-                    ),
-                    const SizedBox(width: 8),
+                    // Title
                     Text(
-                      dateFormat.format(task.scheduledTime),
-                      style: theme.textTheme.bodyMedium,
+                      task.title,
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 24),
+                    const SizedBox(height: 8),
 
-                // Assigned Tasker (for poster)
-                if (isTaskPoster && task.taskerId != null && task.status != 'open') ...[
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 16.0),
-                    child: Row(
+                    // Price
+                    Text(
+                      'RM ${task.price.toStringAsFixed(2)}',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Category and Location
+                    Row(
                       children: [
-                        Icon(Icons.person, color: theme.colorScheme.primary),
+                        Icon(
+                          Icons.category_outlined,
+                          size: 20,
+                          color: theme.colorScheme.secondary,
+                        ),
                         const SizedBox(width: 8),
                         Text(
-                          'Assigned to: ',
-                          style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+                          task.category,
+                          style: theme.textTheme.bodyMedium,
                         ),
-                        FutureBuilder<List<Application>>(
-                          future: ref.read(applicationControllerProvider).getApplications(
-                            taskId: task.id,
-                            status: 'accepted',
+                        const SizedBox(width: 24),
+                        Icon(
+                          Icons.location_on_outlined,
+                          size: 20,
+                          color: theme.colorScheme.secondary,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            task.location,
+                            style: theme.textTheme.bodyMedium,
                           ),
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState == ConnectionState.waiting) {
-                              return const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2));
-                            }
-                            if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
-                              return const Text('Unknown');
-                            }
-                            final application = snapshot.data!.first;
-                            return Text(
-                              application.taskerName,
-                              style: theme.textTheme.bodyMedium,
-                            );
-                          },
                         ),
                       ],
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 8),
 
-                // Description
-                Text(
-                  'Description',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  task.description,
-                  style: theme.textTheme.bodyLarge,
-                ),
-                const SizedBox(height: 24),
-
-                // Applications Section (for task poster)
-                if (isTaskPoster && task.status == 'open') ...[
-                  Text(
-                    'Applications',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
+                    // Scheduled Time
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.schedule,
+                          size: 20,
+                          color: theme.colorScheme.secondary,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          dateFormat.format(task.scheduledTime),
+                          style: theme.textTheme.bodyMedium,
+                        ),
+                      ],
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  StreamBuilder<List<Application>>(
-                    stream: ref.watch(taskApplicationsProvider(widget.taskId).stream),
-                    builder: (context, snapshot) {
-                      if (snapshot.hasError) {
-                        return Text(
-                          'Error loading applications: ${snapshot.error}',
-                          style: TextStyle(color: theme.colorScheme.error),
-                        );
-                      }
+                    const SizedBox(height: 24),
 
-                      if (!snapshot.hasData) {
-                        return const Center(
-                          child: CircularProgressIndicator(),
-                        );
-                      }
-
-                      final applications = snapshot.data!;
-                      if (applications.isEmpty) {
-                        return const Text('No applications yet');
-                      }
-
-                      return ListView.separated(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: applications.length,
-                        separatorBuilder: (context, index) => const SizedBox(height: 8),
-                        itemBuilder: (context, index) {
-                          final application = applications[index];
-                          return Card(
-                            child: ListTile(
-                              title: Text(
-                                'Application from ${application.taskerName}',
-                                style: theme.textTheme.titleMedium,
+                    // Assigned Tasker (for poster)
+                    if (isTaskPoster && task.taskerId != null && task.status != 'open') ...[
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 16.0),
+                        child: Row(
+                          children: [
+                            Icon(Icons.person, color: theme.colorScheme.primary),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Assigned to: ',
+                              style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+                            ),
+                            FutureBuilder<List<Application>>(
+                              future: ref.read(applicationControllerProvider).getApplications(
+                                taskId: task.id,
+                                status: 'accepted',
                               ),
-                              subtitle: Text(
-                                application.message,
-                                maxLines: 3,
-                                overflow: TextOverflow.ellipsis,
+                              builder: (context, snapshot) {
+                                if (snapshot.connectionState == ConnectionState.waiting) {
+                                  return const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2));
+                                }
+                                if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
+                                  return const Text('Unknown');
+                                }
+                                final application = snapshot.data!.first;
+                                return Text(
+                                  application.taskerName,
+                                  style: theme.textTheme.bodyMedium,
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+
+                    // Description
+                    Text(
+                      'Description',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      task.description,
+                      style: theme.textTheme.bodyLarge,
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Applications Section (for task poster)
+                    if (isTaskPoster && task.status == 'open') ...[
+                      Text(
+                        'Applications',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      StreamBuilder<List<Application>>(
+                        stream: ref.watch(taskApplicationsProvider(widget.taskId).stream),
+                        builder: (context, snapshot) {
+                          if (snapshot.hasError) {
+                            return Text(
+                              'Error loading applications: ${snapshot.error}',
+                              style: TextStyle(color: theme.colorScheme.error),
+                            );
+                          }
+
+                          if (!snapshot.hasData) {
+                            return const Center(
+                              child: CircularProgressIndicator(),
+                            );
+                          }
+
+                          final applications = snapshot.data!;
+                          if (applications.isEmpty) {
+                            return const Text('No applications yet');
+                          }
+
+                          return ListView.separated(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: applications.length,
+                            separatorBuilder: (context, index) => const SizedBox(height: 8),
+                            itemBuilder: (context, index) {
+                              final application = applications[index];
+                              return Card(
+                                child: ListTile(
+                                  title: Text(
+                                    'Application from ${application.taskerName}',
+                                    style: theme.textTheme.titleMedium,
+                                  ),
+                                  subtitle: Text(
+                                    application.message,
+                                    maxLines: 3,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  trailing: _isAccepting
+                                      ? const SizedBox(
+                                          width: 20,
+                                          height: 20,
+                                          child: CircularProgressIndicator(strokeWidth: 2),
+                                        )
+                                      : TextButton(
+                                          onPressed: () async {
+                                            setState(() {
+                                              _isAccepting = true;
+                                              _acceptError = null;
+                                            });
+                                            final success = await ref.read(applicationControllerProvider).acceptApplication(application.id);
+                                            if (!mounted) return;
+                                            setState(() {
+                                              _isAccepting = false;
+                                              if (!success) {
+                                                _acceptError = 'Failed to accept application.';
+                                              }
+                                            });
+                                          },
+                                          child: const Text('Accept'),
+                                        ),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 24),
+                    ],
+
+                    // Error Message
+                    if (_errorMessage != null) ...[
+                      Text(
+                        _errorMessage!,
+                        style: TextStyle(
+                          color: theme.colorScheme.error,
+                          fontSize: 12,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+
+                    // Accept Error Message
+                    if (_acceptError != null) ...[
+                      Text(
+                        _acceptError!,
+                        style: TextStyle(color: theme.colorScheme.error, fontSize: 12),
+                      ),
+                      const SizedBox(height: 8),
+                    ],
+
+                    // Action Buttons
+                    if (task.taskerId == user?.id && task.status == 'in_progress') ...[
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: _isLoading
+                              ? null
+                              : () => _updateTaskStatus('pending_approval'),
+                          child: const Text('Mark as Completed'),
+                        ),
+                      ),
+                    ] else if (isTaskPoster && task.status == 'pending_approval') ...[
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: _isLoading
+                              ? null
+                              : () => _updateTaskStatus('completed'),
+                          child: const Text('Approve Completion'),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton(
+                          onPressed: _isLoading
+                              ? null
+                              : () => _updateTaskStatus('in_progress'),
+                          child: Text(
+                            'Request Revision',
+                            style: TextStyle(
+                              color: theme.colorScheme.error,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ] else if (!isTaskPoster && task.status == 'open') ...[
+                      StreamBuilder<List<Application>>(
+                        stream: ref.watch(taskApplicationsProvider(widget.taskId).stream),
+                        builder: (context, snapshot) {
+                          if (snapshot.hasError) {
+                            return const SizedBox.shrink();
+                          }
+
+                          if (!snapshot.hasData) {
+                            return const Center(
+                              child: CircularProgressIndicator(),
+                            );
+                          }
+
+                          final applications = snapshot.data!;
+                          final hasApplied = applications.any((app) => app.taskerId == user?.id);
+
+                          if (hasApplied) {
+                            return Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.surfaceVariant,
+                                borderRadius: BorderRadius.circular(8),
                               ),
-                              trailing: _isAccepting
-                                  ? const SizedBox(
-                                      width: 20,
-                                      height: 20,
-                                      child: CircularProgressIndicator(strokeWidth: 2),
-                                    )
-                                  : TextButton(
-                                      onPressed: () async {
-                                        setState(() {
-                                          _isAccepting = true;
-                                          _acceptError = null;
-                                        });
-                                        final success = await ref.read(applicationControllerProvider).acceptApplication(application.id);
-                                        if (!mounted) return;
-                                        setState(() {
-                                          _isAccepting = false;
-                                          if (!success) {
-                                            _acceptError = 'Failed to accept application.';
-                                          }
-                                        });
-                                      },
-                                      child: const Text('Accept'),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.info_outline,
+                                    color: theme.colorScheme.primary,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      'You have already applied for this task',
+                                      style: theme.textTheme.bodyMedium?.copyWith(
+                                        color: theme.colorScheme.onSurfaceVariant,
+                                      ),
                                     ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }
+
+                          return SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: _isLoading
+                                  ? null
+                                  : () => context.push('/home/tasks/${task.id}/apply'),
+                              child: const Text('Apply for Task'),
                             ),
                           );
                         },
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 24),
-                ],
+                      ),
+                    ],
 
-                // Error Message
-                if (_errorMessage != null) ...[
-                  Text(
-                    _errorMessage!,
-                    style: TextStyle(
-                      color: theme.colorScheme.error,
-                      fontSize: 12,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                ],
-
-                // Accept Error Message
-                if (_acceptError != null) ...[
-                  Text(
-                    _acceptError!,
-                    style: TextStyle(color: theme.colorScheme.error, fontSize: 12),
-                  ),
-                  const SizedBox(height: 8),
-                ],
-
-                // Action Buttons
-                if (task.taskerId == user?.id && task.status == 'in_progress') ...[
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _isLoading
-                          ? null
-                          : () => _updateTaskStatus('pending_approval'),
-                      child: const Text('Mark as Completed'),
-                    ),
-                  ),
-                ] else if (isTaskPoster && task.status == 'pending_approval') ...[
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _isLoading
-                          ? null
-                          : () => _updateTaskStatus('completed'),
-                      child: const Text('Approve Completion'),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton(
-                      onPressed: _isLoading
-                          ? null
-                          : () => _updateTaskStatus('in_progress'),
-                      child: Text(
-                        'Request Revision',
-                        style: TextStyle(
-                          color: theme.colorScheme.error,
+                    if (isTaskPoster && task.status == 'open') ...[
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton(
+                          onPressed: _isLoading
+                              ? null
+                              : () => _updateTaskStatus('cancelled'),
+                          child: Text(
+                            'Cancel Task',
+                            style: TextStyle(
+                              color: theme.colorScheme.error,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                  ),
-                ] else if (!isTaskPoster && task.status == 'open') ...[
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _isLoading
-                          ? null
-                          : () => context.push('/home/tasks/${task.id}/apply'),
-                      child: const Text('Apply for Task'),
-                    ),
-                  ),
-                ],
+                    ],
 
-                if (isTaskPoster && task.status == 'open') ...[
-                  const SizedBox(height: 8),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton(
-                      onPressed: _isLoading
-                          ? null
-                          : () => _updateTaskStatus('cancelled'),
-                      child: Text(
-                        'Cancel Task',
-                        style: TextStyle(
-                          color: theme.colorScheme.error,
+                    // Chat button (show only for poster and assigned tasker)
+                    if ((isTaskPoster || task.taskerId == user?.id) && task.status != 'open') ...[
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: () async {
+                            // Try to get existing channel
+                            final channel = await ref
+                                .read(messageControllerProvider)
+                                .getChannelByTaskId(task.id);
+
+                            if (channel != null) {
+                              if (mounted) {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) => ChatScreen(channel: channel),
+                                  ),
+                                );
+                              }
+                              return;
+                            }
+
+                            // Create new channel
+                            try {
+                              final newChannel = await ref
+                                  .read(messageControllerProvider)
+                                  .createChannel(
+                                    taskId: task.id,
+                                    taskTitle: task.title,
+                                    posterId: task.posterId,
+                                    posterName: task.posterName ?? 'Unknown',
+                                    taskerId: task.taskerId!,
+                                    taskerName: task.taskerName ?? 'Unknown',
+                                  );
+
+                              if (mounted) {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) => ChatScreen(channel: newChannel),
+                                  ),
+                                );
+                              }
+                            } catch (e) {
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Failed to create chat: ${e.toString()}'),
+                                    backgroundColor: theme.colorScheme.error,
+                                  ),
+                                );
+                              }
+                            }
+                          },
+                          icon: const Icon(Icons.chat),
+                          label: const Text('Chat'),
                         ),
                       ),
-                    ),
-                  ),
-                ],
-
-                // Chat button (show only for poster and assigned tasker)
-                if ((isTaskPoster || task.taskerId == user?.id) && task.status != 'open') ...[
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: () async {
-                        // Try to get existing channel
-                        final channel = await ref
-                            .read(messageControllerProvider)
-                            .getChannelByTaskId(task.id);
-
-                        if (channel != null) {
-                          if (mounted) {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) => ChatScreen(channel: channel),
-                              ),
-                            );
-                          }
-                          return;
-                        }
-
-                        // Create new channel
-                        try {
-                          final newChannel = await ref
-                              .read(messageControllerProvider)
-                              .createChannel(
-                                taskId: task.id,
-                                taskTitle: task.title,
-                                posterId: task.posterId,
-                                posterName: task.posterName ?? 'Unknown',
-                                taskerId: task.taskerId!,
-                                taskerName: task.taskerName ?? 'Unknown',
-                              );
-
-                          if (mounted) {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) => ChatScreen(channel: newChannel),
-                              ),
-                            );
-                          }
-                        } catch (e) {
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Failed to create chat: ${e.toString()}'),
-                                backgroundColor: theme.colorScheme.error,
-                              ),
-                            );
-                          }
-                        }
-                      },
-                      icon: const Icon(Icons.chat),
-                      label: const Text('Chat'),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          );
-        },
+                    ],
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
       ),
     );
   }

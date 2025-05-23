@@ -18,10 +18,10 @@ class Application {
     DateTime? createdAt,
     DateTime? updatedAt,
   }) : 
-    this.id = id ?? '',
-    this.status = status ?? 'pending',
-    this.createdAt = createdAt ?? DateTime.now(),
-    this.updatedAt = updatedAt ?? DateTime.now();
+    id = id ?? '',
+    status = status ?? 'pending',
+    createdAt = createdAt ?? DateTime.now(),
+    updatedAt = updatedAt ?? DateTime.now();
 
   factory Application.fromJson(Map<String, dynamic> json) {
     return Application(

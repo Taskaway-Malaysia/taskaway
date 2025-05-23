@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/task.dart';
 import '../repositories/task_repository.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 final taskControllerProvider = Provider((ref) {
   return TaskController(ref);
@@ -37,30 +38,32 @@ class TaskController {
 
   TaskController(this._ref);
 
-  Future<Task> createTask({
+  Future<void> createTask({
     required String title,
     required String description,
-    required double price,
     required String category,
+    required double price,
     required String location,
     required DateTime scheduledTime,
-    required String posterId,
   }) async {
     try {
-      final task = Task(
+      final currentUser = Supabase.instance.client.auth.currentUser;
+      if (currentUser == null) {
+        throw Exception('Not authenticated');
+      }
+
+      await _ref.read(taskRepositoryProvider).createTask(Task(
         title: title,
         description: description,
         price: price,
-        status: 'open', // Default status for new tasks
-        posterId: posterId,
+        status: 'open',
+        posterId: currentUser.id,
         category: category,
         location: location,
         scheduledTime: scheduledTime,
-      );
-
-      final repository = _ref.read(taskRepositoryProvider);
-      return await repository.createTask(task);
+      ));
     } catch (e) {
+      print('Error creating task: $e');
       throw Exception('Failed to create task: $e');
     }
   }

@@ -20,10 +20,15 @@ class TaskRepository {
     String? posterId,
     String? taskerId,
     String? category,
+    bool includeProfiles = false,
   }) async {
     var query = supabase
         .from(_tableName)
-        .select();
+        .select(includeProfiles ? '''
+          *,
+          poster_profile:taskaway_profiles!poster_id(full_name),
+          tasker_profile:taskaway_profiles!tasker_id(full_name)
+        ''' : '*');
 
     if (status != null) {
       query = query.eq('status', status);
@@ -39,17 +44,21 @@ class TaskRepository {
     }
 
     final response = await query;
-    return response.map((json) => Task.fromJson(json as Map<String, dynamic>)).toList();
+    return response.map((json) => Task.fromJson(json)).toList();
   }
 
-  Future<Task> getTaskById(String id) async {
+  Future<Task> getTaskById(String id, {bool includeProfiles = false}) async {
     final data = await supabase
         .from(_tableName)
-        .select()
+        .select(includeProfiles ? '''
+          *,
+          poster_profile:taskaway_profiles!poster_id(full_name),
+          tasker_profile:taskaway_profiles!tasker_id(full_name)
+        ''' : '*')
         .eq('id', id)
         .single();
     
-    return Task.fromJson(data as Map<String, dynamic>);
+    return Task.fromJson(data);
   }
 
   Future<Task> createTask(Task task) async {
@@ -59,7 +68,7 @@ class TaskRepository {
         .select()
         .single();
     
-    return Task.fromJson(response as Map<String, dynamic>);
+    return Task.fromJson(response);
   }
 
   Future<Task> updateTask(String id, Map<String, dynamic> data) async {
@@ -70,10 +79,6 @@ class TaskRepository {
           .select()
           .eq('id', id)
           .single();
-          
-      if (currentTask == null) {
-        throw Exception('Task not found');
-      }
 
       // Perform the update
       final response = await supabase
@@ -83,11 +88,7 @@ class TaskRepository {
           .select()
           .single();
       
-      if (response == null) {
-        throw Exception('Failed to update task: No response from server');
-      }
-      
-      return Task.fromJson(response as Map<String, dynamic>);
+      return Task.fromJson(response);
     } on PostgrestException catch (e) {
       print('PostgrestException in TaskRepository.updateTask: ${e.message}');
       throw Exception('Database error: ${e.message}');
@@ -104,16 +105,15 @@ class TaskRepository {
         .eq('id', id);
   }
 
-  Stream<List<Task>> watchTasks() {
+  Stream<List<Task>> watchTasks({bool includeProfiles = false}) {
     return supabase
         .from(_tableName)
         .stream(primaryKey: ['id'])
         .order('created_at', ascending: false)
-        .map((response) => 
-            response.map((json) => Task.fromJson(json as Map<String, dynamic>)).toList());
+        .map((response) => response.map((json) => Task.fromJson(json)).toList());
   }
 
-  Stream<Task> watchTask(String id) {
+  Stream<Task> watchTask(String id, {bool includeProfiles = false}) {
     return supabase
         .from(_tableName)
         .stream(primaryKey: ['id'])
@@ -122,7 +122,38 @@ class TaskRepository {
           if (response.isEmpty) {
             throw Exception('Task not found');
           }
-          return Task.fromJson(response.first as Map<String, dynamic>);
+          return Task.fromJson(response.first);
         });
+  }
+
+  // Helper method to fetch profiles for a task when needed
+  Future<Task> getTaskWithProfiles(Task task) async {
+    try {
+      final posterProfile = await supabase
+          .from('taskaway_profiles')
+          .select('full_name')
+          .eq('id', task.posterId)
+          .single();
+      
+      Map<String, dynamic>? taskerProfile;
+      final taskerId = task.taskerId;
+      if (taskerId != null) {
+        taskerProfile = await supabase
+            .from('taskaway_profiles')
+            .select('full_name')
+            .eq('id', taskerId)
+            .single();
+      }
+
+      return Task.fromJson({
+        ...task.toJson(),
+        'id': task.id,
+        'poster_profile': posterProfile,
+        'tasker_profile': taskerProfile,
+      });
+    } catch (e) {
+      print('Error fetching profiles for task ${task.id}: $e');
+      return task;
+    }
   }
 } 

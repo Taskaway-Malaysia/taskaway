@@ -53,7 +53,7 @@ class ApplicationRepository {
         .order('created_at', ascending: false);
 
     return response
-        .map((json) => Application.fromJson(json as Map<String, dynamic>))
+        .map((json) => Application.fromJson(json))
         .toList();
   }
 
@@ -64,7 +64,7 @@ class ApplicationRepository {
         .eq('id', id)
         .single();
     
-    return Application.fromJson(data as Map<String, dynamic>);
+    return Application.fromJson(data);
   }
 
   Future<void> updateApplication(String id, Map<String, dynamic> updates) async {
@@ -133,7 +133,7 @@ class ApplicationRepository {
       final applications = list
           .map((json) {
             final app = Application.fromJson({
-              ...json as Map<String, dynamic>,
+              ...json,
               'profiles': {'full_name': taskerNames[json['tasker_id']] ?? 'Unknown Tasker'}
             });
             return app;
@@ -171,7 +171,7 @@ class ApplicationRepository {
         .eq('id', id)) {
       if (list.isEmpty) continue;
       
-      final json = list.first as Map<String, dynamic>;
+      final json = list.first;
       yield Application.fromJson({
         ...json,
         'profiles': {'full_name': initialData.taskerName}

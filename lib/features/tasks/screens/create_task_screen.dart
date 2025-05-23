@@ -50,11 +50,10 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
       await ref.read(taskControllerProvider).createTask(
         title: _titleController.text,
         description: _descriptionController.text,
-        price: price,
         category: _selectedCategory,
+        price: price,
         location: _locationController.text,
         scheduledTime: _scheduledTime,
-        posterId: user.id,
       );
 
       if (mounted) {

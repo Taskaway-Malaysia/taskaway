@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class AppConstants {
   static const String appName = 'Taskaway Malaysia';
@@ -9,13 +10,25 @@ class AppConstants {
   
   // API Endpoints
   static const String billplzApiEndpoint = 'https://www.billplz-sandbox.com/api/v3';
+  static const String billplzCallbackUrl = 'https://aytxvyemlspkzzmwpqkz.functions.supabase.co/billplz-callback';
+  
+  // For web, use the current origin. For mobile, use deep linking.
+  static String getRedirectUrl(String paymentId) {
+    if (kIsWeb) {
+      final origin = Uri.base.origin;
+      return '$origin/payment/$paymentId';
+    } else {
+      return 'taskaway://payment/$paymentId';
+    }
+  }
   
   // Table Names
   static const String tasksTable = 'taskaway_tasks';
   static const String applicationsTable = 'taskaway_applications';
-  static const String messagesTable = 'taskaway_messages';
-  static const String paymentsTable = 'taskaway_payments';
   static const String profilesTable = 'taskaway_profiles';
+  static const String paymentsTable = 'taskaway_payments';
+  static const String messagesTable = 'taskaway_messages';
+  static const String channelsTable = 'taskaway_channels';
   
   // Asset Paths
   static const String imagePath = 'assets/images';

@@ -29,6 +29,7 @@ dependencies:
   geocoding: ^2.1.1
   http: ^1.2.0
   google_fonts: ^6.1.0
+  url_strategy: ^0.2.0
 
 dev_dependencies:
   flutter_test:

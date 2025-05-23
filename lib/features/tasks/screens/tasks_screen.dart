@@ -13,87 +13,122 @@ class TasksScreen extends ConsumerStatefulWidget {
   ConsumerState<TasksScreen> createState() => _TasksScreenState();
 }
 
-class _TasksScreenState extends ConsumerState<TasksScreen> {
+class _TasksScreenState extends ConsumerState<TasksScreen> with WidgetsBindingObserver {
   final _searchController = TextEditingController();
+  final _focusNode = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    // Initial data refresh
+    ref.refresh(taskStreamProvider);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // Refresh data when app comes back to foreground
+      ref.refresh(taskStreamProvider);
+    }
+  }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _searchController.dispose();
+    _focusNode.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleRefresh() async {
+    // Refresh the tasks stream and wait for the first value
+    await ref.refresh(taskStreamProvider.future);
   }
 
   @override
   Widget build(BuildContext context) {
-    final user = ref.watch(currentUserProvider);
-    final isClient = user?.userMetadata?['role'] == 'client';
-    final tasks = ref.watch(filteredTasksProvider);
+    // Add focus listener to the root widget
+    return Focus(
+      focusNode: _focusNode,
+      onFocusChange: (hasFocus) {
+        if (hasFocus) {
+          // Refresh data when screen regains focus
+          ref.refresh(taskStreamProvider);
+        }
+      },
+      child: Scaffold(
+        body: RefreshIndicator(
+          onRefresh: _handleRefresh,
+          child: CustomScrollView(
+            // Enable physics for RefreshIndicator to work
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              // Search and Filter Bar
+              SliverAppBar(
+                floating: true,
+                automaticallyImplyLeading: false,
+                title: SearchBar(
+                  controller: _searchController,
+                  hintText: 'Search tasks...',
+                  leading: const Icon(Icons.search),
+                  onChanged: (value) {
+                    ref.read(searchQueryProvider.notifier).state = value;
+                  },
+                ),
+                actions: [
+                  IconButton(
+                    icon: const Icon(Icons.filter_list),
+                    onPressed: () {
+                      _showFilterDialog(context);
+                    },
+                  ),
+                ],
+              ),
 
-    return Scaffold(
-      body: CustomScrollView(
-        slivers: [
-          // Search and Filter Bar
-          SliverAppBar(
-            floating: true,
-            automaticallyImplyLeading: false,
-            title: SearchBar(
-              controller: _searchController,
-              hintText: 'Search tasks...',
-              leading: const Icon(Icons.search),
-              onChanged: (value) {
-                ref.read(searchQueryProvider.notifier).state = value;
-              },
-            ),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.filter_list),
-                onPressed: () {
-                  _showFilterDialog(context);
-                },
+              // Tasks List
+              ref.watch(filteredTasksProvider).when(
+                data: (taskList) => SliverPadding(
+                  padding: const EdgeInsets.all(16),
+                  sliver: taskList.isEmpty
+                      ? const SliverToBoxAdapter(
+                          child: Center(
+                            child: Text('No tasks found'),
+                          ),
+                        )
+                      : SliverList.separated(
+                          itemCount: taskList.length,
+                          itemBuilder: (context, index) {
+                            final task = taskList[index];
+                            return TaskCard(task: task);
+                          },
+                          separatorBuilder: (context, index) => const SizedBox(height: 8),
+                        ),
+                ),
+                loading: () => const SliverFillRemaining(
+                  child: Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                ),
+                error: (error, stack) => SliverFillRemaining(
+                  child: Center(
+                    child: Text('Error: $error'),
+                  ),
+                ),
               ),
             ],
           ),
-
-          // Tasks List
-          tasks.when(
-            data: (taskList) => SliverPadding(
-              padding: const EdgeInsets.all(16),
-              sliver: taskList.isEmpty
-                  ? const SliverToBoxAdapter(
-                      child: Center(
-                        child: Text('No tasks found'),
-                      ),
-                    )
-                  : SliverList.separated(
-                      itemCount: taskList.length,
-                      itemBuilder: (context, index) {
-                        final task = taskList[index];
-                        return TaskCard(task: task);
-                      },
-                      separatorBuilder: (context, index) => const SizedBox(height: 8),
-                    ),
-            ),
-            loading: () => const SliverFillRemaining(
-              child: Center(
-                child: CircularProgressIndicator(),
-              ),
-            ),
-            error: (error, stack) => SliverFillRemaining(
-              child: Center(
-                child: Text('Error: $error'),
-              ),
-            ),
-          ),
-        ],
+        ),
+        floatingActionButton: ref.watch(currentUserProvider)?.userMetadata?['role'] == 'client'
+            ? FloatingActionButton.extended(
+                onPressed: () {
+                  context.push('/home/tasks/create');
+                },
+                icon: const Icon(Icons.add),
+                label: const Text('Post Task'),
+              )
+            : null,
       ),
-      floatingActionButton: isClient
-          ? FloatingActionButton.extended(
-              onPressed: () {
-                context.push('/home/tasks/create');
-              },
-              icon: const Icon(Icons.add),
-              label: const Text('Post Task'),
-            )
-          : null,
     );
   }
 

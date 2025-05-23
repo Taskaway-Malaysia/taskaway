@@ -51,21 +51,21 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       },
     );
 
-    return Scaffold(
+    return const Scaffold(
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             // Add your logo or app name here
-            const Text(
+            Text(
               'Taskaway Malaysia',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 16),
-            const CircularProgressIndicator(),
+            SizedBox(height: 16),
+            CircularProgressIndicator(),
           ],
         ),
       ),

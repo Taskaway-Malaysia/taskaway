@@ -6,13 +6,16 @@ class Task {
   final String status;
   final String posterId;
   final String? taskerId;
-  final String? posterName;
-  final String? taskerName;
+  final Map<String, dynamic>? posterProfile;
+  final Map<String, dynamic>? taskerProfile;
   final String category;
   final String location;
   final DateTime scheduledTime;
   final DateTime createdAt;
   final DateTime updatedAt;
+
+  String? get posterName => posterProfile?['full_name'] as String?;
+  String? get taskerName => taskerProfile?['full_name'] as String?;
 
   Task({
     String? id,
@@ -22,17 +25,17 @@ class Task {
     required this.status,
     required this.posterId,
     this.taskerId,
-    this.posterName,
-    this.taskerName,
+    this.posterProfile,
+    this.taskerProfile,
     required this.category,
     required this.location,
     required this.scheduledTime,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) : 
-    this.id = id ?? '',
-    this.createdAt = createdAt ?? DateTime.now(),
-    this.updatedAt = updatedAt ?? DateTime.now();
+    id = id ?? '',
+    createdAt = createdAt ?? DateTime.now(),
+    updatedAt = updatedAt ?? DateTime.now();
 
   factory Task.fromJson(Map<String, dynamic> json) {
     return Task(
@@ -43,8 +46,8 @@ class Task {
       status: json['status'] as String,
       posterId: json['poster_id'] as String,
       taskerId: json['tasker_id'] as String?,
-      posterName: json['poster_name'] as String?,
-      taskerName: json['tasker_name'] as String?,
+      posterProfile: json['poster_profile'] as Map<String, dynamic>?,
+      taskerProfile: json['tasker_profile'] as Map<String, dynamic>?,
       category: json['category'] as String,
       location: json['location'] as String,
       scheduledTime: DateTime.parse(json['scheduled_time'] as String),
@@ -61,8 +64,6 @@ class Task {
       'status': status,
       'poster_id': posterId,
       'tasker_id': taskerId,
-      'poster_name': posterName,
-      'tasker_name': taskerName,
       'category': category,
       'location': location,
       'scheduled_time': scheduledTime.toIso8601String(),
@@ -79,8 +80,8 @@ class Task {
     String? status,
     String? posterId,
     String? taskerId,
-    String? posterName,
-    String? taskerName,
+    Map<String, dynamic>? posterProfile,
+    Map<String, dynamic>? taskerProfile,
     String? category,
     String? location,
     DateTime? scheduledTime,
@@ -95,8 +96,8 @@ class Task {
       status: status ?? this.status,
       posterId: posterId ?? this.posterId,
       taskerId: taskerId ?? this.taskerId,
-      posterName: posterName ?? this.posterName,
-      taskerName: taskerName ?? this.taskerName,
+      posterProfile: posterProfile ?? this.posterProfile,
+      taskerProfile: taskerProfile ?? this.taskerProfile,
       category: category ?? this.category,
       location: location ?? this.location,
       scheduledTime: scheduledTime ?? this.scheduledTime,
@@ -117,8 +118,8 @@ class Task {
           status == other.status &&
           posterId == other.posterId &&
           taskerId == other.taskerId &&
-          posterName == other.posterName &&
-          taskerName == other.taskerName &&
+          posterProfile == other.posterProfile &&
+          taskerProfile == other.taskerProfile &&
           category == other.category &&
           location == other.location &&
           scheduledTime == other.scheduledTime &&
@@ -134,8 +135,8 @@ class Task {
       status.hashCode ^
       posterId.hashCode ^
       taskerId.hashCode ^
-      posterName.hashCode ^
-      taskerName.hashCode ^
+      posterProfile.hashCode ^
+      taskerProfile.hashCode ^
       category.hashCode ^
       location.hashCode ^
       scheduledTime.hashCode ^

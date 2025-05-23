@@ -8,6 +8,7 @@ import '../features/tasks/screens/tasks_screen.dart';
 import '../features/tasks/screens/create_task_screen.dart';
 import '../features/tasks/screens/task_details_screen.dart';
 import '../features/tasks/screens/apply_task_screen.dart';
+import '../features/payments/screens/payment_completion_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -22,6 +23,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/auth',
         name: 'auth',
         builder: (context, state) => const AuthScreen(),
+      ),
+      GoRoute(
+        path: '/payment/:id',
+        name: 'payment-callback',
+        builder: (context, state) {
+          final paymentId = state.pathParameters['id']!;
+          final queryParams = Map<String, String>.from(state.uri.queryParameters);
+          return PaymentCompletionScreen(
+            paymentId: paymentId,
+            billplzParams: queryParams,
+          );
+        },
       ),
       ShellRoute(
         builder: (context, state, child) => HomeScreen(child: child),

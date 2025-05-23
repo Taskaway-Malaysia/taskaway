@@ -40,7 +40,7 @@ class MessageRepository {
           .select()
           .single();
 
-      return Channel.fromJson(response as Map<String, dynamic>);
+      return Channel.fromJson(response);
     } catch (e) {
       print('Error creating channel: $e');
       throw Exception('Failed to create channel');
@@ -56,7 +56,7 @@ class MessageRepository {
           .single();
       
       return response != null 
-          ? Channel.fromJson(response as Map<String, dynamic>)
+          ? Channel.fromJson(response)
           : null;
     } catch (e) {
       print('Error getting channel: $e');
@@ -87,7 +87,7 @@ class MessageRepository {
           });
           
           return filteredResponse
-              .map((json) => Channel.fromJson(json as Map<String, dynamic>))
+              .map((json) => Channel.fromJson(json))
               .toList();
         });
   }
@@ -128,7 +128,7 @@ class MessageRepository {
           .eq('id', channelId);
 
       // Combine the message data with sender profile info
-      final messageData = response as Map<String, dynamic>;
+      final messageData = response;
       messageData['sender_name'] = senderProfile['full_name'];
       messageData['sender_avatar'] = senderProfile['avatar_url'];
 
@@ -146,7 +146,7 @@ class MessageRepository {
         .eq('channel_id', channelId)
         .order('created_at')
         .map((response) => response
-            .map((json) => Message.fromJson(json as Map<String, dynamic>))
+            .map((json) => Message.fromJson(json))
             .toList());
   }
 
@@ -158,7 +158,7 @@ class MessageRepository {
         .order('created_at');
     
     return response
-        .map((json) => Message.fromJson(json as Map<String, dynamic>))
+        .map((json) => Message.fromJson(json))
         .toList();
   }
 } 
