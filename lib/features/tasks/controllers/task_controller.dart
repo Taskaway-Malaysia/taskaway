@@ -4,11 +4,13 @@ import '../repositories/task_repository.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 final taskControllerProvider = Provider((ref) {
-  return TaskController(ref);
+  final repository = ref.watch(taskRepositoryProvider);
+  return TaskController(repository);
 });
 
+// Stream of all tasks
 final taskStreamProvider = StreamProvider<List<Task>>((ref) {
-  return ref.watch(taskRepositoryProvider).watchTasks();
+  return ref.watch(taskControllerProvider).watchTasks();
 });
 
 final filteredTasksProvider = Provider<AsyncValue<List<Task>>>((ref) {
@@ -34,86 +36,60 @@ final searchQueryProvider = StateProvider<String>((ref) => '');
 final selectedCategoriesProvider = StateProvider<List<String>>((ref) => []);
 
 class TaskController {
-  final Ref _ref;
+  final TaskRepository _repository;
 
-  TaskController(this._ref);
+  TaskController(this._repository);
 
-  Future<void> createTask({
+  Stream<List<Task>> watchTasks() => _repository.watchTasks();
+  
+  Stream<Task> watchTask(String id) => _repository.watchTask(id);
+
+  Future<Task> getTaskById(String id) => _repository.getTaskById(id);
+
+  Future<Task> createTask({
     required String title,
     required String description,
     required String category,
     required double price,
     required String location,
     required DateTime scheduledTime,
+    required String posterId,
   }) async {
-    try {
-      final currentUser = Supabase.instance.client.auth.currentUser;
-      if (currentUser == null) {
-        throw Exception('Not authenticated');
-      }
-
-      await _ref.read(taskRepositoryProvider).createTask(Task(
-        title: title,
-        description: description,
-        price: price,
-        status: 'open',
-        posterId: currentUser.id,
-        category: category,
-        location: location,
-        scheduledTime: scheduledTime,
-      ));
-    } catch (e) {
-      print('Error creating task: $e');
-      throw Exception('Failed to create task: $e');
-    }
+    final task = Task(
+      title: title,
+      description: description,
+      category: category,
+      price: price,
+      location: location,
+      scheduledTime: scheduledTime,
+      status: 'open',
+      posterId: posterId,
+    );
+    return _repository.createTask(task);
   }
 
-  Future<List<Task>> getTasks({
-    String? status,
-    String? posterId,
-    String? taskerId,
-    String? category,
-  }) async {
-    try {
-      final repository = _ref.read(taskRepositoryProvider);
-      return await repository.getTasks(
-        status: status,
-        posterId: posterId,
-        taskerId: taskerId,
-        category: category,
-      );
-    } catch (e) {
-      throw Exception('Failed to fetch tasks: $e');
-    }
-  }
-
-  Stream<List<Task>> watchTasks() {
-    final repository = _ref.read(taskRepositoryProvider);
-    return repository.watchTasks();
-  }
-
-  Stream<Task> watchTask(String taskId) {
-    final repository = _ref.read(taskRepositoryProvider);
-    return repository.watchTask(taskId);
-  }
-
-  Future<bool> updateTask(String id, Map<String, dynamic> updates) async {
-    try {
-      final repository = _ref.read(taskRepositoryProvider);
-      await repository.updateTask(id, updates);
-      return true;
-    } catch (error) {
-      print('Error updating task: $error');
-      return false;
-    }
+  Future<Task> updateTask(String id, Map<String, dynamic> data) async {
+    // Convert the data map to use snake_case for database compatibility
+    final dbData = {
+      if (data['title'] != null) 'title': data['title'],
+      if (data['description'] != null) 'description': data['description'],
+      if (data['category'] != null) 'category': data['category'],
+      if (data['price'] != null) 'price': data['price'],
+      if (data['location'] != null) 'location': data['location'],
+      if (data['scheduledTime'] != null) 'scheduled_time': (data['scheduledTime'] as DateTime).toIso8601String(),
+      if (data['status'] != null) 'status': data['status'],
+      if (data['taskerId'] != null) 'tasker_id': data['taskerId'],
+      'updated_at': DateTime.now().toIso8601String(),
+    };
+    
+    return _repository.updateTask(id, dbData);
   }
 
   Future<bool> deleteTask(String id) async {
     try {
-      final repository = _ref.read(taskRepositoryProvider);
-      await repository.deleteTask(id);
+      await _repository.deleteTask(id);
       return true;
-    } catch (error) {
+    } catch (e) {
       return false;
     }
   }

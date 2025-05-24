@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../controllers/task_controller.dart';
@@ -54,6 +55,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
         price: price,
         location: _locationController.text,
         scheduledTime: _scheduledTime,
+        posterId: user.id,
       );
 
       if (mounted) {
@@ -102,178 +104,165 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final dateFormat = DateFormat('MMM d, y h:mm a');
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Post a Task'),
+        title: const Text('Create Task'),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppConstants.defaultPadding),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Title
-              TextFormField(
-                controller: _titleController,
-                decoration: const InputDecoration(
-                  labelText: 'Title',
-                  hintText: 'Enter a clear title for your task',
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter a title';
-                  }
-                  if (value.length < 5) {
-                    return 'Title must be at least 5 characters';
-                  }
-                  return null;
-                },
-                enabled: !_isLoading,
-              ),
-              const SizedBox(height: 16),
-
-              // Description
-              TextFormField(
-                controller: _descriptionController,
-                decoration: const InputDecoration(
-                  labelText: 'Description',
-                  hintText: 'Describe your task in detail',
-                ),
-                maxLines: 5,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter a description';
-                  }
-                  if (value.length < 20) {
-                    return 'Description must be at least 20 characters';
-                  }
-                  return null;
-                },
-                enabled: !_isLoading,
-              ),
-              const SizedBox(height: 16),
-
-              // Price
-              TextFormField(
-                controller: _priceController,
-                decoration: const InputDecoration(
-                  labelText: 'Budget (RM)',
-                  hintText: 'Enter your budget',
-                  prefixText: 'RM ',
-                ),
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter a budget';
-                  }
-                  final price = double.tryParse(value);
-                  if (price == null) {
-                    return 'Please enter a valid number';
-                  }
-                  if (price <= 0) {
-                    return 'Budget must be greater than 0';
-                  }
-                  return null;
-                },
-                enabled: !_isLoading,
-              ),
-              const SizedBox(height: 16),
-
-              // Category
-              DropdownButtonFormField<String>(
-                value: _selectedCategory,
-                decoration: const InputDecoration(
-                  labelText: 'Category',
-                ),
-                items: const [
-                  DropdownMenuItem(
-                    value: 'cleaning',
-                    child: Text('Cleaning'),
-                  ),
-                  DropdownMenuItem(
-                    value: 'delivery',
-                    child: Text('Delivery'),
-                  ),
-                  DropdownMenuItem(
-                    value: 'handyman',
-                    child: Text('Handyman'),
-                  ),
-                  DropdownMenuItem(
-                    value: 'moving',
-                    child: Text('Moving'),
-                  ),
-                  DropdownMenuItem(
-                    value: 'other',
-                    child: Text('Other'),
-                  ),
-                ],
-                onChanged: _isLoading ? null : (value) {
-                  if (value != null) {
-                    setState(() => _selectedCategory = value);
-                  }
-                },
-              ),
-              const SizedBox(height: 16),
-
-              // Location
-              TextFormField(
-                controller: _locationController,
-                decoration: const InputDecoration(
-                  labelText: 'Location',
-                  hintText: 'Enter task location',
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter a location';
-                  }
-                  return null;
-                },
-                enabled: !_isLoading,
-              ),
-              const SizedBox(height: 16),
-
-              // Scheduled Time
-              ListTile(
-                title: const Text('Scheduled Time'),
-                subtitle: Text(
-                  '${_scheduledTime.day}/${_scheduledTime.month}/${_scheduledTime.year} '
-                  'at ${_scheduledTime.hour.toString().padLeft(2, '0')}:'
-                  '${_scheduledTime.minute.toString().padLeft(2, '0')}',
-                ),
-                trailing: const Icon(Icons.calendar_today),
-                onTap: _isLoading ? null : _selectDateTime,
-              ),
-              const SizedBox(height: 24),
-
-              // Error Message
-              if (_errorMessage != null) ...[
-                Text(
+      body: Form(
+        key: _formKey,
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            if (_errorMessage != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Text(
                   _errorMessage!,
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.error,
-                    fontSize: 12,
-                  ),
-                  textAlign: TextAlign.center,
+                  style: TextStyle(color: theme.colorScheme.error),
                 ),
-                const SizedBox(height: 16),
-              ],
-
-              // Submit Button
-              ElevatedButton(
-                onPressed: _isLoading ? null : _handleSubmit,
-                child: _isLoading
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                        ),
-                      )
-                    : const Text('Post Task'),
               ),
-            ],
-          ),
+
+            // Title
+            TextFormField(
+              controller: _titleController,
+              decoration: const InputDecoration(
+                labelText: 'Title',
+                hintText: 'Enter task title',
+              ),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please enter a title';
+                }
+                return null;
+              },
+              enabled: !_isLoading,
+            ),
+            const SizedBox(height: 16),
+
+            // Description
+            TextFormField(
+              controller: _descriptionController,
+              decoration: const InputDecoration(
+                labelText: 'Description',
+                hintText: 'Enter task description',
+              ),
+              maxLines: 3,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please enter a description';
+                }
+                return null;
+              },
+              enabled: !_isLoading,
+            ),
+            const SizedBox(height: 16),
+
+            // Price
+            TextFormField(
+              controller: _priceController,
+              decoration: const InputDecoration(
+                labelText: 'Budget (RM)',
+                hintText: 'Enter your budget',
+                prefixText: 'RM ',
+              ),
+              keyboardType: TextInputType.number,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please enter a budget';
+                }
+                final price = double.tryParse(value);
+                if (price == null) {
+                  return 'Please enter a valid number';
+                }
+                if (price <= 0) {
+                  return 'Budget must be greater than 0';
+                }
+                return null;
+              },
+              enabled: !_isLoading,
+            ),
+            const SizedBox(height: 16),
+
+            // Category
+            DropdownButtonFormField<String>(
+              value: _selectedCategory,
+              decoration: const InputDecoration(
+                labelText: 'Category',
+              ),
+              items: const [
+                DropdownMenuItem(
+                  value: 'cleaning',
+                  child: Text('Cleaning'),
+                ),
+                DropdownMenuItem(
+                  value: 'delivery',
+                  child: Text('Delivery'),
+                ),
+                DropdownMenuItem(
+                  value: 'handyman',
+                  child: Text('Handyman'),
+                ),
+                DropdownMenuItem(
+                  value: 'moving',
+                  child: Text('Moving'),
+                ),
+                DropdownMenuItem(
+                  value: 'other',
+                  child: Text('Other'),
+                ),
+              ],
+              onChanged: _isLoading ? null : (value) {
+                if (value != null) {
+                  setState(() => _selectedCategory = value);
+                }
+              },
+            ),
+            const SizedBox(height: 16),
+
+            // Location
+            TextFormField(
+              controller: _locationController,
+              decoration: const InputDecoration(
+                labelText: 'Location',
+                hintText: 'Enter task location',
+              ),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please enter a location';
+                }
+                return null;
+              },
+              enabled: !_isLoading,
+            ),
+            const SizedBox(height: 16),
+
+            // Scheduled Time
+            ListTile(
+              title: const Text('Scheduled Time'),
+              subtitle: Text(dateFormat.format(_scheduledTime)),
+              trailing: IconButton(
+                icon: const Icon(Icons.calendar_today),
+                onPressed: _isLoading ? null : _selectDateTime,
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            ElevatedButton(
+              onPressed: _isLoading ? null : _handleSubmit,
+              child: _isLoading
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : const Text('Create Task'),
+            ),
+          ],
         ),
       ),
     );

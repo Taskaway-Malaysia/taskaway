@@ -113,17 +113,31 @@ class TaskRepository {
         .map((response) => response.map((json) => Task.fromJson(json)).toList());
   }
 
-  Stream<Task> watchTask(String id, {bool includeProfiles = false}) {
-    return supabase
-        .from(_tableName)
-        .stream(primaryKey: ['id'])
-        .eq('id', id)
-        .map((response) {
-          if (response.isEmpty) {
-            throw Exception('Task not found');
-          }
-          return Task.fromJson(response.first);
+  Stream<Task> watchTask(String id, {bool includeProfiles = false}) async* {
+    try {
+      // Get initial data with profiles
+      final initialData = await getTaskById(id, includeProfiles: true);
+      yield initialData;
+
+      // Stream updates
+      await for (final list in supabase
+          .from(_tableName)
+          .stream(primaryKey: ['id'])
+          .eq('id', id)) {
+        if (list.isEmpty) continue; // Skip empty updates instead of throwing
+        
+        final json = list.first;
+        // Preserve the profile data from initial fetch
+        yield Task.fromJson({
+          ...json,
+          'poster_profile': initialData.posterProfile,
+          'tasker_profile': initialData.taskerProfile,
         });
+      }
+    } catch (e) {
+      print('Error in watchTask: $e');
+      rethrow; // Rethrow to let StreamBuilder handle the error
+    }
   }
 
   // Helper method to fetch profiles for a task when needed
