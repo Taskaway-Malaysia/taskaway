@@ -71,7 +71,14 @@ class _ApplyTaskScreenState extends ConsumerState<ApplyTaskScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Apply for Task'),
+        backgroundColor: theme.colorScheme.tertiary,
+        foregroundColor: theme.colorScheme.onTertiary,
+        title: Text(
+          'Apply for Task',
+          style: TextStyle(
+            color: theme.colorScheme.onTertiary,
+          ),
+        ),
       ),
       body: StreamBuilder<Task>(
         stream: ref.watch(taskControllerProvider).watchTask(widget.taskId),

@@ -9,6 +9,9 @@ import '../features/tasks/screens/create_task_screen.dart';
 import '../features/tasks/screens/task_details_screen.dart';
 import '../features/tasks/screens/apply_task_screen.dart';
 import '../features/payments/screens/payment_completion_screen.dart';
+import '../features/messages/screens/chat_list_screen.dart';
+import '../features/messages/screens/chat_screen.dart';
+import '../features/messages/models/channel.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -75,15 +78,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/home/chat',
             name: 'chat',
-            builder: (context, state) => const Scaffold(
-              body: Center(child: Text('Chat List Screen')),
-            ),
+            builder: (context, state) => const ChatListScreen(),
             routes: [
               GoRoute(
                 path: ':id',
                 name: 'chat-room',
-                builder: (context, state) => Scaffold(
-                  body: Center(child: Text('Chat Room ${state.pathParameters['id']}')),
+                builder: (context, state) => ChatScreen(
+                  channel: state.extra as Channel,
                 ),
               ),
             ],

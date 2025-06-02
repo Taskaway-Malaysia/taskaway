@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 @immutable
 class Channel {
@@ -13,6 +14,7 @@ class Channel {
   final DateTime? lastMessageAt;
   final String? lastMessageContent;
   final String? lastMessageSenderId;
+  final int unreadCount;
 
   const Channel({
     required this.id,
@@ -26,6 +28,7 @@ class Channel {
     this.lastMessageAt,
     this.lastMessageContent,
     this.lastMessageSenderId,
+    this.unreadCount = 0,
   });
 
   factory Channel.fromJson(Map<String, dynamic> json) {
@@ -43,6 +46,7 @@ class Channel {
           : null,
       lastMessageContent: json['last_message_content'] as String?,
       lastMessageSenderId: json['last_message_sender_id'] as String?,
+      unreadCount: json['unread_count'] as int? ?? 0,
     );
   }
 
@@ -59,6 +63,7 @@ class Channel {
       'last_message_at': lastMessageAt?.toIso8601String(),
       'last_message_content': lastMessageContent,
       'last_message_sender_id': lastMessageSenderId,
+      'unread_count': unreadCount,
     };
   }
 
@@ -74,6 +79,7 @@ class Channel {
     DateTime? lastMessageAt,
     String? lastMessageContent,
     String? lastMessageSenderId,
+    int? unreadCount,
   }) {
     return Channel(
       id: id ?? this.id,
@@ -87,6 +93,26 @@ class Channel {
       lastMessageAt: lastMessageAt ?? this.lastMessageAt,
       lastMessageContent: lastMessageContent ?? this.lastMessageContent,
       lastMessageSenderId: lastMessageSenderId ?? this.lastMessageSenderId,
+      unreadCount: unreadCount ?? this.unreadCount,
     );
+  }
+
+  static Future<Channel> withUnreadCount(Channel channel, String userId) async {
+    if (userId.isEmpty) return channel;
+    
+    try {
+      final response = await Supabase.instance.client
+          .from('taskaway_messages')
+          .select()
+          .eq('channel_id', channel.id)
+          .neq('sender_id', userId)
+          .eq('is_read', false);
+
+      final count = (response as List).length;
+      return channel.copyWith(unreadCount: count);
+    } catch (e) {
+      print('Error getting unread count: $e');
+      return channel;
+    }
   }
 } 

@@ -69,11 +69,28 @@ class MessageController {
     );
   }
 
+  Future<void> markChannelAsRead(String channelId) async {
+    final user = _ref.read(currentUserProvider);
+    if (user == null) throw Exception('User must be logged in to mark messages as read');
+
+    await repository.markChannelAsRead(channelId, user.id);
+  }
+
   Stream<List<Message>> watchChannelMessages(String channelId) {
     return repository.watchChannelMessages(channelId);
   }
 
   Future<List<Message>> getChannelMessages(String channelId) {
     return repository.getChannelMessages(channelId);
+  }
+
+  Future<List<Message>> getOlderMessages({
+    required String channelId,
+    required DateTime beforeTimestamp,
+  }) {
+    return repository.getOlderMessages(
+      channelId: channelId,
+      beforeTimestamp: beforeTimestamp,
+    );
   }
 } 

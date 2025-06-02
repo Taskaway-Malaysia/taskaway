@@ -109,7 +109,14 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Create Task'),
+        backgroundColor: theme.colorScheme.primary,
+        foregroundColor: theme.colorScheme.onPrimary,
+        title: Text(
+          'Create Task',
+          style: TextStyle(
+            color: theme.colorScheme.onPrimary,
+          ),
+        ),
       ),
       body: Form(
         key: _formKey,

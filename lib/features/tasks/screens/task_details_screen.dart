@@ -261,21 +261,40 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> with Widg
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Task Details'),
+          backgroundColor: isClient 
+              ? theme.colorScheme.primary // Blue for poster
+              : theme.colorScheme.tertiary, // Orange for tasker
+          foregroundColor: isClient
+              ? theme.colorScheme.onPrimary
+              : theme.colorScheme.onTertiary,
+          title: Text(
+            'Task Details',
+            style: TextStyle(
+              color: isClient
+                  ? theme.colorScheme.onPrimary
+                  : theme.colorScheme.onTertiary,
+            ),
+          ),
           actions: [
             if (isLoading)
-              const Center(
+              Center(
                 child: SizedBox(
                   width: 20,
                   height: 20,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
+                    color: isClient
+                        ? theme.colorScheme.onPrimary
+                        : theme.colorScheme.onTertiary,
                   ),
                 ),
               )
             else if (isClient)
               IconButton(
-                icon: const Icon(Icons.delete),
+                icon: Icon(
+                  Icons.delete,
+                  color: theme.colorScheme.onPrimary,
+                ),
                 onPressed: _deleteTask,
               ),
           ],
@@ -758,23 +777,30 @@ class TaskActionButtons extends ConsumerWidget {
     final theme = Theme.of(context);
     final user = ref.watch(currentUserProvider);
     final isTaskPoster = user?.id == task.posterId;
+    final isTasker = task.taskerId == user?.id;
 
-    if (task.taskerId == user?.id && task.status == 'in_progress') {
-      return _buildTaskerInProgressButtons();
-    } else if (isTaskPoster && task.status == 'pending_approval') {
-      return _buildPosterApprovalButtons();
-    } else if (!isTaskPoster && task.status == 'open') {
-      return _buildOpenTaskButtons(context, ref);
-    } else if (isTaskPoster && task.status == 'open') {
-      return _buildPosterOpenButtons();
-    }
+    // Determine if we should show the chat button
+    final shouldShowChat = (isTaskPoster || isTasker) && task.status != 'open';
 
-    // Chat button for active tasks
-    if ((isTaskPoster || task.taskerId == user?.id) && task.status != 'open') {
-      return _buildChatButton(theme);
-    }
+    return Column(
+      children: [
+        // Action buttons based on role and status
+        if (isTasker && task.status == 'in_progress')
+          _buildTaskerInProgressButtons()
+        else if (isTaskPoster && task.status == 'pending_approval')
+          _buildPosterApprovalButtons()
+        else if (!isTaskPoster && task.status == 'open')
+          _buildOpenTaskButtons(context, ref)
+        else if (isTaskPoster && task.status == 'open')
+          _buildPosterOpenButtons(),
 
-    return const SizedBox.shrink();
+        // Chat button if applicable
+        if (shouldShowChat) ...[
+          const SizedBox(height: 16),
+          _buildChatButton(theme),
+        ],
+      ],
+    );
   }
 
   Widget _buildTaskerInProgressButtons() {
@@ -879,18 +905,13 @@ class TaskActionButtons extends ConsumerWidget {
   }
 
   Widget _buildChatButton(ThemeData theme) {
-    return Column(
-      children: [
-        const SizedBox(height: 16),
-        SizedBox(
-          width: double.infinity,
-          child: OutlinedButton.icon(
-            onPressed: onChatNavigation,
-            icon: const Icon(Icons.chat),
-            label: const Text('Chat'),
-          ),
-        ),
-      ],
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        onPressed: onChatNavigation,
+        icon: const Icon(Icons.chat),
+        label: const Text('Chat'),
+      ),
     );
   }
 } 
