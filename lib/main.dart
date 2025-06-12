@@ -16,7 +16,7 @@ void main() async {
       anonKey: AppConstants.supabaseAnonKey,
       debug: true, // Enable debug mode to see detailed logs
     );
-    print('Supabase initialized successfully');
+    print('Supabase initialized successfully.');
   } catch (e) {
     print('Error initializing Supabase: $e');
     return;
