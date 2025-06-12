@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import '../../../core/constants/app_constants.dart';
+import '../../../core/constants/style_constants.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../controllers/task_controller.dart';
 import '../controllers/application_controller.dart';
@@ -378,7 +378,7 @@ class TaskDetailsContent extends ConsumerWidget {
 
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.all(AppConstants.defaultPadding),
+      padding: const EdgeInsets.all(StyleConstants.defaultPadding),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -735,6 +735,8 @@ class ApplicationCard extends StatelessWidget {
 }
 
 class ErrorMessages extends ConsumerWidget {
+  const ErrorMessages({super.key});
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);

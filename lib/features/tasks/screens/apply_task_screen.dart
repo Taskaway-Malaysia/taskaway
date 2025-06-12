@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/constants/app_constants.dart';
+import '../../../core/constants/style_constants.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../controllers/task_controller.dart';
 import '../controllers/application_controller.dart';
@@ -101,7 +101,7 @@ class _ApplyTaskScreenState extends ConsumerState<ApplyTaskScreen> {
           final task = snapshot.data!;
 
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(AppConstants.defaultPadding),
+            padding: const EdgeInsets.all(StyleConstants.defaultPadding),
             child: Form(
               key: _formKey,
               child: Column(

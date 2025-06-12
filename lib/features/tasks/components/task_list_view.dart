@@ -5,6 +5,8 @@ import '../controllers/task_controller.dart' show taskStreamProvider;
 import 'task_card.dart';
 
 class TaskListView extends ConsumerWidget {
+  const TaskListView({super.key});
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return ref.watch(filteredTasksProvider).when(
