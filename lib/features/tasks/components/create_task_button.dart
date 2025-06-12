@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import '../../auth/controllers/auth_controller.dart';
 
 class CreateTaskButton extends ConsumerWidget {
+  const CreateTaskButton({super.key});
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isClient = ref.watch(currentUserProvider)?.userMetadata?['role'] == 'client';

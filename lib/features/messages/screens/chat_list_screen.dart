@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/constants/app_constants.dart';
+import '../../../core/constants/style_constants.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../controllers/message_controller.dart';
-import 'chat_screen.dart';
 
 class ChatListScreen extends ConsumerWidget {
   const ChatListScreen({super.key});
@@ -31,13 +30,13 @@ class ChatListScreen extends ConsumerWidget {
                   Icon(
                     Icons.chat_outlined,
                     size: 64,
-                    color: theme.colorScheme.onSurface.withOpacity(0.2),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.2),
                   ),
                   const SizedBox(height: 16),
                   Text(
                     'No messages yet',
                     style: theme.textTheme.bodyLarge?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.6),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -45,7 +44,7 @@ class ChatListScreen extends ConsumerWidget {
                     'Messages will appear here when you chat with task posters or taskers',
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.4),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
                     ),
                   ),
                 ],
@@ -54,7 +53,7 @@ class ChatListScreen extends ConsumerWidget {
           }
 
           return ListView.builder(
-            padding: const EdgeInsets.all(AppConstants.defaultPadding),
+            padding: const EdgeInsets.all(StyleConstants.defaultPadding),
             itemCount: channelsList.length,
             itemBuilder: (context, index) {
               final channel = channelsList[index];
@@ -71,7 +70,7 @@ class ChatListScreen extends ConsumerWidget {
                       await ref.read(messageControllerProvider).markChannelAsRead(channel.id);
                       
                       // Refresh the channels list to update unread counts
-                      ref.refresh(userChannelsProvider);
+                      await ref.refresh(userChannelsProvider.future);
                       
                       if (context.mounted) {
                         context.push(
@@ -175,7 +174,7 @@ class ChatListScreen extends ConsumerWidget {
                               vertical: 8,
                             ),
                             decoration: BoxDecoration(
-                              color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+                              color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Row(

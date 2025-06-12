@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/task.dart';
-import '../../../core/constants/app_constants.dart';
+import '../../../core/constants/db_constants.dart';
 
 final taskRepositoryProvider = Provider<TaskRepository>((ref) {
   return TaskRepository(
@@ -11,7 +11,7 @@ final taskRepositoryProvider = Provider<TaskRepository>((ref) {
 
 class TaskRepository {
   final SupabaseClient supabase;
-  final String _tableName = AppConstants.tasksTable;
+  final String _tableName = DbConstants.tasksTable;
 
   TaskRepository({required this.supabase});
 
