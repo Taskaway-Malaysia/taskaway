@@ -8,4 +8,16 @@ export PATH="$PATH:$HOME/flutter/bin"
 flutter pub get
 
 # Build Flutter for web
-flutter build web --release --web-renderer canvaskit 
+flutter build web --release --web-renderer canvaskit
+
+# Ensure proper permissions for web files
+chmod -R 755 build/web/
+
+# Ensure manifest.json and other critical files exist and are accessible
+if [ -f "build/web/manifest.json" ]; then
+    echo "manifest.json exists and is accessible"
+    cat build/web/manifest.json
+else
+    echo "Error: manifest.json not found in build/web/"
+    exit 1
+fi 
