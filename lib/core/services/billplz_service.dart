@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../constants/app_constants.dart';
+import '../constants/api_constants.dart';
 
 class BillplzService {
   final _supabase = Supabase.instance.client;
@@ -152,7 +152,7 @@ class BillplzService {
         customerPhone: '60123456789',
         amount: 10.00,
         description: 'Test Payment',
-        redirectUrl: AppConstants.getRedirectUrl(paymentData['id']),
+        redirectUrl: ApiConstants.getRedirectUrl(paymentData['id']),
       );
 
       print('Bill created successfully:');

@@ -1,19 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'core/constants/app_constants.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_web_plugins/flutter_web_plugins.dart';
+import 'core/constants/api_constants.dart';
+import 'core/constants/style_constants.dart';
 import 'core/theme/app_theme.dart';
 import 'routes/app_router.dart';
-import 'package:url_strategy/url_strategy.dart';
+
 void main() async {
-  setPathUrlStrategy();
+  // Use path URL strategy for web
+  if (kIsWeb) {
+    setUrlStrategy(PathUrlStrategy());
+  }
   WidgetsFlutterBinding.ensureInitialized();
 
   try {
     // Initialize Supabase
     await Supabase.initialize(
-      url: AppConstants.supabaseUrl,
-      anonKey: AppConstants.supabaseAnonKey,
+      url: ApiConstants.supabaseUrl,
+      anonKey: ApiConstants.supabaseAnonKey,
       debug: true, // Enable debug mode to see detailed logs
     );
     print('Supabase initialized successfully');
@@ -37,7 +43,7 @@ class TaskawayApp extends ConsumerWidget {
     final router = ref.watch(appRouterProvider);
     
     return MaterialApp.router(
-      title: AppConstants.appName,
+      title: StyleConstants.appName,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.system,

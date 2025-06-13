@@ -1,9 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../../core/constants/app_constants.dart';
+import '../../../core/constants/db_constants.dart';
 import '../models/message.dart';
 import '../models/channel.dart';
-import 'package:rxdart/rxdart.dart';
 
 final messageRepositoryProvider = Provider<MessageRepository>((ref) {
   return MessageRepository(
@@ -13,7 +12,7 @@ final messageRepositoryProvider = Provider<MessageRepository>((ref) {
 
 class MessageRepository {
   final SupabaseClient supabase;
-  final String _tableName = AppConstants.messagesTable;
+  final String _tableName = DbConstants.messagesTable;
   final String _channelsTable = 'taskaway_channels';
 
   MessageRepository({required this.supabase});
@@ -56,9 +55,7 @@ class MessageRepository {
           .eq('task_id', taskId)
           .single();
       
-      return response != null 
-          ? Channel.fromJson(response)
-          : null;
+      return Channel.fromJson(response);
     } catch (e) {
       print('Error getting channel: $e');
       return null;

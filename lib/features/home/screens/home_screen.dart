@@ -16,7 +16,7 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentIndex = ref.watch(currentIndexProvider);
-    final user = ref.watch(currentUserProvider);
+    // User provider is watched elsewhere when needed
 
     return Scaffold(
       appBar: AppBar(

@@ -1,9 +1,7 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/services/billplz_service.dart';
-import '../../../core/constants/app_constants.dart';
-import '../models/payment.dart';
+import '../../../core/constants/api_constants.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -56,7 +54,7 @@ class PaymentController {
       print('Created payment record: ${jsonEncode(paymentData)}'); // Debug log
 
       // Get redirect URL based on platform
-      final redirectUrl = AppConstants.getRedirectUrl(paymentData['id']);
+      final redirectUrl = ApiConstants.getRedirectUrl(paymentData['id']);
 
       // Create Billplz bill
       final billData = await _billplzService.createBill(
@@ -146,13 +144,11 @@ class PaymentController {
             .eq('id', paymentId)
             .single();
 
-        if (paymentData != null) {
-          await _supabase.from('taskaway_tasks').update({
-            'status': 'completed',
-            'updated_at': DateTime.now().toIso8601String(),
-          }).eq('id', paymentData['task_id']);
-        }
-      }
+        await _supabase.from('taskaway_tasks').update({
+          'status': 'completed',
+          'updated_at': DateTime.now().toIso8601String(),
+        }).eq('id', paymentData['task_id']);
+            }
     } catch (e) {
       print('Error handling payment callback: $e');
       throw Exception('Failed to handle payment callback: $e');

@@ -1,5 +1,27 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../constants/app_constants.dart';
+import '../constants/db_constants.dart';
+
+// Define RealtimeListenTypes enum to match Supabase's expected values
+enum RealtimeListenTypes {
+  postgresChanges,
+  broadcast,
+  presence,
+}
+
+// Define ChannelFilter class for Realtime subscriptions
+class ChannelFilter {
+  final String event;
+  final String schema;
+  final String table;
+  final String filter;
+
+  ChannelFilter({
+    required this.event,
+    required this.schema,
+    required this.table,
+    required this.filter,
+  });
+}
 
 class SupabaseService {
   static final SupabaseClient client = Supabase.instance.client;
@@ -39,7 +61,7 @@ class SupabaseService {
     String? phoneNumber,
     String? avatarUrl,
   }) async {
-    await client.from(AppConstants.profilesTable).insert({
+    await client.from(DbConstants.profilesTable).insert({
       'user_id': userId,
       'name': name,
       'role': role,
@@ -50,7 +72,7 @@ class SupabaseService {
 
   Future<Map<String, dynamic>?> getProfile(String userId) async {
     final response = await client
-        .from(AppConstants.profilesTable)
+        .from(DbConstants.profilesTable)
         .select()
         .eq('user_id', userId)
         .single();
@@ -64,7 +86,7 @@ class SupabaseService {
     int? limit,
     int? offset,
   }) async {
-    var query = client.from(AppConstants.tasksTable).select();
+    var query = client.from(DbConstants.tasksTable).select();
 
     if (category != null) {
       query = query.eq('category', category);
@@ -73,10 +95,10 @@ class SupabaseService {
       query = query.eq('status', status);
     }
     if (limit != null) {
-      query = query.limit(limit);
+      query = query.limit(limit) as PostgrestFilterBuilder<PostgrestList>;
     }
     if (offset != null) {
-      query = query.range(offset, offset + (limit ?? 10) - 1);
+      query = query.range(offset, offset + (limit ?? 10) - 1) as PostgrestFilterBuilder<PostgrestList>;
     }
 
     final response = await query;
@@ -92,7 +114,7 @@ class SupabaseService {
     required DateTime deadline,
     required String posterId,
   }) async {
-    await client.from(AppConstants.tasksTable).insert({
+    await client.from(DbConstants.tasksTable).insert({
       'title': title,
       'description': description,
       'category': category,
@@ -111,7 +133,7 @@ class SupabaseService {
     required String coverLetter,
     required double proposedPrice,
   }) async {
-    await client.from(AppConstants.applicationsTable).insert({
+    await client.from(DbConstants.applicationsTable).insert({
       'task_id': taskId,
       'tasker_id': taskerId,
       'cover_letter': coverLetter,
@@ -123,7 +145,7 @@ class SupabaseService {
   // Message Methods
   Future<List<Map<String, dynamic>>> getMessages(String conversationId) async {
     final response = await client
-        .from(AppConstants.messagesTable)
+        .from(DbConstants.messagesTable)
         .select()
         .eq('conversation_id', conversationId)
         .order('created_at');
@@ -135,7 +157,7 @@ class SupabaseService {
     required String senderId,
     required String content,
   }) async {
-    await client.from(AppConstants.messagesTable).insert({
+    await client.from(DbConstants.messagesTable).insert({
       'conversation_id': conversationId,
       'sender_id': senderId,
       'content': content,
@@ -148,16 +170,17 @@ class SupabaseService {
     void Function(Map<String, dynamic>) onMessage,
   ) {
     return client
-        .channel('public:${AppConstants.messagesTable}')
-        .on(
-          RealtimeListenTypes.postgresChanges,
-          ChannelFilter(
-            event: 'INSERT',
-            schema: 'public',
-            table: AppConstants.messagesTable,
-            filter: 'conversation_id=eq.$conversationId',
+        .channel('public:${DbConstants.messagesTable}')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.insert,
+          schema: 'public',
+          table: DbConstants.messagesTable,
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'conversation_id',
+            value: conversationId,
           ),
-          (payload, [_]) => onMessage(payload.newRecord as Map<String, dynamic>),
+          callback: (payload) => onMessage(payload.newRecord),
         )
         .subscribe();
   }
