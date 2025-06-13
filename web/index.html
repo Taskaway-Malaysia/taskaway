@@ -38,10 +38,6 @@
 <body>
   <script>
     window.addEventListener('load', function(ev) {
-      // Declare global _flutter variable
-      window._flutter = window._flutter || {};
-      // Use the template token that will be replaced during build
-      _flutter.loader = _flutter.loader || {};
       _flutter.loader.loadEntrypoint({
         serviceWorker: {
           serviceWorkerVersion: "{{flutter_service_worker_version}}",
