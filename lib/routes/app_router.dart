@@ -45,8 +45,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/home',
             name: 'home',
-            redirect: (context, state) => '/home/tasks',
+            redirect: (context, state) => '/home/browse',
           ),
+          // Browse screen (index 0)
+          GoRoute(
+            path: '/home/browse',
+            name: 'browse',
+            builder: (context, state) => const TasksScreen(), // Reusing TasksScreen for now
+          ),
+          // My Tasks screen (index 1)
           GoRoute(
             path: '/home/tasks',
             name: 'tasks',
@@ -75,6 +82,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               ),
             ],
           ),
+          // Post Task screen (index 2)
+          GoRoute(
+            path: '/home/post',
+            name: 'post-task',
+            builder: (context, state) => const CreateTaskScreen(),
+          ),
+          // Messages screen (index 3)
           GoRoute(
             path: '/home/chat',
             name: 'chat',
@@ -89,6 +103,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               ),
             ],
           ),
+          // Profile screen (index 4)
           GoRoute(
             path: '/home/profile',
             name: 'profile',
@@ -100,4 +115,4 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
     ],
   );
-}); 
+});

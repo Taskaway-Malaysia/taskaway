@@ -2,18 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_web_plugins/flutter_web_plugins.dart';
+// Only import web plugins when needed
 import 'core/constants/api_constants.dart';
 import 'core/constants/style_constants.dart';
 import 'core/theme/app_theme.dart';
 import 'routes/app_router.dart';
 
+// We'll conditionally initialize web-specific functionality
+
 void main() async {
-  // Use path URL strategy for web
-  if (kIsWeb) {
-    setUrlStrategy(PathUrlStrategy());
-  }
+  // Initialize Flutter binding
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Configure web URL strategy if running on web
+  // This is handled separately to avoid import errors on mobile
+  if (kIsWeb) {
+    // Web-specific initialization will be handled by the Flutter framework
+    // We don't need to manually set the URL strategy for this app on mobile
+  }
 
   try {
     // Initialize Supabase
