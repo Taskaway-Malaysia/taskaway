@@ -12,6 +12,7 @@ import '../features/payments/screens/payment_completion_screen.dart';
 import '../features/messages/screens/chat_list_screen.dart';
 import '../features/messages/screens/chat_screen.dart';
 import '../features/messages/models/channel.dart';
+import '../features/profile/screens/profile_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -107,9 +108,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/home/profile',
             name: 'profile',
-            builder: (context, state) => const Scaffold(
-              body: Center(child: Text('Profile Screen')),
-            ),
+            builder: (context, state) => const ProfileScreen(),
           ),
         ],
       ),

@@ -6,6 +6,7 @@ import '../../auth/controllers/auth_controller.dart';
 import '../controllers/message_controller.dart';
 import '../models/channel.dart';
 import '../models/message.dart';
+import '../providers/mock_data_provider.dart'; // Import mock data provider
 
 class ChatScreen extends ConsumerStatefulWidget {
   final Channel channel;
@@ -24,28 +25,19 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObse
   final _scrollController = ScrollController();
   final _focusNode = FocusNode();
   bool _isLoading = false;
-  bool _isLoadingMore = false;
+  late Channel _channel;
   List<Message> _messages = [];
-  bool _hasReachedTop = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     
-    // Initial data refresh
-    Future.microtask(() async {
-      try {
-        await ref.refresh(channelMessagesProvider(widget.channel.id).future);
-        // Mark messages as read after refresh
-        _markMessagesAsRead();
-      } catch (e) {
-        print('Error refreshing messages: $e');
-      }
-    });
+    // Set channel from widget
+    _channel = widget.channel;
     
-    // Add scroll listener for pagination
-    _scrollController.addListener(_onScroll);
+    // Get mock data
+    _loadMockData();
     
     // Schedule scroll to bottom after build
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -53,15 +45,17 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObse
     });
   }
 
+  void _loadMockData() {
+    // Get messages for this channel
+    _messages = ref.read(mockMessagesProvider)[_channel.id] ?? [];
+  }
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      // Refresh data when app comes back to foreground
-      Future.microtask(() async {
-        await ref.refresh(channelMessagesProvider(widget.channel.id).future);
-        _markMessagesAsRead();
-        _scrollToBottom();
-      });
+      // Refresh mock data when app comes back to foreground
+      _loadMockData();
+      _scrollToBottom();
     }
   }
 
@@ -69,374 +63,289 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObse
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _messageController.dispose();
-    _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     _focusNode.dispose();
     super.dispose();
   }
 
-  void _onScroll() {
-    if (!_scrollController.hasClients) return;
-    
-    // Load more messages when reaching near the top (when scrolling up)
-    if (_scrollController.position.pixels <= 50 && !_isLoadingMore && !_hasReachedTop) {
-      _loadOlderMessages();
-    }
-  }
-
-  Future<void> _loadOlderMessages() async {
-    if (_messages.isEmpty || _isLoadingMore || _hasReachedTop) return;
-
-    setState(() {
-      _isLoadingMore = true;
-    });
-
-    try {
-      final oldestMessage = _messages.first;
-      final olderMessages = await ref.read(messageControllerProvider).getOlderMessages(
-        channelId: widget.channel.id,
-        beforeTimestamp: oldestMessage.createdAt,
-      );
-
-      if (olderMessages.isEmpty) {
-        setState(() {
-          _hasReachedTop = true;
-        });
-      } else {
-        setState(() {
-          _messages = [...olderMessages, ..._messages];
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error loading older messages: ${e.toString()}'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoadingMore = false;
-        });
-      }
-    }
-  }
-
-  Future<void> _handleRefresh() async {
-    // Only refresh messages, don't auto-scroll
-    await ref.refresh(channelMessagesProvider(widget.channel.id).future);
-  }
-
-  Future<void> _sendMessage() async {
-    final message = _messageController.text.trim();
-    if (message.isEmpty) return;
-
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      await ref.read(messageControllerProvider).sendMessage(
-        channelId: widget.channel.id,
-        content: message,
-      );
-      
-      _messageController.clear();
-      _scrollToBottom();
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to send message: ${e.toString()}'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
   void _scrollToBottom() {
-    if (_scrollController.hasClients) {
+    if (_scrollController.hasClients && _messages.isNotEmpty) {
       _scrollController.animateTo(
-        0, // Since we're using reverse: true, 0 is the bottom
+        _scrollController.position.maxScrollExtent,
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeOut,
       );
     }
   }
 
-  Future<void> _markMessagesAsRead() async {
-    try {
-      await ref.read(messageControllerProvider).markChannelAsRead(widget.channel.id);
-    } catch (e) {
-      print('Error marking messages as read: $e');
-    }
+  void _sendMessage() {
+    final text = _messageController.text.trim();
+    if (text.isEmpty || _isLoading) return;
+
+    final currentUser = ref.read(currentUserProvider);
+    final userId = currentUser?.id ?? '';
+    
+    setState(() {
+      _isLoading = true;
+    });
+
+    // Create a new message and add it to the list
+    final newMessage = Message(
+      id: 'msg-${DateTime.now().millisecondsSinceEpoch}',
+      channelId: _channel.id,
+      senderId: userId,
+      content: text,
+      createdAt: DateTime.now(),
+      senderName: 'You',
+    );
+
+    setState(() {
+      _messages = [..._messages, newMessage];
+      _isLoading = false;
+      _messageController.clear();
+    });
+
+    // Schedule scroll to bottom after the message is added
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollToBottom();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final user = ref.watch(currentUserProvider);
-    final messages = ref.watch(channelMessagesProvider(widget.channel.id));
-    final dateFormat = DateFormat('MMM d, y h:mm a');
-    final isPoster = user?.id == widget.channel.posterId;
-
-    return Focus(
-      focusNode: _focusNode,
-      onFocusChange: (hasFocus) {
-        if (hasFocus) {
-          Future.microtask(() async {
-            await ref.refresh(channelMessagesProvider(widget.channel.id).future);
-          });
-        }
-      },
-      child: Scaffold(
-        appBar: AppBar(
-          backgroundColor: isPoster 
-              ? theme.colorScheme.primary // Blue for poster
-              : theme.colorScheme.tertiary, // Orange for tasker
-          foregroundColor: isPoster
-              ? theme.colorScheme.onPrimary
-              : theme.colorScheme.onTertiary,
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                widget.channel.taskTitle,
-                style: TextStyle(
-                  color: isPoster
-                      ? theme.colorScheme.onPrimary
-                      : theme.colorScheme.onTertiary,
-                ),
-              ),
-              Text(
-                isPoster
-                  ? 'Chatting with ${widget.channel.taskerName}'
-                  : 'Chatting with ${widget.channel.posterName}',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: (isPoster
-                      ? theme.colorScheme.onPrimary
-                      : theme.colorScheme.onTertiary)
-                      .withValues(alpha: 0.8),
-                ),
-              ),
-            ],
-          ),
-        ),
-        body: Column(
+    final currentUser = ref.watch(currentUserProvider);
+    final userId = currentUser?.id ?? '';
+    
+    // Determine if current user is poster or tasker
+    final isCurrentUserPoster = _channel.posterId == userId;
+    
+    // Get the other user's name based on current user's role
+    final otherUserName = isCurrentUserPoster ? _channel.taskerName : _channel.posterName;
+    
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF6C5CE7), // Updated to match home/tasks purple color
+        foregroundColor: Colors.white,
+        title: Row(
           children: [
-            Expanded(
-              child: RefreshIndicator(
-                onRefresh: _handleRefresh,
-                child: messages.when(
-                  data: (messagesList) {
-                    // Update local messages list
-                    if (_messages.isEmpty) {
-                      // Only auto-scroll on initial load
-                      _messages = messagesList;
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        _scrollToBottom();
-                      });
-                    } else if (messagesList.length > _messages.length) {
-                      // Only auto-scroll for new messages
-                      final isAtBottom = _scrollController.position.pixels == 0;
-                      _messages = messagesList;
-                      if (isAtBottom) {
-                        WidgetsBinding.instance.addPostFrameCallback((_) {
-                          _scrollToBottom();
-                        });
-                      }
-                    } else {
-                      _messages = messagesList;
-                    }
-                    
-                    if (messagesList.isEmpty) {
-                      return Center(
-                        child: Text(
-                          'No messages yet',
-                          style: theme.textTheme.bodyLarge?.copyWith(
-                            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                          ),
-                        ),
-                      );
-                    }
+            CircleAvatar(
+              radius: 16,
+              backgroundColor: Colors.white,
+              child: Text(
+                otherUserName.substring(0, 1).toUpperCase(),
+                style: const TextStyle(color: Color(0xFF6C5CE7)),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  otherUserName,
+                  style: const TextStyle(fontSize: 16),
+                ),
+                Text(
+                  _channel.taskTitle,
+                  style: const TextStyle(fontSize: 12),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ],
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.more_vert),
+            onPressed: () {
+              // TODO: Show options menu
+            },
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          // Messages list
+          Expanded(
+            child: _messages.isEmpty
+                ? Center(
+                    child: Text(
+                      'No messages yet',
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        color: theme.colorScheme.onSurface.withOpacity(0.6),
+                      ),
+                    ),
+                  )
+                : ListView.builder(
+                    controller: _scrollController,
+                    padding: const EdgeInsets.all(16),
+                    itemCount: _messages.length,
+                    itemBuilder: (context, index) {
+                      final message = _messages[index];
+                      final isCurrentUser = message.senderId == userId;
+                      final showSenderInfo = index == 0 ||
+                          _messages[index - 1].senderId != message.senderId;
 
-                    return Stack(
-                      children: [
-                        ListView.builder(
-                          controller: _scrollController,
-                          reverse: true, // Display messages from bottom to top
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          padding: const EdgeInsets.all(StyleConstants.defaultPadding),
-                          itemCount: _messages.length + (_isLoadingMore ? 1 : 0),
-                          itemBuilder: (context, index) {
-                            if (_isLoadingMore && index == 0) {
-                              return const Center(
-                                child: Padding(
-                                  padding: EdgeInsets.all(8.0),
-                                  child: CircularProgressIndicator(),
-                                ),
-                              );
-                            }
-
-                            final message = _messages[_isLoadingMore ? index - 1 : index];
-                            final isCurrentUser = message.senderId == user?.id;
-
-                            return Align(
-                              alignment: isCurrentUser
-                                  ? Alignment.centerRight
-                                  : Alignment.centerLeft,
-                              child: Container(
-                                margin: const EdgeInsets.only(bottom: 8),
-                                constraints: BoxConstraints(
-                                  maxWidth: MediaQuery.of(context).size.width * 0.75,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: isCurrentUser
-                                      ? theme.colorScheme.primary
-                                      : theme.colorScheme.surfaceContainerHighest,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 8,
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    if (!isCurrentUser && message.senderName != null)
-                                      Padding(
-                                        padding: const EdgeInsets.only(bottom: 4),
-                                        child: Text(
-                                          message.senderName!,
-                                          style: theme.textTheme.labelSmall?.copyWith(
-                                            color: isCurrentUser
-                                                ? theme.colorScheme.onPrimary.withValues(alpha: 0.7)
-                                                : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-                                          ),
-                                        ),
-                                      ),
-                                    Text(
-                                      message.content,
-                                      style: theme.textTheme.bodyLarge?.copyWith(
-                                        color: isCurrentUser
-                                            ? theme.colorScheme.onPrimary
-                                            : theme.colorScheme.onSurfaceVariant,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      dateFormat.format(message.createdAt),
-                                      style: theme.textTheme.bodySmall?.copyWith(
-                                        color: isCurrentUser
-                                            ? theme.colorScheme.onPrimary.withValues(alpha: 0.7)
-                                            : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                        if (_hasReachedTop)
-                          Positioned(
-                            top: 0,
-                            left: 0,
-                            right: 0,
-                            child: Center(
-                              child: Container(
-                                margin: const EdgeInsets.all(8),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 6,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: theme.colorScheme.surfaceContainerHighest,
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Row(
+                          mainAxisAlignment: isCurrentUser
+                              ? MainAxisAlignment.end
+                              : MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (!isCurrentUser && showSenderInfo)
+                              CircleAvatar(
+                                radius: 16,
+                                backgroundColor: Colors.grey.shade300,
                                 child: Text(
-                                  'No more messages',
-                                  style: theme.textTheme.labelSmall?.copyWith(
-                                    color: theme.colorScheme.onSurfaceVariant,
+                                  message.senderName?.isNotEmpty == true
+                                      ? message.senderName![0].toUpperCase()
+                                      : '?',
+                                  style: const TextStyle(
+                                    color: Colors.black54,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
                                   ),
                                 ),
                               ),
+                            if (!isCurrentUser && !showSenderInfo)
+                              const SizedBox(width: 32), // Space for avatar alignment
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: Column(
+                                crossAxisAlignment: isCurrentUser
+                                    ? CrossAxisAlignment.end
+                                    : CrossAxisAlignment.start,
+                                children: [
+                                  if (showSenderInfo && !isCurrentUser)
+                                    Padding(
+                                      padding: const EdgeInsets.only(left: 12, bottom: 4),
+                                      child: Text(
+                                        message.senderName ?? 'Unknown',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 12,
+                                          color: Colors.black54,
+                                        ),
+                                      ),
+                                    ),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 12,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: isCurrentUser
+                                          ? const Color(0xFF8B5CF6) // Purple for current user
+                                          : Colors.grey.shade200, // Light gray for other users
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    child: Text(
+                                      message.content,
+                                      style: TextStyle(
+                                        color: isCurrentUser ? Colors.white : Colors.black87,
+                                      ),
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 4, left: 12, right: 12),
+                                    child: Text(
+                                      _formatTimestamp(message.createdAt),
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        color: Colors.grey.shade600,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                      ],
-                    );
-                  },
-                  loading: () => const Center(
-                    child: CircularProgressIndicator(),
+                          ],
+                        ),
+                      );
+                    },
                   ),
-                  error: (error, stack) => Center(
-                    child: Text(
-                      'Error loading messages: $error',
-                      style: TextStyle(color: theme.colorScheme.error),
+          ),
+          // Message input
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, -3),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _messageController,
+                    focusNode: _focusNode,
+                    decoration: InputDecoration(
+                      hintText: 'Type a message...',
+                      filled: true,
+                      fillColor: Colors.grey.shade100,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(24),
+                        borderSide: BorderSide.none,
+                      ),
                     ),
+                    textInputAction: TextInputAction.send,
+                    onSubmitted: (_) => _sendMessage(),
                   ),
                 ),
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.all(StyleConstants.defaultPadding),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surface,
-                boxShadow: [
-                  BoxShadow(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.1),
-                    blurRadius: 4,
-                    offset: const Offset(0, -2),
+                const SizedBox(width: 8),
+                Container(
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Color(0xFF8B5CF6), // Purple color
                   ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _messageController,
-                      decoration: InputDecoration(
-                        hintText: 'Type a message...',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(24),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                      ),
-                      maxLines: null,
-                      textInputAction: TextInputAction.send,
-                      onSubmitted: (_) => _sendMessage(),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  IconButton(
-                    onPressed: _isLoading ? null : _sendMessage,
+                  child: IconButton(
                     icon: _isLoading
                         ? const SizedBox(
                             width: 24,
                             height: 24,
-                            child: CircularProgressIndicator(strokeWidth: 2),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
                           )
-                        : const Icon(Icons.send),
+                        : const Icon(Icons.send, color: Colors.white),
+                    onPressed: _isLoading ? null : _sendMessage,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
-} 
+
+  String _formatTimestamp(DateTime timestamp) {
+    final now = DateTime.now();
+    final difference = now.difference(timestamp);
+    
+    if (difference.inMinutes < 1) {
+      return 'Just now';
+    } else if (difference.inHours < 1) {
+      return '${difference.inMinutes} min ago';
+    } else if (difference.inDays < 1) {
+      return DateFormat('h:mm a').format(timestamp);
+    } else if (difference.inDays < 7) {
+      return DateFormat('E, h:mm a').format(timestamp);
+    } else {
+      return DateFormat('MMM d, h:mm a').format(timestamp);
+    }
+  }
+}
