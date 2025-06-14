@@ -1,12 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import '../../../core/constants/style_constants.dart';
-import '../../auth/controllers/auth_controller.dart';
-import '../controllers/message_controller.dart';
 import '../models/channel.dart';
 import '../models/message.dart';
-import '../providers/mock_data_provider.dart'; // Import mock data provider
 
 class ChatScreen extends ConsumerStatefulWidget {
   final Channel channel;
@@ -20,24 +16,22 @@ class ChatScreen extends ConsumerStatefulWidget {
   ConsumerState<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObserver {
+class _ChatScreenState extends ConsumerState<ChatScreen> {
   final _messageController = TextEditingController();
   final _scrollController = ScrollController();
-  final _focusNode = FocusNode();
   bool _isLoading = false;
   late Channel _channel;
-  List<Message> _messages = [];
+  late List<Message> _messages;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
     
     // Set channel from widget
     _channel = widget.channel;
     
-    // Get mock data
-    _loadMockData();
+    // Initialize with hardcoded messages
+    _initializeHardcodedMessages();
     
     // Schedule scroll to bottom after build
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -45,26 +39,58 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObse
     });
   }
 
-  void _loadMockData() {
-    // Get messages for this channel
-    _messages = ref.read(mockMessagesProvider)[_channel.id] ?? [];
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      // Refresh mock data when app comes back to foreground
-      _loadMockData();
-      _scrollToBottom();
-    }
+  void _initializeHardcodedMessages() {
+    final now = DateTime.now();
+    final yesterday = now.subtract(const Duration(days: 1));
+    
+    _messages = [
+      Message(
+        id: '1',
+        channelId: _channel.id,
+        senderId: _channel.posterId,
+        content: 'Hi, thank you for accepting my task! I\'m really glad to have your help.',
+        createdAt: yesterday.add(const Duration(hours: 10)),
+        senderName: _channel.posterName,
+      ),
+      Message(
+        id: '2',
+        channelId: _channel.id,
+        senderId: _channel.taskerId,
+        content: 'you\'re welcome! So, do you still have all the parts?',
+        createdAt: yesterday.add(const Duration(hours: 10)),
+        senderName: _channel.taskerName,
+      ),
+      Message(
+        id: '3',
+        channelId: _channel.id,
+        senderId: _channel.posterId,
+        content: 'Yes, I still have all the parts? Do you think you\'ll be available to start tomorrow?',
+        createdAt: now.add(const Duration(hours: 10)),
+        senderName: _channel.posterName,
+      ),
+      Message(
+        id: '4',
+        channelId: _channel.id,
+        senderId: _channel.taskerId,
+        content: 'Absolutely, I can definitely start tomorrow.',
+        createdAt: now.add(const Duration(hours: 10)),
+        senderName: _channel.taskerName,
+      ),
+      Message(
+        id: '5',
+        channelId: _channel.id,
+        senderId: _channel.posterId,
+        content: 'I\'ll be available to assist if needed.',
+        createdAt: now.add(const Duration(hours: 10, minutes: 1)),
+        senderName: _channel.posterName,
+      ),
+    ];
   }
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
     _messageController.dispose();
     _scrollController.dispose();
-    _focusNode.dispose();
     super.dispose();
   }
 
@@ -82,9 +108,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObse
     final text = _messageController.text.trim();
     if (text.isEmpty || _isLoading) return;
 
-    final currentUser = ref.read(currentUserProvider);
-    final userId = currentUser?.id ?? '';
-    
     setState(() {
       _isLoading = true;
     });
@@ -93,10 +116,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObse
     final newMessage = Message(
       id: 'msg-${DateTime.now().millisecondsSinceEpoch}',
       channelId: _channel.id,
-      senderId: userId,
+      senderId: _channel.taskerId, // Assuming current user is the tasker
       content: text,
       createdAt: DateTime.now(),
-      senderName: 'You',
+      senderName: _channel.taskerName,
     );
 
     setState(() {
@@ -113,45 +136,45 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObse
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final currentUser = ref.watch(currentUserProvider);
-    final userId = currentUser?.id ?? '';
-    
-    // Determine if current user is poster or tasker
-    final isCurrentUserPoster = _channel.posterId == userId;
-    
-    // Get the other user's name based on current user's role
-    final otherUserName = isCurrentUserPoster ? _channel.taskerName : _channel.posterName;
+    // Assuming current user is the tasker for this example
+    final currentUserId = _channel.taskerId;
     
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF6C5CE7), // Updated to match home/tasks purple color
+        backgroundColor: const Color(0xFF6C5CE7),
         foregroundColor: Colors.white,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         title: Row(
           children: [
             CircleAvatar(
               radius: 16,
               backgroundColor: Colors.white,
               child: Text(
-                otherUserName.substring(0, 1).toUpperCase(),
+                _channel.posterName.substring(0, 1).toUpperCase(),
                 style: const TextStyle(color: Color(0xFF6C5CE7)),
               ),
             ),
             const SizedBox(width: 8),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  otherUserName,
-                  style: const TextStyle(fontSize: 16),
-                ),
-                Text(
-                  _channel.taskTitle,
-                  style: const TextStyle(fontSize: 12),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _channel.posterName,
+                    style: const TextStyle(fontSize: 16),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(
+                    _channel.taskTitle,
+                    style: const TextStyle(fontSize: 12),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -159,114 +182,39 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObse
           IconButton(
             icon: const Icon(Icons.more_vert),
             onPressed: () {
-              // TODO: Show options menu
+              // Show options menu
             },
           ),
         ],
       ),
       body: Column(
         children: [
-          // Messages list
+          // Date separators and messages
           Expanded(
-            child: _messages.isEmpty
-                ? Center(
-                    child: Text(
-                      'No messages yet',
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        color: theme.colorScheme.onSurface.withOpacity(0.6),
-                      ),
-                    ),
-                  )
-                : ListView.builder(
-                    controller: _scrollController,
-                    padding: const EdgeInsets.all(16),
-                    itemCount: _messages.length,
-                    itemBuilder: (context, index) {
-                      final message = _messages[index];
-                      final isCurrentUser = message.senderId == userId;
-                      final showSenderInfo = index == 0 ||
-                          _messages[index - 1].senderId != message.senderId;
-
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: Row(
-                          mainAxisAlignment: isCurrentUser
-                              ? MainAxisAlignment.end
-                              : MainAxisAlignment.start,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (!isCurrentUser && showSenderInfo)
-                              CircleAvatar(
-                                radius: 16,
-                                backgroundColor: Colors.grey.shade300,
-                                child: Text(
-                                  message.senderName?.isNotEmpty == true
-                                      ? message.senderName![0].toUpperCase()
-                                      : '?',
-                                  style: const TextStyle(
-                                    color: Colors.black54,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ),
-                            if (!isCurrentUser && !showSenderInfo)
-                              const SizedBox(width: 32), // Space for avatar alignment
-                            const SizedBox(width: 8),
-                            Flexible(
-                              child: Column(
-                                crossAxisAlignment: isCurrentUser
-                                    ? CrossAxisAlignment.end
-                                    : CrossAxisAlignment.start,
-                                children: [
-                                  if (showSenderInfo && !isCurrentUser)
-                                    Padding(
-                                      padding: const EdgeInsets.only(left: 12, bottom: 4),
-                                      child: Text(
-                                        message.senderName ?? 'Unknown',
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 12,
-                                          color: Colors.black54,
-                                        ),
-                                      ),
-                                    ),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                      vertical: 12,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: isCurrentUser
-                                          ? const Color(0xFF8B5CF6) // Purple for current user
-                                          : Colors.grey.shade200, // Light gray for other users
-                                      borderRadius: BorderRadius.circular(16),
-                                    ),
-                                    child: Text(
-                                      message.content,
-                                      style: TextStyle(
-                                        color: isCurrentUser ? Colors.white : Colors.black87,
-                                      ),
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 4, left: 12, right: 12),
-                                    child: Text(
-                                      _formatTimestamp(message.createdAt),
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        color: Colors.grey.shade600,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
+            child: ListView.builder(
+              controller: _scrollController,
+              padding: const EdgeInsets.all(16),
+              itemCount: _messages.length + 2, // +2 for date separators
+              itemBuilder: (context, index) {
+                // Add date separators
+                if (index == 0) {
+                  return _buildDateSeparator('Yesterday');
+                } else if (index == 3) {
+                  return _buildDateSeparator('Today');
+                }
+                
+                // Adjust index for actual messages
+                final messageIndex = index < 3 ? index - 1 : index - 2;
+                if (messageIndex < 0 || messageIndex >= _messages.length) {
+                  return const SizedBox.shrink();
+                }
+                
+                final message = _messages[messageIndex];
+                final isCurrentUser = message.senderId == currentUserId;
+                
+                return _buildMessageBubble(message, isCurrentUser);
+              },
+            ),
           ),
           // Message input
           Container(
@@ -286,9 +234,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObse
                 Expanded(
                   child: TextField(
                     controller: _messageController,
-                    focusNode: _focusNode,
                     decoration: InputDecoration(
-                      hintText: 'Type a message...',
+                      hintText: 'Text Message',
                       filled: true,
                       fillColor: Colors.grey.shade100,
                       contentPadding: const EdgeInsets.symmetric(
@@ -308,7 +255,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObse
                 Container(
                   decoration: const BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Color(0xFF8B5CF6), // Purple color
+                    color: Color(0xFF6C5CE7),
                   ),
                   child: IconButton(
                     icon: _isLoading
@@ -332,20 +279,87 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObse
     );
   }
 
-  String _formatTimestamp(DateTime timestamp) {
-    final now = DateTime.now();
-    final difference = now.difference(timestamp);
-    
-    if (difference.inMinutes < 1) {
-      return 'Just now';
-    } else if (difference.inHours < 1) {
-      return '${difference.inMinutes} min ago';
-    } else if (difference.inDays < 1) {
-      return DateFormat('h:mm a').format(timestamp);
-    } else if (difference.inDays < 7) {
-      return DateFormat('E, h:mm a').format(timestamp);
-    } else {
-      return DateFormat('MMM d, h:mm a').format(timestamp);
-    }
+  Widget _buildDateSeparator(String date) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade200,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Text(
+            date,
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMessageBubble(Message message, bool isCurrentUser) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Row(
+        mainAxisAlignment: isCurrentUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (!isCurrentUser)
+            CircleAvatar(
+              radius: 16,
+              backgroundColor: Colors.grey.shade200,
+              child: Text(
+                message.senderName?.isNotEmpty == true
+                    ? message.senderName![0].toUpperCase()
+                    : '?',
+                style: const TextStyle(
+                  color: Colors.black54,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+          if (!isCurrentUser) const SizedBox(width: 8),
+          Flexible(
+            child: Column(
+              crossAxisAlignment: isCurrentUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: isCurrentUser
+                        ? const Color(0xFFE9ECEF) // Light gray for current user
+                        : const Color(0xFFFFF8E1), // Light yellow for other user
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Text(
+                    message.content,
+                    style: const TextStyle(color: Colors.black87),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 4, left: 4, right: 4),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '10:00 AM',
+                        style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
+                      ),
+                      if (isCurrentUser)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 4),
+                          child: Icon(Icons.done_all, size: 14, color: Colors.orange.shade300),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

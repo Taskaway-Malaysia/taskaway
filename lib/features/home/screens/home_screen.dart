@@ -24,11 +24,14 @@ class HomeScreen extends ConsumerWidget {
     // Only show the home content if we're on the browse route
     final bool isHomeRoute = currentLocation.contains('/home/browse');
     
+    // Hide bottom navigation bar when in chat screen (but not chat list)
+    final bool showBottomNav = !currentLocation.contains('/home/chat/');
+    
     return Scaffold(
       body: isHomeRoute 
         ? _buildHomeContent(context, user)
         : child, // Show only the child for non-home routes
-      bottomNavigationBar: NavigationBar(
+      bottomNavigationBar: showBottomNav ? NavigationBar(
         selectedIndex: currentIndex,
         onDestinationSelected: (index) {
           ref.read(currentIndexProvider.notifier).state = index;
@@ -52,112 +55,138 @@ class HomeScreen extends ConsumerWidget {
         },
         destinations: const [
           NavigationDestination(
-            icon: Icon(Icons.home),
-            label: 'Home',
+            icon: Icon(Icons.search_outlined),
+            label: 'Browse',
           ),
           NavigationDestination(
-            icon: Icon(Icons.assignment),
+            icon: Icon(Icons.article_outlined),
             label: 'My Tasks',
           ),
           NavigationDestination(
             selectedIcon: Icon(Icons.add_circle),
-            icon: Icon(Icons.add_circle_outline),
+            icon: Icon(Icons.add_circle),
             label: 'Post Task',
           ),
           NavigationDestination(
-            icon: Icon(Icons.chat),
+            icon: Icon(Icons.mail_outline),
             label: 'Messages',
           ),
           NavigationDestination(
-            icon: Icon(Icons.person),
+            icon: Icon(Icons.person_outline),
             label: 'Profile',
           ),
         ],
-      ),
+      ) : null,
     );
   }
   
   // Extracted home content into a separate method
   Widget _buildHomeContent(BuildContext context, dynamic user) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final headerHeight = screenHeight / 3; // 2/6 = 1/3 of screen height
+    
     return Column(
       children: [
         // Purple header with user info and notification
         Container(
+          height: headerHeight,
           padding: const EdgeInsets.fromLTRB(16, 48, 16, 16),
           decoration: const BoxDecoration(
             color: Color(0xFF6C5CE7), // Purple color from the image
             borderRadius: BorderRadius.only(
-              bottomLeft: Radius.circular(0),
-              bottomRight: Radius.circular(0),
+              bottomLeft: Radius.circular(30),
+              bottomRight: Radius.circular(30),
             ),
           ),
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               // User profile and notification row
-              Row(
-                children: [
-                  // User avatar and name
-                  Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 20,
-                        backgroundColor: Colors.white,
-                        child: Text(
-                          user?.userMetadata?['name']?.toString().substring(0, 1).toUpperCase() ?? 'U',
-                          style: const TextStyle(color: Color(0xFF6C5CE7)),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // User avatar and name
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 24,
+                          backgroundColor: Colors.white,
+                          child: Text(
+                            user?.userMetadata?['name']?.toString().substring(0, 1).toUpperCase() ?? 'U',
+                            style: const TextStyle(color: Color(0xFF6C5CE7), fontSize: 18),
+                          ),
                         ),
-                      ),
+                        const SizedBox(width: 12),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Hello there,',
+                              style: TextStyle(color: Colors.white70, fontSize: 14),
+                            ),
+                            Text(
+                              user?.userMetadata?['name']?.toString() ?? 'User',
+                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const Spacer(),
+                    // Notification bell
+                    IconButton(
+                      icon: const Icon(Icons.notifications_outlined, color: Colors.white),
+                      onPressed: () {
+                        // Handle notification tap
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              
+              // Post a Task text
+              const Padding(
+                padding: EdgeInsets.only(left: 24.0, bottom: 8.0),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Post a Task. Give it Away.',
+                    style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w500),
+                  ),
+                ),
+              ),
+              
+              // Search bar - positioned at bottom of header
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(StyleConstants.defaultRadius),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.search, color: Colors.grey),
                       const SizedBox(width: 8),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Hello there,',
-                            style: TextStyle(color: Colors.white70, fontSize: 14),
+                      Expanded(
+                        child: TextField(
+                          decoration: const InputDecoration(
+                            hintText: 'Tell us what you need help with...',
+                            border: InputBorder.none,
+                            hintStyle: TextStyle(color: Colors.grey),
+                            isDense: true,
+                            contentPadding: EdgeInsets.zero,
                           ),
-                          Text(
-                            user?.userMetadata?['name']?.toString() ?? 'User',
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-                          ),
-                        ],
+                          onTap: () {
+                            // Handle search tap
+                          },
+                        ),
                       ),
                     ],
                   ),
-                  const Spacer(),
-                  // Notification bell
-                  IconButton(
-                    icon: const Icon(Icons.notifications_outlined, color: Colors.white),
-                    onPressed: () {
-                      // Handle notification tap
-                    },
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              // Search bar
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(StyleConstants.defaultRadius),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.search, color: Colors.grey),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: TextField(
-                        decoration: const InputDecoration(
-                          hintText: 'Tell us what you need help with...',
-                          border: InputBorder.none,
-                          hintStyle: TextStyle(color: Colors.grey),
-                        ),
-                        onTap: () {
-                          // Handle search tap
-                        },
-                      ),
-                    ),
-                  ],
                 ),
               ),
             ],
@@ -165,40 +194,45 @@ class HomeScreen extends ConsumerWidget {
         ),
         
         // Categories section
-        Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Categories',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-              GridView.count(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisCount: 3,
-                mainAxisSpacing: 16,
-                crossAxisSpacing: 16,
+        Expanded(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(24.0, 16.0, 24.0, 16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildCategoryItem(context, 'Handyman', Icons.handyman),
-                  _buildCategoryItem(context, 'Cleaning', Icons.cleaning_services),
-                  _buildCategoryItem(context, 'Gardening', Icons.yard),
-                  _buildCategoryItem(context, 'Painting', Icons.format_paint),
-                  _buildCategoryItem(context, 'Organizing', Icons.inventory_2),
-                  _buildCategoryItem(context, 'Pet Care', Icons.pets),
-                  _buildCategoryItem(context, 'House Moving', Icons.local_shipping),
-                  _buildCategoryItem(context, 'Events & Photography', Icons.camera_alt),
-                  _buildCategoryItem(context, 'Others', Icons.more_horiz),
+                  const Padding(
+                    padding: EdgeInsets.only(left: 8.0, bottom: 0.0),
+                    child: Text(
+                      'Categories',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  const SizedBox(height: 0),
+                  GridView.count(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    crossAxisCount: 3,
+                    mainAxisSpacing: 16,
+                    crossAxisSpacing: 16,
+                    childAspectRatio: 1.0,
+                    children: [
+                      _buildCategoryItem(context, 'Handyman', Icons.handyman_outlined),
+                      _buildCategoryItem(context, 'Cleaning', Icons.cleaning_services_outlined),
+                      _buildCategoryItem(context, 'Gardening', Icons.yard_outlined),
+                      _buildCategoryItem(context, 'Painting', Icons.format_paint_outlined),
+                      _buildCategoryItem(context, 'Organizing', Icons.inventory_2_outlined),
+                      _buildCategoryItem(context, 'Pet Care', Icons.pets_outlined),
+                      _buildCategoryItem(context, 'Self Care', Icons.spa_outlined),
+                      _buildCategoryItem(context, 'Events & Photography', Icons.camera_alt_outlined),
+                      _buildCategoryItem(context, 'Others', Icons.more_horiz),
+                    ],
+                  ),
                 ],
               ),
-            ],
+            ),
           ),
         ),
-        
-        // Expanded area for child content on home screen
-        Expanded(child: Container()),
       ],
     );
   }
@@ -209,27 +243,20 @@ class HomeScreen extends ConsumerWidget {
         // Handle category tap
       },
       borderRadius: BorderRadius.circular(12),
-      child: Container(
-        decoration: BoxDecoration(
-          color: const Color(0xFF6C5CE7).withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircleAvatar(
-              backgroundColor: const Color(0xFF6C5CE7),
-              radius: 20,
-              child: Icon(icon, color: Colors.white, size: 20),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 12),
-            ),
-          ],
-        ),
+      child: Column(
+        children: [
+          CircleAvatar(
+            backgroundColor: const Color(0xFF6C5CE7),
+            radius: 30,
+            child: Icon(icon, color: Colors.white, size: 24),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 12),
+          ),
+        ],
       ),
     );
   }

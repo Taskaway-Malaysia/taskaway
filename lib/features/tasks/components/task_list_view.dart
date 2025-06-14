@@ -21,7 +21,7 @@ class TaskListView extends ConsumerWidget {
                 final task = taskList[index];
                 return TaskCard(task: task);
               },
-              separatorBuilder: (context, index) => const SizedBox(height: 16),
+              separatorBuilder: (context, index) => const SizedBox(height: 12),
             ),
       loading: () => const Center(
         child: CircularProgressIndicator(),

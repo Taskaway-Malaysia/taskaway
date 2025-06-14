@@ -67,8 +67,8 @@ class ChatListScreen extends ConsumerWidget {
 
                 return InkWell(
                   onTap: () {
-                    // Navigate to chat screen with mock data
-                    context.push('/messages/${channel.id}');
+                    // Navigate to chat screen with the channel object as extra data
+                    context.push('/home/chat/${channel.id}', extra: channel);
                   },
                   child: Container(
                     decoration: BoxDecoration(

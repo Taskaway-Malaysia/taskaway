@@ -49,7 +49,7 @@ class ProfileScreen extends ConsumerWidget {
                 elevation: 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
-                  side: BorderSide(color: Colors.grey.shade300),
+                  side: BorderSide(color: Colors.grey.shade400, width: 1.0),
                 ),
                 child: Padding(
                   padding: const EdgeInsets.all(16),
@@ -136,7 +136,7 @@ class ProfileScreen extends ConsumerWidget {
                 margin: const EdgeInsets.symmetric(vertical: 8),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
-                  side: BorderSide(color: Colors.grey.shade300),
+                  side: BorderSide(color: Colors.grey.shade400, width: 1.0),
                 ),
                 child: Padding(
                   padding: const EdgeInsets.all(16),
@@ -163,7 +163,7 @@ class ProfileScreen extends ConsumerWidget {
                 margin: const EdgeInsets.symmetric(vertical: 8),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
-                  side: BorderSide(color: Colors.grey.shade300),
+                  side: BorderSide(color: Colors.grey.shade400, width: 1.0),
                 ),
                 child: Padding(
                   padding: const EdgeInsets.all(16),
@@ -199,7 +199,7 @@ class ProfileScreen extends ConsumerWidget {
                 margin: const EdgeInsets.symmetric(vertical: 8),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
-                  side: BorderSide(color: Colors.grey.shade300),
+                  side: BorderSide(color: Colors.grey.shade400, width: 1.0),
                 ),
                 child: Padding(
                   padding: const EdgeInsets.all(16),
