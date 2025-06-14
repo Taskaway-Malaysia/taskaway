@@ -184,4 +184,77 @@ class SupabaseService {
         )
         .subscribe();
   }
-} 
+  
+  // Storage Methods
+  Future<String?> uploadFile({
+    required String bucket,
+    required String filePath,
+    required dynamic file,
+    FileOptions? options,
+  }) async {
+    try {
+      await client.storage.from(bucket).upload(
+        filePath,
+        file,
+        fileOptions: options ?? const FileOptions(cacheControl: '3600', upsert: false),
+      );
+      
+      return client.storage.from(bucket).getPublicUrl(filePath);
+    } catch (e) {
+      print('Error uploading file: $e');
+      return null;
+    }
+  }
+  
+  Future<List<String>> uploadFiles({
+    required String bucket,
+    required String folderPath,
+    required List<dynamic> files,
+  }) async {
+    final uploadedUrls = <String>[];
+    
+    for (final file in files) {
+      final fileExt = file.path.split('.').last;
+      final fileName = '${DateTime.now().millisecondsSinceEpoch}_${uploadedUrls.length}.$fileExt';
+      final filePath = '$folderPath/$fileName';
+      
+      final url = await uploadFile(
+        bucket: bucket,
+        filePath: filePath,
+        file: file,
+      );
+      
+      if (url != null) {
+        uploadedUrls.add(url);
+      }
+    }
+    
+    return uploadedUrls;
+  }
+  
+  Future<bool> deleteFile({
+    required String bucket,
+    required String filePath,
+  }) async {
+    try {
+      await client.storage.from(bucket).remove([filePath]);
+      return true;
+    } catch (e) {
+      print('Error deleting file: $e');
+      return false;
+    }
+  }
+  
+  Future<bool> deleteFiles({
+    required String bucket,
+    required List<String> filePaths,
+  }) async {
+    try {
+      await client.storage.from(bucket).remove(filePaths);
+      return true;
+    } catch (e) {
+      print('Error deleting files: $e');
+      return false;
+    }
+  }
+}

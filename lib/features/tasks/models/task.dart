@@ -13,6 +13,12 @@ class Task {
   final DateTime scheduledTime;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final List<String>? images;
+  final String? dateOption;
+  final bool? needsSpecificTime;
+  final String? timeOfDay;
+  final String? locationType;
+  final bool? providesMaterials;
 
   String? get posterName => posterProfile?['full_name'] as String?;
   String? get taskerName => taskerProfile?['full_name'] as String?;
@@ -32,6 +38,12 @@ class Task {
     required this.scheduledTime,
     DateTime? createdAt,
     DateTime? updatedAt,
+    this.images,
+    this.dateOption,
+    this.needsSpecificTime,
+    this.timeOfDay,
+    this.locationType,
+    this.providesMaterials,
   }) : 
     id = id ?? '',
     createdAt = createdAt ?? DateTime.now(),
@@ -53,6 +65,12 @@ class Task {
       scheduledTime: DateTime.parse(json['scheduled_time'] as String),
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
+      images: json['images'] != null ? List<String>.from(json['images'] as List) : null,
+      dateOption: json['date_option'] as String?,
+      needsSpecificTime: json['needs_specific_time'] as bool?,
+      timeOfDay: json['time_of_day'] as String?,
+      locationType: json['location_type'] as String?,
+      providesMaterials: json['provides_materials'] as bool?,
     );
   }
 
@@ -69,6 +87,12 @@ class Task {
       'scheduled_time': scheduledTime.toIso8601String(),
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
+      if (images != null) 'images': images,
+      if (dateOption != null) 'date_option': dateOption,
+      if (needsSpecificTime != null) 'needs_specific_time': needsSpecificTime,
+      if (timeOfDay != null) 'time_of_day': timeOfDay,
+      if (locationType != null) 'location_type': locationType,
+      if (providesMaterials != null) 'provides_materials': providesMaterials,
     };
   }
 
@@ -87,6 +111,12 @@ class Task {
     DateTime? scheduledTime,
     DateTime? createdAt,
     DateTime? updatedAt,
+    List<String>? images,
+    String? dateOption,
+    bool? needsSpecificTime,
+    String? timeOfDay,
+    String? locationType,
+    bool? providesMaterials,
   }) {
     return Task(
       id: id ?? this.id,
@@ -103,6 +133,12 @@ class Task {
       scheduledTime: scheduledTime ?? this.scheduledTime,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      images: images ?? this.images,
+      dateOption: dateOption ?? this.dateOption,
+      needsSpecificTime: needsSpecificTime ?? this.needsSpecificTime,
+      timeOfDay: timeOfDay ?? this.timeOfDay,
+      locationType: locationType ?? this.locationType,
+      providesMaterials: providesMaterials ?? this.providesMaterials,
     );
   }
 
@@ -124,7 +160,24 @@ class Task {
           location == other.location &&
           scheduledTime == other.scheduledTime &&
           createdAt == other.createdAt &&
-          updatedAt == other.updatedAt;
+          updatedAt == other.updatedAt &&
+          _listEquals(images, other.images) &&
+          dateOption == other.dateOption &&
+          needsSpecificTime == other.needsSpecificTime &&
+          timeOfDay == other.timeOfDay &&
+          locationType == other.locationType &&
+          providesMaterials == other.providesMaterials;
+
+  // Helper method to compare lists
+  bool _listEquals<T>(List<T>? a, List<T>? b) {
+    if (a == null && b == null) return true;
+    if (a == null || b == null) return false;
+    if (a.length != b.length) return false;
+    for (int i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
+  }
 
   @override
   int get hashCode =>
@@ -141,5 +194,11 @@ class Task {
       location.hashCode ^
       scheduledTime.hashCode ^
       createdAt.hashCode ^
-      updatedAt.hashCode;
-} 
+      updatedAt.hashCode ^
+      images.hashCode ^
+      dateOption.hashCode ^
+      needsSpecificTime.hashCode ^
+      timeOfDay.hashCode ^
+      locationType.hashCode ^
+      providesMaterials.hashCode;
+}

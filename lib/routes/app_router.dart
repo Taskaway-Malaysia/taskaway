@@ -40,6 +40,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           );
         },
       ),
+      // Create Task screen - moved outside ShellRoute to hide navigation bar
+      GoRoute(
+        path: '/create-task',
+        name: 'create-task',
+        builder: (context, state) => const CreateTaskScreen(),
+      ),
       ShellRoute(
         builder: (context, state, child) => HomeScreen(child: child),
         routes: [
@@ -60,11 +66,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             name: 'tasks',
             builder: (context, state) => const TasksScreen(),
             routes: [
-              GoRoute(
-                path: 'create',
-                name: 'create-task',
-                builder: (context, state) => const CreateTaskScreen(),
-              ),
               GoRoute(
                 path: ':id',
                 name: 'task-details',
@@ -88,6 +89,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             path: '/home/post',
             name: 'post-task',
             builder: (context, state) => const CreateTaskScreen(),
+            redirect: (context, state) => '/create-task', // Redirect to the standalone route
           ),
           // Messages screen (index 3)
           GoRoute(

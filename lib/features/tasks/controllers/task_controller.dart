@@ -1,6 +1,9 @@
+import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/task.dart';
 import '../repositories/task_repository.dart';
+import '../../../core/services/supabase_service.dart';
 
 final taskControllerProvider = Provider((ref) {
   final repository = ref.watch(taskRepositoryProvider);
@@ -36,6 +39,8 @@ final selectedCategoriesProvider = StateProvider<List<String>>((ref) => []);
 
 class TaskController {
   final TaskRepository _repository;
+  final _supabase = Supabase.instance.client;
+  final SupabaseService _supabaseService = SupabaseService();
 
   TaskController(this._repository);
 
@@ -45,6 +50,15 @@ class TaskController {
 
   Future<Task> getTaskById(String id) => _repository.getTaskById(id);
 
+  // Upload images to Supabase storage and return URLs
+  Future<List<String>> _uploadTaskImages(List<File> images, String taskId) async {
+    return await _supabaseService.uploadFiles(
+      bucket: 'task_images',
+      folderPath: 'tasks/$taskId',
+      files: images,
+    );
+  }
+
   Future<Task> createTask({
     required String title,
     required String description,
@@ -53,8 +67,16 @@ class TaskController {
     required String location,
     required DateTime scheduledTime,
     required String posterId,
+    String? dateOption,
+    bool? needsSpecificTime,
+    String? timeOfDay,
+    String? locationType,
+    bool? providesMaterials,
+    List<File>? images,
   }) async {
+    // Create the task first to get an ID
     final task = Task(
+      id: '',
       title: title,
       description: description,
       category: category,
@@ -63,8 +85,34 @@ class TaskController {
       scheduledTime: scheduledTime,
       status: 'open',
       posterId: posterId,
+      dateOption: dateOption,
+      needsSpecificTime: needsSpecificTime,
+      timeOfDay: timeOfDay,
+      locationType: locationType,
+      providesMaterials: providesMaterials,
+      images: [],
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
     );
-    return _repository.createTask(task);
+    
+    final createdTask = await _repository.createTask(task);
+    
+    // If there are images, upload them and update the task with image URLs
+    if (images != null && images.isNotEmpty) {
+      final imageUrls = await _uploadTaskImages(images, createdTask.id);
+      
+      if (imageUrls.isNotEmpty) {
+        // Update the task with image URLs
+        await _repository.updateTask(createdTask.id, {
+          'images': imageUrls,
+        });
+        
+        // Return the updated task
+        return await _repository.getTaskById(createdTask.id);
+      }
+    }
+    
+    return createdTask;
   }
 
   Future<Task> updateTask(String id, Map<String, dynamic> data) async {
@@ -86,10 +134,33 @@ class TaskController {
 
   Future<bool> deleteTask(String id) async {
     try {
+      // Get the task to access its images
+      final task = await _repository.getTaskById(id);
+      
+      // Delete the task from the database
       await _repository.deleteTask(id);
+      
+      // Delete associated images if they exist
+      if (task.images?.isNotEmpty == true) {
+        // Extract file paths from URLs
+        final filePaths = task.images!.map((url) {
+          // Extract the path portion after the bucket name
+          final uri = Uri.parse(url);
+          final pathSegments = uri.pathSegments;
+          // Skip the first segment (usually 'storage') and the bucket name
+          return pathSegments.sublist(2).join('/');
+        }).toList();
+        
+        await _supabaseService.deleteFiles(
+          bucket: 'task_images',
+          filePaths: filePaths,
+        );
+      }
+      
       return true;
     } catch (e) {
+      print('Error deleting task: $e');
       return false;
     }
   }
-} 
+}

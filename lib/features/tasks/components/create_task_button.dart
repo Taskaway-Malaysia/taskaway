@@ -13,9 +13,9 @@ class CreateTaskButton extends ConsumerWidget {
     if (!isClient) return const SizedBox.shrink();
 
     return FloatingActionButton.extended(
-      onPressed: () => context.push('/home/tasks/create'),
+      onPressed: () => context.push('/create-task'),
       icon: const Icon(Icons.add),
       label: const Text('Post Task'),
     );
   }
-} 
+}
