@@ -1,9 +1,10 @@
 import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/services/billplz_service.dart';
+import '../services/billplz_service.dart';
 import '../../../core/constants/api_constants.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:logger/logger.dart';
 
 final paymentControllerProvider = Provider((ref) => PaymentController(ref));
 
@@ -11,6 +12,7 @@ class PaymentController {
   final Ref _ref;
   final _supabase = Supabase.instance.client;
   final _billplzService = BillplzService();
+  final _logger = Logger();
 
   PaymentController(this._ref);
 
@@ -51,7 +53,7 @@ class PaymentController {
         'updated_at': DateTime.now().toIso8601String(),
       }).select().single();
 
-      print('Created payment record: ${jsonEncode(paymentData)}'); // Debug log
+      _logger.d('Created payment record: ${jsonEncode(paymentData)}'); // Debug log
 
       // Get redirect URL based on platform
       final redirectUrl = ApiConstants.getRedirectUrl(paymentData['id']);
@@ -66,7 +68,7 @@ class PaymentController {
         redirectUrl: redirectUrl,
       );
 
-      print('Received Billplz response: ${jsonEncode(billData)}'); // Debug log
+      _logger.d('Received Billplz response: ${jsonEncode(billData)}'); // Debug log
       
       if (billData['id'] == null) {
         throw Exception('No bill ID received from Billplz: ${jsonEncode(billData)}');
@@ -78,7 +80,7 @@ class PaymentController {
         'updated_at': DateTime.now().toIso8601String(),
       }).eq('id', paymentData['id']).select().single();
 
-      print('Updated payment record: ${jsonEncode(updateResult)}'); // Debug log
+      _logger.d('Updated payment record: ${jsonEncode(updateResult)}'); // Debug log
 
       // Verify the update
       final verifyPayment = await _supabase
@@ -87,7 +89,7 @@ class PaymentController {
           .eq('id', paymentData['id'])
           .single();
       
-      print('Verified payment record: ${jsonEncode(verifyPayment)}'); // Debug log
+      _logger.d('Verified payment record: ${jsonEncode(verifyPayment)}'); // Debug log
 
       if (verifyPayment['billplz_bill_id'] == null) {
         throw Exception('Failed to store Billplz bill ID');
@@ -110,8 +112,8 @@ class PaymentController {
         throw Exception('Could not launch payment page');
       }
     } catch (e, stackTrace) {
-      print('Error in handleTaskApproval: $e'); // Debug log
-      print('Stack trace: $stackTrace'); // Debug log
+      _logger.e('Error in handleTaskApproval: $e'); // Debug log
+      _logger.e('Stack trace: $stackTrace'); // Debug log
       throw Exception('Failed to process payment: $e');
     }
   }
@@ -150,7 +152,7 @@ class PaymentController {
         }).eq('id', paymentData['task_id']);
             }
     } catch (e) {
-      print('Error handling payment callback: $e');
+      _logger.e('Error handling payment callback: $e');
       throw Exception('Failed to handle payment callback: $e');
     }
   }

@@ -3,8 +3,8 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 /// Constants related to API endpoints and configurations
 class ApiConstants {
   // Supabase Configuration
-  static const String supabaseUrl = 'https://aytxvyemlspkzzmwpqkz.supabase.co';
-  static const String supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF5dHh2eWVtbHNwa3p6bXdwcWt6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE0MTIzMzMsImV4cCI6MjA1Njk4ODMzM30.MnwbHavRic_3IiW2cK1uISlMlQa7j8vsK2OL1fFGijI';
+  static const String supabaseUrl = 'https://txojopmkgjbqsfcacglz.supabase.co';
+  static const String supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR4b2pvcG1rZ2picXNmY2FjZ2x6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk0MzMxODcsImV4cCI6MjA2NTAwOTE4N30.5itLemoP3J_05zZW9qS7yRb4RbBlZ2dy3J6GkDA1rkY';
   
   // API Endpoints
   static const String billplzApiEndpoint = 'https://www.billplz-sandbox.com/api/v3';

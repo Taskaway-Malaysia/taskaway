@@ -6,6 +6,7 @@ import '../../auth/controllers/auth_controller.dart';
 import '../controllers/message_controller.dart';
 import '../models/channel.dart';
 import '../models/message.dart';
+import 'package:logger/logger.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   final Channel channel;
@@ -27,6 +28,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObse
   bool _isLoadingMore = false;
   List<Message> _messages = [];
   bool _hasReachedTop = false;
+  final _logger = Logger();
 
   @override
   void initState() {
@@ -40,7 +42,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObse
         // Mark messages as read after refresh
         _markMessagesAsRead();
       } catch (e) {
-        print('Error refreshing messages: $e');
+        _logger.e('Error refreshing messages: $e');
       }
     });
     
@@ -178,7 +180,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObse
     try {
       await ref.read(messageControllerProvider).markChannelAsRead(widget.channel.id);
     } catch (e) {
-      print('Error marking messages as read: $e');
+      _logger.e('Error marking messages as read: $e');
     }
   }
 
