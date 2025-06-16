@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import '../../../core/constants/app_constants.dart';
+import '../../../core/constants/style_constants.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../controllers/message_controller.dart';
 import '../models/channel.dart';
 import '../models/message.dart';
+import 'package:logger/logger.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   final Channel channel;
@@ -27,6 +28,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObse
   bool _isLoadingMore = false;
   List<Message> _messages = [];
   bool _hasReachedTop = false;
+  final _logger = Logger();
 
   @override
   void initState() {
@@ -34,10 +36,15 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObse
     WidgetsBinding.instance.addObserver(this);
     
     // Initial data refresh
-    ref.refresh(channelMessagesProvider(widget.channel.id));
-    
-    // Mark messages as read
-    _markMessagesAsRead();
+    Future.microtask(() async {
+      try {
+        await ref.refresh(channelMessagesProvider(widget.channel.id).future);
+        // Mark messages as read after refresh
+        _markMessagesAsRead();
+      } catch (e) {
+        _logger.e('Error refreshing messages: $e');
+      }
+    });
     
     // Add scroll listener for pagination
     _scrollController.addListener(_onScroll);
@@ -52,9 +59,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObse
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       // Refresh data when app comes back to foreground
-      ref.refresh(channelMessagesProvider(widget.channel.id));
-      _markMessagesAsRead();
-      _scrollToBottom();
+      Future.microtask(() async {
+        await ref.refresh(channelMessagesProvider(widget.channel.id).future);
+        _markMessagesAsRead();
+        _scrollToBottom();
+      });
     }
   }
 
@@ -171,7 +180,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObse
     try {
       await ref.read(messageControllerProvider).markChannelAsRead(widget.channel.id);
     } catch (e) {
-      print('Error marking messages as read: $e');
+      _logger.e('Error marking messages as read: $e');
     }
   }
 
@@ -187,7 +196,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObse
       focusNode: _focusNode,
       onFocusChange: (hasFocus) {
         if (hasFocus) {
-          ref.refresh(channelMessagesProvider(widget.channel.id));
+          Future.microtask(() async {
+            await ref.refresh(channelMessagesProvider(widget.channel.id).future);
+          });
         }
       },
       child: Scaffold(
@@ -217,7 +228,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObse
                   color: (isPoster
                       ? theme.colorScheme.onPrimary
                       : theme.colorScheme.onTertiary)
-                      .withOpacity(0.8),
+                      .withValues(alpha: 0.8),
                 ),
               ),
             ],
@@ -255,7 +266,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObse
                         child: Text(
                           'No messages yet',
                           style: theme.textTheme.bodyLarge?.copyWith(
-                            color: theme.colorScheme.onSurface.withOpacity(0.6),
+                            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                           ),
                         ),
                       );
@@ -267,7 +278,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObse
                           controller: _scrollController,
                           reverse: true, // Display messages from bottom to top
                           physics: const AlwaysScrollableScrollPhysics(),
-                          padding: const EdgeInsets.all(AppConstants.defaultPadding),
+                          padding: const EdgeInsets.all(StyleConstants.defaultPadding),
                           itemCount: _messages.length + (_isLoadingMore ? 1 : 0),
                           itemBuilder: (context, index) {
                             if (_isLoadingMore && index == 0) {
@@ -311,8 +322,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObse
                                           message.senderName!,
                                           style: theme.textTheme.labelSmall?.copyWith(
                                             color: isCurrentUser
-                                                ? theme.colorScheme.onPrimary.withOpacity(0.7)
-                                                : theme.colorScheme.onSurfaceVariant.withOpacity(0.7),
+                                                ? theme.colorScheme.onPrimary.withValues(alpha: 0.7)
+                                                : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                                           ),
                                         ),
                                       ),
@@ -329,8 +340,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObse
                                       dateFormat.format(message.createdAt),
                                       style: theme.textTheme.bodySmall?.copyWith(
                                         color: isCurrentUser
-                                            ? theme.colorScheme.onPrimary.withOpacity(0.7)
-                                            : theme.colorScheme.onSurfaceVariant.withOpacity(0.7),
+                                            ? theme.colorScheme.onPrimary.withValues(alpha: 0.7)
+                                            : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                                       ),
                                     ),
                                   ],
@@ -352,7 +363,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObse
                                   vertical: 6,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: theme.colorScheme.surfaceVariant,
+                                  color: theme.colorScheme.surfaceContainerHighest,
                                   borderRadius: BorderRadius.circular(16),
                                 ),
                                 child: Text(
@@ -380,12 +391,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObse
               ),
             ),
             Container(
-              padding: const EdgeInsets.all(AppConstants.defaultPadding),
+              padding: const EdgeInsets.all(StyleConstants.defaultPadding),
               decoration: BoxDecoration(
                 color: theme.colorScheme.surface,
                 boxShadow: [
                   BoxShadow(
-                    color: theme.colorScheme.onSurface.withOpacity(0.1),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.1),
                     blurRadius: 4,
                     offset: const Offset(0, -2),
                   ),

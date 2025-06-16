@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
-import '../constants/app_constants.dart';
+import '../constants/style_constants.dart';
+
+/// App theme with purple for poster and orange/gold for tasker
 
 class AppTheme {
   static ThemeData lightTheme = ThemeData(
     useMaterial3: true,
     colorScheme: ColorScheme.fromSeed(
-      seedColor: AppConstants.primaryColor,
+      seedColor: StyleConstants.posterColorPrimary,
       brightness: Brightness.light,
     ),
+    // Tasker color palette integration
+    secondaryHeaderColor: StyleConstants.taskerColorPrimary,
     fontFamily: 'Inter',
     appBarTheme: const AppBarTheme(
       centerTitle: true,
@@ -22,33 +26,43 @@ class AppTheme {
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-        backgroundColor: AppConstants.primaryColor,
+        backgroundColor: StyleConstants.taskerColorPrimary, // Using tasker primary color for buttons
         foregroundColor: Colors.white,
         minimumSize: const Size(double.infinity, 48),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppConstants.defaultRadius),
+          borderRadius: BorderRadius.circular(StyleConstants.defaultRadius),
+        ),
+      ),
+    ),
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: OutlinedButton.styleFrom(
+        foregroundColor: StyleConstants.taskerColorPrimary,
+        side: const BorderSide(color: StyleConstants.taskerColorPrimary),
+        minimumSize: const Size(double.infinity, 48),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(StyleConstants.defaultRadius),
         ),
       ),
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
       fillColor: Colors.grey[100],
-      contentPadding: const EdgeInsets.all(AppConstants.defaultPadding),
+      contentPadding: const EdgeInsets.all(StyleConstants.defaultPadding),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppConstants.defaultRadius),
+        borderRadius: BorderRadius.circular(StyleConstants.defaultRadius),
         borderSide: BorderSide.none,
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppConstants.defaultRadius),
+        borderRadius: BorderRadius.circular(StyleConstants.defaultRadius),
         borderSide: BorderSide.none,
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppConstants.defaultRadius),
-        borderSide: const BorderSide(color: AppConstants.primaryColor),
+        borderRadius: BorderRadius.circular(StyleConstants.defaultRadius),
+        borderSide: const BorderSide(color: StyleConstants.posterColorPrimary),
       ),
       errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppConstants.defaultRadius),
-        borderSide: const BorderSide(color: AppConstants.errorColor),
+        borderRadius: BorderRadius.circular(StyleConstants.defaultRadius),
+        borderSide: const BorderSide(color: StyleConstants.errorColor),
       ),
     ),
   );
@@ -56,9 +70,11 @@ class AppTheme {
   static ThemeData darkTheme = ThemeData(
     useMaterial3: true,
     colorScheme: ColorScheme.fromSeed(
-      seedColor: AppConstants.primaryColor,
+      seedColor: StyleConstants.posterColorPrimary,
       brightness: Brightness.dark,
     ),
+    // Tasker color palette integration
+    secondaryHeaderColor: StyleConstants.taskerColorPrimary,
     fontFamily: 'Inter',
     appBarTheme: const AppBarTheme(
       centerTitle: true,
@@ -70,33 +86,43 @@ class AppTheme {
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-        backgroundColor: AppConstants.primaryColor,
+        backgroundColor: StyleConstants.taskerColorPrimary, // Using tasker primary color for buttons
         foregroundColor: Colors.white,
         minimumSize: const Size(double.infinity, 48),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppConstants.defaultRadius),
+          borderRadius: BorderRadius.circular(StyleConstants.defaultRadius),
+        ),
+      ),
+    ),
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: OutlinedButton.styleFrom(
+        foregroundColor: StyleConstants.taskerColorPrimary,
+        side: const BorderSide(color: StyleConstants.taskerColorPrimary),
+        minimumSize: const Size(double.infinity, 48),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(StyleConstants.defaultRadius),
         ),
       ),
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      contentPadding: const EdgeInsets.all(AppConstants.defaultPadding),
+      contentPadding: const EdgeInsets.all(StyleConstants.defaultPadding),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppConstants.defaultRadius),
+        borderRadius: BorderRadius.circular(StyleConstants.defaultRadius),
         borderSide: BorderSide.none,
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppConstants.defaultRadius),
+        borderRadius: BorderRadius.circular(StyleConstants.defaultRadius),
         borderSide: BorderSide.none,
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppConstants.defaultRadius),
-        borderSide: const BorderSide(color: AppConstants.primaryColor),
+        borderRadius: BorderRadius.circular(StyleConstants.defaultRadius),
+        borderSide: const BorderSide(color: StyleConstants.posterColorPrimary),
       ),
       errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppConstants.defaultRadius),
-        borderSide: const BorderSide(color: AppConstants.errorColor),
+        borderRadius: BorderRadius.circular(StyleConstants.defaultRadius),
+        borderSide: const BorderSide(color: StyleConstants.errorColor),
       ),
     ),
   );
-} 
+}
