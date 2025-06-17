@@ -111,7 +111,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                 
                 // Login to get started
                 Text(
-                  'Login to Get Started',
+                  'Login to Get Started.',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     color: Colors.black54,
                   ),
