@@ -32,6 +32,8 @@ dependencies:
   freezed_annotation: ^2.4.1
   json_annotation: ^4.9.0
   uuid: ^4.3.3
+  smooth_page_indicator: ^1.2.1
+  shared_preferences: ^2.5.3
   # Replacing url_strategy with flutter_web_plugins configuration
 
 dev_dependencies:

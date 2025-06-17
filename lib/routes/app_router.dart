@@ -26,6 +26,7 @@ import 'package:taskaway/features/auth/widgets/guest_prompt_overlay.dart';
 import '../features/auth/screens/forgot_password_screen.dart';
 import '../features/auth/screens/change_password_screen.dart';
 import '../features/auth/screens/change_password_success_screen.dart';
+import '../features/onboarding/screens/onboarding_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
 
@@ -52,7 +53,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         '/guest-prompt',
         '/forgot-password',
         '/change-password',
-        '/change-password-success'
+        '/change-password-success',
+        '/onboarding'
       ];
       // Define routes that are part of the profile creation flow
       final profileCreationRoutes = ['/create-profile', '/signup-success'];
@@ -185,6 +187,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/change-password-success',
         name: 'change-password-success',
         builder: (context, state) => const ChangePasswordSuccessScreen(),
+      ),
+      GoRoute(
+        path: '/onboarding',
+        name: 'onboarding',
+        builder: (context, state) => const OnboardingScreen(),
       ),
       GoRoute(
         path: '/payment/:id',
