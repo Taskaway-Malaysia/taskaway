@@ -7,6 +7,9 @@ import 'core/constants/api_constants.dart';
 import 'core/constants/style_constants.dart';
 import 'core/theme/app_theme.dart';
 import 'routes/app_router.dart';
+import 'package:logger/logger.dart';
+
+final _logger = Logger();
 
 // We'll conditionally initialize web-specific functionality
 
@@ -28,9 +31,9 @@ void main() async {
       anonKey: ApiConstants.supabaseAnonKey,
       debug: true, // Enable debug mode to see detailed logs
     );
-    print('Supabase initialized successfully');
+    _logger.i('Supabase initialized successfully');
   } catch (e) {
-    print('Error initializing Supabase: $e');
+    _logger.e('Error initializing Supabase: $e');
     return;
   }
 

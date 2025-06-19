@@ -44,10 +44,9 @@ class Task {
     this.timeOfDay,
     this.locationType,
     this.providesMaterials,
-  }) : 
-    id = id ?? '',
-    createdAt = createdAt ?? DateTime.now(),
-    updatedAt = updatedAt ?? DateTime.now();
+  })  : id = id ?? '',
+        createdAt = createdAt ?? DateTime.now(),
+        updatedAt = updatedAt ?? DateTime.now();
 
   factory Task.fromJson(Map<String, dynamic> json) {
     return Task(
@@ -65,7 +64,9 @@ class Task {
       scheduledTime: DateTime.parse(json['scheduled_time'] as String),
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
-      images: json['images'] != null ? List<String>.from(json['images'] as List) : null,
+      images: json['images'] != null
+          ? List<String>.from(json['images'] as List)
+          : null,
       dateOption: json['date_option'] as String?,
       needsSpecificTime: json['needs_specific_time'] as bool?,
       timeOfDay: json['time_of_day'] as String?,

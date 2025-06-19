@@ -8,7 +8,7 @@ final currentIndexProvider = StateProvider<int>((ref) => 0);
 
 class HomeScreen extends ConsumerWidget {
   final Widget child;
-  
+
   const HomeScreen({
     super.key,
     required this.child,
@@ -20,71 +20,76 @@ class HomeScreen extends ConsumerWidget {
     final user = ref.watch(currentUserProvider);
     final theme = Theme.of(context);
     final currentLocation = GoRouterState.of(context).uri.toString();
-    
+
     // Only show the home content if we're on the browse route
     final bool isHomeRoute = currentLocation.contains('/home/browse');
-    
+
     // Hide bottom navigation bar when in chat screen (but not chat list)
     final bool showBottomNav = !currentLocation.contains('/home/chat/');
-    
+
     return Scaffold(
-      body: isHomeRoute 
-        ? _buildHomeContent(context, user)
-        : child, // Show only the child for non-home routes
-      bottomNavigationBar: showBottomNav ? NavigationBar(
-        selectedIndex: currentIndex,
-        onDestinationSelected: (index) {
-          ref.read(currentIndexProvider.notifier).state = index;
-          switch (index) {
-            case 0:
-              context.go('/home/browse');
-              break;
-            case 1:
-              context.go('/home/tasks');
-              break;
-            case 2:
-              context.go('/home/post');
-              break;
-            case 3:
-              context.go('/home/chat');
-              break;
-            case 4:
-              context.go('/home/profile');
-              break;
-          }
-        },
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.search_outlined),
-            label: 'Browse',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.article_outlined),
-            label: 'My Tasks',
-          ),
-          NavigationDestination(
-            selectedIcon: Icon(Icons.add_circle),
-            icon: Icon(Icons.add_circle),
-            label: 'Post Task',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.mail_outline),
-            label: 'Messages',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            label: 'Profile',
-          ),
-        ],
-      ) : null,
+      body: isHomeRoute
+          ? _buildHomeContent(context, user)
+          : child, // Show only the child for non-home routes
+      bottomNavigationBar: showBottomNav
+          ? NavigationBar(
+              selectedIndex: currentIndex,
+              onDestinationSelected: (index) {
+                ref.read(currentIndexProvider.notifier).state = index;
+                switch (index) {
+                  case 0:
+                    context.go('/home/browse');
+                    break;
+                  case 1:
+                    context.go('/home/tasks');
+                    break;
+                  case 2:
+                    context.go('/home/post');
+                    break;
+                  case 3:
+                    context.go('/home/chat');
+                    break;
+                  case 4:
+                    context.go('/home/profile');
+                    break;
+                }
+              },
+              destinations: const [
+                NavigationDestination(
+                  icon: Icon(Icons.search_outlined),
+                  label: 'Browse',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.article_outlined),
+                  label: 'My Tasks',
+                ),
+                NavigationDestination(
+                  selectedIcon: Icon(Icons.add_circle),
+                  icon: Icon(Icons.add_circle),
+                  label: 'Post Task',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.mail_outline),
+                  label: 'Messages',
+                  icon: Icon(Icons.mail_outline),
+                  label: 'Messages',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.person_outline),
+                  icon: Icon(Icons.person_outline),
+                  label: 'Profile',
+                ),
+              ],
+            )
+          : null,
     );
   }
-  
+
   // Extracted home content into a separate method
   Widget _buildHomeContent(BuildContext context, dynamic user) {
     final screenHeight = MediaQuery.of(context).size.height;
     final headerHeight = screenHeight / 3; // 2/6 = 1/3 of screen height
-    
+
     return Column(
       children: [
         // Purple header with user info and notification
@@ -114,8 +119,13 @@ class HomeScreen extends ConsumerWidget {
                           radius: 24,
                           backgroundColor: Colors.white,
                           child: Text(
-                            user?.userMetadata?['name']?.toString().substring(0, 1).toUpperCase() ?? 'U',
-                            style: const TextStyle(color: Color(0xFF6C5CE7), fontSize: 18),
+                            user?.userMetadata?['name']
+                                    ?.toString()
+                                    .substring(0, 1)
+                                    .toUpperCase() ??
+                                'U',
+                            style: const TextStyle(
+                                color: Color(0xFF6C5CE7), fontSize: 18),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -124,11 +134,15 @@ class HomeScreen extends ConsumerWidget {
                           children: [
                             const Text(
                               'Hello there,',
-                              style: TextStyle(color: Colors.white70, fontSize: 14),
+                              style: TextStyle(
+                                  color: Colors.white70, fontSize: 14),
                             ),
                             Text(
                               user?.userMetadata?['name']?.toString() ?? 'User',
-                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18),
                             ),
                           ],
                         ),
@@ -137,7 +151,8 @@ class HomeScreen extends ConsumerWidget {
                     const Spacer(),
                     // Notification bell
                     IconButton(
-                      icon: const Icon(Icons.notifications_outlined, color: Colors.white),
+                      icon: const Icon(Icons.notifications_outlined,
+                          color: Colors.white),
                       onPressed: () {
                         // Handle notification tap
                       },
@@ -145,7 +160,7 @@ class HomeScreen extends ConsumerWidget {
                   ],
                 ),
               ),
-              
+
               // Post a Task text
               const Padding(
                 padding: EdgeInsets.only(left: 24.0, bottom: 8.0),
@@ -153,19 +168,24 @@ class HomeScreen extends ConsumerWidget {
                   alignment: Alignment.centerLeft,
                   child: Text(
                     'Post a Task. Give it Away.',
-                    style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w500),
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500),
                   ),
                 ),
               ),
-              
+
               // Search bar - positioned at bottom of header
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24.0),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(StyleConstants.defaultRadius),
+                    borderRadius:
+                        BorderRadius.circular(StyleConstants.defaultRadius),
                   ),
                   child: Row(
                     children: [
@@ -192,7 +212,7 @@ class HomeScreen extends ConsumerWidget {
             ],
           ),
         ),
-        
+
         // Categories section
         Expanded(
           child: SingleChildScrollView(
@@ -205,7 +225,8 @@ class HomeScreen extends ConsumerWidget {
                     padding: EdgeInsets.only(left: 8.0, bottom: 0.0),
                     child: Text(
                       'Categories',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                   ),
                   const SizedBox(height: 0),
@@ -217,14 +238,22 @@ class HomeScreen extends ConsumerWidget {
                     crossAxisSpacing: 16,
                     childAspectRatio: 1.0,
                     children: [
-                      _buildCategoryItem(context, 'Handyman', Icons.handyman_outlined),
-                      _buildCategoryItem(context, 'Cleaning', Icons.cleaning_services_outlined),
-                      _buildCategoryItem(context, 'Gardening', Icons.yard_outlined),
-                      _buildCategoryItem(context, 'Painting', Icons.format_paint_outlined),
-                      _buildCategoryItem(context, 'Organizing', Icons.inventory_2_outlined),
-                      _buildCategoryItem(context, 'Pet Care', Icons.pets_outlined),
-                      _buildCategoryItem(context, 'Self Care', Icons.spa_outlined),
-                      _buildCategoryItem(context, 'Events & Photography', Icons.camera_alt_outlined),
+                      _buildCategoryItem(
+                          context, 'Handyman', Icons.handyman_outlined),
+                      _buildCategoryItem(context, 'Cleaning',
+                          Icons.cleaning_services_outlined),
+                      _buildCategoryItem(
+                          context, 'Gardening', Icons.yard_outlined),
+                      _buildCategoryItem(
+                          context, 'Painting', Icons.format_paint_outlined),
+                      _buildCategoryItem(
+                          context, 'Organizing', Icons.inventory_2_outlined),
+                      _buildCategoryItem(
+                          context, 'Pet Care', Icons.pets_outlined),
+                      _buildCategoryItem(
+                          context, 'Self Care', Icons.spa_outlined),
+                      _buildCategoryItem(context, 'Events & Photography',
+                          Icons.camera_alt_outlined),
                       _buildCategoryItem(context, 'Others', Icons.more_horiz),
                     ],
                   ),
@@ -236,7 +265,7 @@ class HomeScreen extends ConsumerWidget {
       ],
     );
   }
-  
+
   Widget _buildCategoryItem(BuildContext context, String title, IconData icon) {
     return InkWell(
       onTap: () {

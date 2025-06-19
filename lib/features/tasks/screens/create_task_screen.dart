@@ -12,21 +12,21 @@ final createTaskStepProvider = StateProvider<int>((ref) => 0);
 
 // Provider to store task data during creation process
 final createTaskDataProvider = StateProvider<Map<String, dynamic>>((ref) => {
-  'category': 'cleaning',
-  'title': '',
-  'description': '',
-  'scheduledTime': DateTime.now().add(const Duration(days: 1)),
-  'location': '',
-  'price': 0.0,
-  'dateOption': 'on_date',
-  'needsSpecificTime': false,
-  'timeOfDay': null,
-  'locationType': 'physical',
-  'providesMaterials': false,
-  'images': <File>[],
-});
+      'category': 'cleaning',
+      'title': '',
+      'description': '',
+      'scheduledTime': DateTime.now().add(const Duration(days: 1)),
+      'location': '',
+      'price': 0.0,
+      'dateOption': 'on_date',
+      'needsSpecificTime': false,
+      'timeOfDay': null,
+      'locationType': 'physical',
+      'providesMaterials': false,
+      'images': <File>[],
+    });
 
-class CreateTaskScreen extends ConsumerStatefulWidget {
+class CreateTaskScreen extends StatelessWidget {
   const CreateTaskScreen({super.key});
 
   @override
@@ -72,10 +72,10 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
     try {
       final user = ref.read(currentUserProvider)!;
       final taskData = ref.read(createTaskDataProvider);
-      
+
       // Print debug info
       print('Submitting task: $taskData');
-      
+
       // Ensure price is a double
       double price = 0.0;
       if (taskData['price'] is String) {
@@ -83,26 +83,28 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
       } else if (taskData['price'] is num) {
         price = (taskData['price'] as num).toDouble();
       }
-      
+
       // Ensure we have a valid category
       String category = taskData['category'] ?? 'other';
-      
+
       // Create the task
       await ref.read(taskControllerProvider).createTask(
-        title: taskData['title'],
-        description: taskData['description'],
-        category: category,
-        price: price,
-        location: taskData['location'] ?? '',
-        scheduledTime: taskData['scheduledTime'] ?? DateTime.now(),
-        posterId: user.id,
-        dateOption: taskData['dateOption'],
-        needsSpecificTime: taskData['needsSpecificTime'],
-        timeOfDay: taskData['timeOfDay'],
-        locationType: taskData['locationType'],
-        providesMaterials: taskData['providesMaterials'],
-        images: taskData['images'] is List<File> ? taskData['images'] : <File>[],
-      );
+            title: taskData['title'],
+            description: taskData['description'],
+            category: category,
+            price: price,
+            location: taskData['location'] ?? '',
+            scheduledTime: taskData['scheduledTime'] ?? DateTime.now(),
+            posterId: user.id,
+            dateOption: taskData['dateOption'],
+            needsSpecificTime: taskData['needsSpecificTime'],
+            timeOfDay: taskData['timeOfDay'],
+            locationType: taskData['locationType'],
+            providesMaterials: taskData['providesMaterials'],
+            images: taskData['images'] is List<File>
+                ? taskData['images']
+                : <File>[],
+          );
 
       if (mounted) {
         // Show task posted success screen instead of popping
@@ -124,17 +126,17 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
   // Navigate to next step if current step is valid
   void _goToNextStep() async {
     final currentStep = ref.read(createTaskStepProvider);
-    
+
     // Validate current step if it has a form
-    if (currentStep < _formKeys.length && 
-        _formKeys[currentStep].currentState != null && 
+    if (currentStep < _formKeys.length &&
+        _formKeys[currentStep].currentState != null &&
         !_formKeys[currentStep].currentState!.validate()) {
       return;
     }
-    
+
     // Save data from current step
     _saveCurrentStepData(currentStep);
-    
+
     // Move to next step
     if (currentStep < 3) {
       ref.read(createTaskStepProvider.notifier).state = currentStep + 1;
@@ -157,8 +159,9 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
 
   // Save data from current step to provider
   void _saveCurrentStepData(int step) {
-    final taskData = Map<String, dynamic>.from(ref.read(createTaskDataProvider));
-    
+    final taskData =
+        Map<String, dynamic>.from(ref.read(createTaskDataProvider));
+
     switch (step) {
       case 0: // Category and Title/Description step
         taskData['title'] = _titleController.text;
@@ -182,14 +185,14 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
         // No data to save in confirmation step
         break;
     }
-    
+
     ref.read(createTaskDataProvider.notifier).state = taskData;
   }
 
   // Load data into form fields when step changes
   void _loadStepData(int step) {
     final taskData = ref.read(createTaskDataProvider);
-    
+
     switch (step) {
       case 0: // Category and Title/Description step
         _titleController.text = taskData['title'] ?? '';
@@ -197,9 +200,8 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
         break;
       case 2: // Location and budget step
         _locationController.text = taskData['location'] ?? '';
-        _priceController.text = taskData['price'] > 0 
-            ? taskData['price'].toString() 
-            : '';
+        _priceController.text =
+            taskData['price'] > 0 ? taskData['price'].toString() : '';
         break;
       default:
         break;
@@ -208,9 +210,11 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
 
   // Select date and time for the task
   Future<void> _selectDateTime() async {
-    final taskData = Map<String, dynamic>.from(ref.read(createTaskDataProvider));
-    final currentDateTime = taskData['scheduledTime'] ?? DateTime.now().add(const Duration(days: 1));
-    
+    final taskData =
+        Map<String, dynamic>.from(ref.read(createTaskDataProvider));
+    final currentDateTime = taskData['scheduledTime'] ??
+        DateTime.now().add(const Duration(days: 1));
+
     final date = await showDatePicker(
       context: context,
       initialDate: currentDateTime,
@@ -234,7 +238,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
       time.hour,
       time.minute,
     );
-    
+
     taskData['scheduledTime'] = newDateTime;
     ref.read(createTaskDataProvider.notifier).state = taskData;
   }
@@ -244,7 +248,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
     final theme = Theme.of(context);
     final currentStep = ref.watch(createTaskStepProvider);
     final taskData = ref.watch(createTaskDataProvider);
-    
+
     // Load data when step changes
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadStepData(currentStep);
@@ -252,7 +256,8 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF6C5CE7), // Purple color from other screens
+        backgroundColor:
+            const Color(0xFF6C5CE7), // Purple color from other screens
         foregroundColor: Colors.white,
         title: const Text(
           'Post a Task',
@@ -261,17 +266,19 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
           ),
         ),
         automaticallyImplyLeading: false, // Disable automatic back button
-        leading: currentStep == 4 ? null : IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            if (currentStep > 0) {
-              _goToPreviousStep();
-            } else {
-              // If on first step, go back to previous screen
-              Navigator.of(context).pop();
-            }
-          },
-        ),
+        leading: currentStep == 4
+            ? null
+            : IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () {
+                  if (currentStep > 0) {
+                    _goToPreviousStep();
+                  } else {
+                    // If on first step, go back to previous screen
+                    Navigator.of(context).pop();
+                  }
+                },
+              ),
       ),
       body: Column(
         children: [
@@ -288,18 +295,21 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                     margin: const EdgeInsets.symmetric(horizontal: 4),
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: index <= currentStep 
-                          ? const Color(0xFF6C5CE7) // Purple color from other screens
+                      color: index <= currentStep
+                          ? const Color(
+                              0xFF6C5CE7) // Purple color from other screens
                           : Colors.grey.shade300,
-                      border: index == currentStep 
-                          ? Border.all(color: const Color(0xFF6C5CE7), width: 2) // Purple color from other screens
+                      border: index == currentStep
+                          ? Border.all(
+                              color: const Color(0xFF6C5CE7),
+                              width: 2) // Purple color from other screens
                           : null,
                     ),
                   );
                 }),
               ),
             ),
-          
+
           // Step content
           Expanded(
             child: SingleChildScrollView(
@@ -307,7 +317,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
               child: _buildStepContent(currentStep, theme),
             ),
           ),
-          
+
           // Continue button or Go to My Tasks button
           Padding(
             padding: const EdgeInsets.all(16.0),
@@ -315,13 +325,16 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
               width: double.infinity,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF6C5CE7), // Purple color from other screens
+                  backgroundColor: const Color(
+                      0xFF6C5CE7), // Purple color from other screens
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
-                onPressed: _isLoading ? null : currentStep == 4 
-                    ? () => context.go('/tasks') // Navigate to tasks screen
-                    : _goToNextStep,
+                onPressed: _isLoading
+                    ? null
+                    : currentStep == 4
+                        ? () => context.go('/tasks') // Navigate to tasks screen
+                        : _goToNextStep,
                 child: _isLoading
                     ? const SizedBox(
                         height: 20,
@@ -331,9 +344,11 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                           color: Colors.white,
                         ),
                       )
-                    : Text(currentStep == 4 
+                    : Text(currentStep == 4
                         ? 'Go to My Tasks'
-                        : currentStep == 3 ? 'Post Task' : 'Continue'),
+                        : currentStep == 3
+                            ? 'Post Task'
+                            : 'Continue'),
               ),
             ),
           ),
@@ -359,7 +374,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
         return const SizedBox.shrink();
     }
   }
-  
+
   // Task posted success screen
   Widget _buildTaskPostedScreen(ThemeData theme) {
     return Column(
@@ -400,7 +415,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
       ],
     );
   }
-  
+
   // Helper widget to build next step item
   Widget _buildNextStep(int stepNumber, String text) {
     return Row(
@@ -436,7 +451,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
     final taskData = ref.watch(createTaskDataProvider);
     final selectedCategory = taskData['category'];
     final categoriesAsync = ref.watch(categoriesProvider);
-    
+
     return Form(
       key: _formKeys[0],
       child: Column(
@@ -453,11 +468,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
               return Column(
                 children: categories.map((category) {
                   return _buildCategoryOption(
-                    category.id,
-                    category.name,
-                    selectedCategory,
-                    theme
-                  );
+                      category.id, category.name, selectedCategory, theme);
                 }).toList(),
               );
             },
@@ -475,7 +486,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
             ),
           ),
           const SizedBox(height: 24),
-          
+
           // Title field
           const Text(
             'Start with a title',
@@ -503,7 +514,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
             },
           ),
           const SizedBox(height: 24),
-          
+
           // Description field
           const Text(
             'Describe the task',
@@ -537,14 +548,16 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
   }
 
   // Category option widget
-  Widget _buildCategoryOption(String value, String label, String selectedValue, ThemeData theme) {
+  Widget _buildCategoryOption(
+      String value, String label, String selectedValue, ThemeData theme) {
     final isSelected = value == selectedValue;
-    
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 12.0),
       child: InkWell(
         onTap: () {
-          final taskData = Map<String, dynamic>.from(ref.read(createTaskDataProvider));
+          final taskData =
+              Map<String, dynamic>.from(ref.read(createTaskDataProvider));
           taskData['category'] = value;
           ref.read(createTaskDataProvider.notifier).state = taskData;
         },
@@ -553,7 +566,8 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             border: Border.all(
-              color: isSelected ? const Color(0xFF6C5CE7) : Colors.grey.shade300,
+              color:
+                  isSelected ? const Color(0xFF6C5CE7) : Colors.grey.shade300,
               width: isSelected ? 2 : 1,
             ),
             borderRadius: BorderRadius.circular(8),
@@ -565,9 +579,12 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                 height: 24,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: isSelected ? const Color(0xFF6C5CE7) : Colors.transparent,
+                  color:
+                      isSelected ? const Color(0xFF6C5CE7) : Colors.transparent,
                   border: Border.all(
-                    color: isSelected ? const Color(0xFF6C5CE7) : Colors.grey.shade400,
+                    color: isSelected
+                        ? const Color(0xFF6C5CE7)
+                        : Colors.grey.shade400,
                     width: 2,
                   ),
                 ),
@@ -593,7 +610,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
   // Step 4: Confirmation step
   Widget _buildConfirmationStep(ThemeData theme) {
     final taskData = ref.watch(createTaskDataProvider);
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -607,7 +624,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
           style: TextStyle(color: Colors.grey),
         ),
         const SizedBox(height: 24),
-        
+
         // Task details list
         _buildTaskDetailItem(
           Icons.category_outlined,
@@ -629,7 +646,8 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
           'Before ${DateFormat('EEEE, d MMMM').format(taskData['scheduledTime'] ?? DateTime.now())}',
           onEdit: () => ref.read(createTaskStepProvider.notifier).state = 1,
         ),
-        if (taskData['needsSpecificTime'] == true && taskData['timeOfDay'] != null)
+        if (taskData['needsSpecificTime'] == true &&
+            taskData['timeOfDay'] != null)
           _buildTaskDetailItem(
             Icons.access_time_outlined,
             _getTimeOfDayText(taskData['timeOfDay']),
@@ -648,9 +666,10 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
       ],
     );
   }
-  
+
   // Helper widget to build task detail item with edit button
-  Widget _buildTaskDetailItem(IconData icon, String text, {required VoidCallback onEdit}) {
+  Widget _buildTaskDetailItem(IconData icon, String text,
+      {required VoidCallback onEdit}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Row(
@@ -694,7 +713,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
     final taskData = ref.watch(createTaskDataProvider);
     final scheduledTime = taskData['scheduledTime'] as DateTime;
     final dateFormat = DateFormat('EEEE, d MMMM');
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -708,18 +727,21 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
           style: TextStyle(color: Colors.grey),
         ),
         const SizedBox(height: 24),
-        
+
         // Date options
-        _buildDateOption('on_date', 'On date', theme, 
-          dateText: taskData['dateOption'] == 'on_date' ? 'On ${dateFormat.format(scheduledTime)}' : null),
+        _buildDateOption('on_date', 'On date', theme,
+            dateText: taskData['dateOption'] == 'on_date'
+                ? 'On ${dateFormat.format(scheduledTime)}'
+                : null),
         const SizedBox(height: 12),
-        _buildDateOption('before_date', 'Before date', theme, 
-          dateText: taskData['beforeDateText'] ?? 'Before ${dateFormat.format(scheduledTime)}'),
+        _buildDateOption('before_date', 'Before date', theme,
+            dateText: taskData['beforeDateText'] ??
+                'Before ${dateFormat.format(scheduledTime)}'),
         const SizedBox(height: 12),
         _buildDateOption('any_day', 'Any day', theme),
-        
+
         const SizedBox(height: 24),
-        
+
         // Time of day checkbox
         Row(
           children: [
@@ -742,9 +764,9 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
             const Text('I need a certain time of the day'),
           ],
         ),
-        
+
         // Time selection grid - only show when checkbox is checked
-        if (taskData['needsSpecificTime'] == true) ...[  
+        if (taskData['needsSpecificTime'] == true) ...[
           const SizedBox(height: 24),
           GridView.count(
             crossAxisCount: 2,
@@ -754,10 +776,14 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
             crossAxisSpacing: 12,
             childAspectRatio: 2.0,
             children: [
-              _buildTimeOption('morning', 'Morning', '8AM - 12PM', Icons.wb_sunny_outlined),
-              _buildTimeOption('afternoon', 'Afternoon', '12PM - 5PM', Icons.wb_sunny),
-              _buildTimeOption('evening', 'Evening', '5PM - 8PM', Icons.wb_twilight),
-              _buildTimeOption('night', 'Night', 'After 8PM', Icons.nightlight_round),
+              _buildTimeOption(
+                  'morning', 'Morning', '8AM - 12PM', Icons.wb_sunny_outlined),
+              _buildTimeOption(
+                  'afternoon', 'Afternoon', '12PM - 5PM', Icons.wb_sunny),
+              _buildTimeOption(
+                  'evening', 'Evening', '5PM - 8PM', Icons.wb_twilight),
+              _buildTimeOption(
+                  'night', 'Night', 'After 8PM', Icons.nightlight_round),
             ],
           ),
         ],
@@ -766,10 +792,11 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
   }
 
   // Time option widget for the grid
-  Widget _buildTimeOption(String value, String label, String timeRange, IconData icon) {
+  Widget _buildTimeOption(
+      String value, String label, String timeRange, IconData icon) {
     final taskData = ref.watch(createTaskDataProvider);
     final isSelected = taskData['timeOfDay'] == value;
-    
+
     return InkWell(
       onTap: () {
         final updatedData = Map<String, dynamic>.from(taskData);
@@ -821,16 +848,17 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
   }
 
   // Date option widget
-  Widget _buildDateOption(String value, String label, ThemeData theme, {String? dateText}) {
+  Widget _buildDateOption(String value, String label, ThemeData theme,
+      {String? dateText}) {
     final taskData = ref.watch(createTaskDataProvider);
     final isSelected = taskData['dateOption'] == value;
-    
+
     return InkWell(
       onTap: () {
         final updatedData = Map<String, dynamic>.from(taskData);
         updatedData['dateOption'] = value;
         ref.read(createTaskDataProvider.notifier).state = updatedData;
-        
+
         // Show date picker for 'on_date' and 'before_date' options
         if (value == 'on_date' || value == 'before_date') {
           _showDatePicker(context, value == 'before_date');
@@ -841,7 +869,9 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF6C5CE7).withOpacity(0.1) : Colors.grey.shade200,
+          color: isSelected
+              ? const Color(0xFF6C5CE7).withOpacity(0.1)
+              : Colors.grey.shade200,
           borderRadius: BorderRadius.circular(8),
           border: isSelected
               ? Border.all(color: const Color(0xFF6C5CE7), width: 2)
@@ -858,12 +888,13 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
       ),
     );
   }
-  
+
   // Show date picker dialog
   Future<void> _showDatePicker(BuildContext context, bool isEndDate) async {
     final taskData = ref.read(createTaskDataProvider);
-    final initialDate = taskData['scheduledTime'] as DateTime? ?? DateTime.now();
-    
+    final initialDate =
+        taskData['scheduledTime'] as DateTime? ?? DateTime.now();
+
     final DateTime? pickedDate = await showDatePicker(
       context: context,
       initialDate: initialDate,
@@ -882,17 +913,18 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
         );
       },
     );
-    
+
     if (pickedDate != null) {
       final updatedData = Map<String, dynamic>.from(taskData);
       updatedData['scheduledTime'] = pickedDate;
-      
+
       // Update the date text for the 'before_date' option
       if (isEndDate) {
         final dateFormat = DateFormat('EEEE, d MMMM');
-        updatedData['beforeDateText'] = 'Before ${dateFormat.format(pickedDate)}';
+        updatedData['beforeDateText'] =
+            'Before ${dateFormat.format(pickedDate)}';
       }
-      
+
       ref.read(createTaskDataProvider.notifier).state = updatedData;
     }
   }
@@ -900,7 +932,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
   // Step 4: Location and budget
   Widget _buildLocationBudgetStep(ThemeData theme) {
     final taskData = ref.watch(createTaskDataProvider);
-    
+
     return Form(
       key: _formKeys[2],
       child: Column(
@@ -916,22 +948,24 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
             style: TextStyle(color: Colors.grey),
           ),
           const SizedBox(height: 16),
-          
+
           // Location type selection (Physical or Online)
           Row(
             children: [
               Expanded(
-                child: _buildLocationType('physical', 'Physical', 'This task requires in-person help', Icons.place_outlined),
+                child: _buildLocationType('physical', 'Physical',
+                    'This task requires in-person help', Icons.place_outlined),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _buildLocationType('online', 'Online', 'Can be done remotely', Icons.language),
+                child: _buildLocationType(
+                    'online', 'Online', 'Can be done remotely', Icons.language),
               ),
             ],
           ),
-          
+
           // Postcode input - only show for physical tasks
-          if (taskData['locationType'] == 'physical') ...[  
+          if (taskData['locationType'] == 'physical') ...[
             const SizedBox(height: 24),
             const Text(
               'Postcode',
@@ -948,14 +982,15 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                 ),
               ),
               validator: (value) {
-                if (taskData['locationType'] == 'physical' && (value == null || value.isEmpty)) {
+                if (taskData['locationType'] == 'physical' &&
+                    (value == null || value.isEmpty)) {
                   return 'Please enter a location';
                 }
                 return null;
               },
             ),
           ],
-          
+
           const SizedBox(height: 24),
           const Text(
             'Snap a photo',
@@ -982,43 +1017,46 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                 ),
               ),
               const SizedBox(width: 12),
-              if (taskData['images'] != null && (taskData['images'] as List).isNotEmpty)
-                ...(taskData['images'] as List).map((image) => Padding(
-                  padding: const EdgeInsets.only(right: 12),
-                  child: Stack(
-                    children: [
-                      Container(
-                        width: 80,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(8),
-                          image: DecorationImage(
-                            image: FileImage(image),
-                            fit: BoxFit.cover,
+              if (taskData['images'] != null &&
+                  (taskData['images'] as List).isNotEmpty)
+                ...(taskData['images'] as List)
+                    .map((image) => Padding(
+                          padding: const EdgeInsets.only(right: 12),
+                          child: Stack(
+                            children: [
+                              Container(
+                                width: 80,
+                                height: 80,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(8),
+                                  image: DecorationImage(
+                                    image: FileImage(image),
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              ),
+                              Positioned(
+                                top: 4,
+                                right: 4,
+                                child: InkWell(
+                                  onTap: () => _removeImage(image),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: const BoxDecoration(
+                                      color: Colors.white,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(Icons.close, size: 16),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                      ),
-                      Positioned(
-                        top: 4,
-                        right: 4,
-                        child: InkWell(
-                          onTap: () => _removeImage(image),
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.close, size: 16),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                )).toList(),
+                        ))
+                    .toList(),
             ],
           ),
-          
+
           const SizedBox(height: 24),
           const Text(
             'Enter your budget',
@@ -1076,12 +1114,13 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
       ),
     );
   }
-  
+
   // Location type selection widget
-  Widget _buildLocationType(String value, String label, String description, IconData icon) {
+  Widget _buildLocationType(
+      String value, String label, String description, IconData icon) {
     final taskData = ref.watch(createTaskDataProvider);
     final isSelected = taskData['locationType'] == value;
-    
+
     return InkWell(
       onTap: () {
         final updatedData = Map<String, dynamic>.from(taskData);
@@ -1127,16 +1166,18 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
       ),
     );
   }
-  
+
   // Image picker functionality
   Future<void> _pickImage() async {
     try {
-      final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+      final pickedFile =
+          await ImagePicker().pickImage(source: ImageSource.gallery);
       if (pickedFile == null) return;
-      
-      final taskData = Map<String, dynamic>.from(ref.read(createTaskDataProvider));
+
+      final taskData =
+          Map<String, dynamic>.from(ref.read(createTaskDataProvider));
       final images = taskData['images'] as List? ?? [];
-      
+
       // Limit to 5 images
       if (images.length >= 5) {
         if (mounted) {
@@ -1146,10 +1187,10 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
         }
         return;
       }
-      
+
       final imageFile = File(pickedFile.path);
       images.add(imageFile);
-      
+
       taskData['images'] = images;
       ref.read(createTaskDataProvider.notifier).state = taskData;
     } catch (e) {
@@ -1160,13 +1201,14 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
       }
     }
   }
-  
+
   // Remove image from the list
   void _removeImage(File image) {
-    final taskData = Map<String, dynamic>.from(ref.read(createTaskDataProvider));
+    final taskData =
+        Map<String, dynamic>.from(ref.read(createTaskDataProvider));
     final images = taskData['images'] as List;
     images.remove(image);
-    
+
     taskData['images'] = images;
     ref.read(createTaskDataProvider.notifier).state = taskData;
   }

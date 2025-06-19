@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../models/channel.dart';
 import '../models/message.dart';
+import 'package:logger/logger.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   final Channel channel;
@@ -26,13 +27,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   @override
   void initState() {
     super.initState();
-    
+
     // Set channel from widget
     _channel = widget.channel;
-    
+
     // Initialize with hardcoded messages
     _initializeHardcodedMessages();
-    
+
     // Schedule scroll to bottom after build
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _scrollToBottom();
@@ -42,13 +43,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   void _initializeHardcodedMessages() {
     final now = DateTime.now();
     final yesterday = now.subtract(const Duration(days: 1));
-    
+
     _messages = [
       Message(
         id: '1',
         channelId: _channel.id,
         senderId: _channel.posterId,
-        content: 'Hi, thank you for accepting my task! I\'m really glad to have your help.',
+        content:
+            'Hi, thank you for accepting my task! I\'m really glad to have your help.',
         createdAt: yesterday.add(const Duration(hours: 10)),
         senderName: _channel.posterName,
       ),
@@ -64,7 +66,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         id: '3',
         channelId: _channel.id,
         senderId: _channel.posterId,
-        content: 'Yes, I still have all the parts? Do you think you\'ll be available to start tomorrow?',
+        content:
+            'Yes, I still have all the parts? Do you think you\'ll be available to start tomorrow?',
         createdAt: now.add(const Duration(hours: 10)),
         senderName: _channel.posterName,
       ),
@@ -138,7 +141,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   Widget build(BuildContext context) {
     // Assuming current user is the tasker for this example
     final currentUserId = _channel.taskerId;
-    
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xFF6C5CE7),
@@ -202,16 +205,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 } else if (index == 3) {
                   return _buildDateSeparator('Today');
                 }
-                
+
                 // Adjust index for actual messages
                 final messageIndex = index < 3 ? index - 1 : index - 2;
                 if (messageIndex < 0 || messageIndex >= _messages.length) {
                   return const SizedBox.shrink();
                 }
-                
+
                 final message = _messages[messageIndex];
                 final isCurrentUser = message.senderId == currentUserId;
-                
+
                 return _buildMessageBubble(message, isCurrentUser);
               },
             ),
@@ -264,7 +267,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                             height: 24,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              valueColor:
+                                  AlwaysStoppedAnimation<Color>(Colors.white),
                             ),
                           )
                         : const Icon(Icons.send, color: Colors.white),
@@ -302,7 +306,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Row(
-        mainAxisAlignment: isCurrentUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment:
+            isCurrentUser ? MainAxisAlignment.end : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (!isCurrentUser)
@@ -323,14 +328,18 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           if (!isCurrentUser) const SizedBox(width: 8),
           Flexible(
             child: Column(
-              crossAxisAlignment: isCurrentUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+              crossAxisAlignment: isCurrentUser
+                  ? CrossAxisAlignment.end
+                  : CrossAxisAlignment.start,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   decoration: BoxDecoration(
                     color: isCurrentUser
                         ? const Color(0xFFE9ECEF) // Light gray for current user
-                        : const Color(0xFFFFF8E1), // Light yellow for other user
+                        : const Color(
+                            0xFFFFF8E1), // Light yellow for other user
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Text(
@@ -345,12 +354,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     children: [
                       Text(
                         '10:00 AM',
-                        style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
+                        style: TextStyle(
+                            fontSize: 10, color: Colors.grey.shade600),
                       ),
                       if (isCurrentUser)
                         Padding(
                           padding: const EdgeInsets.only(left: 4),
-                          child: Icon(Icons.done_all, size: 14, color: Colors.orange.shade300),
+                          child: Icon(Icons.done_all,
+                              size: 14, color: Colors.orange.shade300),
                         ),
                     ],
                   ),
