@@ -7,4 +7,5 @@ class DbConstants {
   static const String paymentsTable = 'taskaway_payments';
   static const String messagesTable = 'taskaway_messages';
   static const String channelsTable = 'taskaway_channels';
+  static const String categoriesTable = 'taskaway_categories';
 }
