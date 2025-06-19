@@ -4,6 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:taskaway/features/auth/controllers/auth_controller.dart';
+import 'package:taskaway/features/auth/screens/change_password_screen.dart';
+import 'package:taskaway/features/auth/screens/change_password_success_screen.dart';
+import 'package:taskaway/features/auth/screens/forgot_password_screen.dart';
+import 'package:taskaway/features/auth/widgets/guest_prompt_overlay.dart';
+import 'package:taskaway/features/onboarding/screens/onboarding_screen.dart';
 import 'dart:developer' as dev; // For logging
 import '../features/splash/screens/splash_screen.dart';
 import '../features/auth/screens/auth_screen.dart';
@@ -13,8 +18,8 @@ import '../features/auth/screens/create_profile_screen.dart';
 import '../features/auth/screens/signup_success_screen.dart';
 import '../features/home/screens/home_screen.dart';
 import '../features/profile/screens/profile_screen.dart';
-import '../features/tasks/screens/tasks_screen.dart';
-import '../features/tasks/screens/my_tasks_screen.dart';
+import '../features/tasks/screens/my_task_screen.dart';
+import '../features/tasks/screens/my_task_screen.dart';
 import '../features/tasks/screens/create_task_screen.dart';
 import '../features/tasks/screens/task_details_screen.dart';
 import '../features/tasks/screens/apply_task_screen.dart';
@@ -222,7 +227,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           );
         },
       ),
-      // Create Task screen - moved outside ShellRoute to hide navigation bar
       GoRoute(
         path: '/create-task',
         name: 'create-task',
@@ -236,19 +240,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             name: 'home',
             redirect: (context, state) => '/home/browse',
           ),
-          // Browse screen (index 0)
           GoRoute(
             path: '/home/browse',
             name: 'browse',
-            builder: (context, state) =>
-                const TasksScreen(), // Reusing TasksScreen for now
+            builder: (context, state) => const MyTaskScreen(),
           ),
-          // My Tasks screen (index 1)
           GoRoute(
-            path: '/home/browse', // Renamed from /home/tasks
-            name: 'browse', // Renamed from tasks
-            builder: (context, state) =>
-                const TasksScreen(), // TasksScreen will serve as Browse screen
+            path: '/home/browse',
+            name: 'browse',
+            builder: (context, state) => const MyTaskScreen(),
             routes: [
               GoRoute(
                 path: ':id',
@@ -258,7 +258,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 ),
                 routes: [
                   GoRoute(
-                    path: 'apply', // e.g., /home/browse/task_id/apply
+                    path: 'apply',
                     name: 'apply-task',
                     builder: (context, state) => ApplyTaskScreen(
                       taskId: state.pathParameters['id']!,
@@ -268,15 +268,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               ),
             ],
           ),
-          // Post Task screen (index 2)
           GoRoute(
             path: '/home/post',
             name: 'post-task',
             builder: (context, state) => const CreateTaskScreen(),
-            redirect: (context, state) =>
-                '/create-task', // Redirect to the standalone route
+            redirect: (context, state) => '/create-task',
           ),
-          // Messages screen (index 3)
           GoRoute(
             path: '/home/chat',
             name: 'chat',
@@ -291,7 +288,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               ),
             ],
           ),
-          // Profile screen (index 4)
           GoRoute(
             path: '/home/profile',
             name: 'profile',

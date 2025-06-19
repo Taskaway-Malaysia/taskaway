@@ -4,8 +4,8 @@ import 'package:intl/intl.dart'; // For date formatting
 import 'package:taskaway/core/constants/style_constants.dart'; // For theme colors
 import 'package:taskaway/core/utils/states.dart'; // For location dropdown
 import 'package:taskaway/features/auth/controllers/auth_controller.dart'; // For currentProfileProvider
+import 'package:taskaway/features/tasks/controllers/task_controller.dart';
 import 'package:taskaway/features/tasks/models/task.dart';
-import 'package:taskaway/features/tasks/models/task_status.dart';
 import 'dart:developer' as dev;
 
 // Provider for role selection (Poster or Tasker)
@@ -14,6 +14,9 @@ final taskRoleProvider = StateProvider.autoDispose<String>((ref) => 'poster');
 // Provider for task status filter
 final taskStatusProvider =
     StateProvider.autoDispose<String>((ref) => 'awaiting_offers');
+
+// Search text provider for task filtering
+final searchTextProvider = StateProvider<String>((ref) => '');
 
 // Provider for filtered tasks that combines search, category, role and status filters
 final filteredTasksProvider =
@@ -65,8 +68,8 @@ String mapStatusToFilter(String status) {
   }
 }
 
-class TasksScreen extends ConsumerWidget {
-  const TasksScreen({super.key});
+class MyTaskScreen extends ConsumerWidget {
+  const MyTaskScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -204,13 +207,19 @@ class TasksScreen extends ConsumerWidget {
           ),
           // Task List
           Expanded(
-            child: ListView.builder(
-              physics: const NeverScrollableScrollPhysics(),
-              shrinkWrap: true,
-              itemCount: _mockTasks.length,
-              itemBuilder: (context, index) {
-                return TaskCard(task: _mockTasks[index]);
-              },
+            child: ref.watch(filteredTasksProvider).when(
+              data: (tasks) => tasks.isEmpty
+                  ? const Center(child: Text('No tasks found'))
+                  : ListView.builder(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      shrinkWrap: true,
+                      itemCount: tasks.length,
+                      itemBuilder: (context, index) {
+                        return TaskCard(task: tasks[index]);
+                      },
+                    ),
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (error, stack) => Center(child: Text('Error: $error')),
             ),
           ),
         ],
@@ -265,170 +274,52 @@ class FilterDropdown extends StatelessWidget {
   }
 }
 
-class TaskCard extends StatelessWidget {
+class TaskCard extends ConsumerWidget {
   final Task task;
 
   const TaskCard({required this.task, super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final role = ref.watch(taskRoleProvider);
-    final status = ref.watch(taskStatusProvider);
-
-    return Focus(
-      focusNode: _focusNode,
-      onFocusChange: (hasFocus) {
-        if (hasFocus && mounted) {
-          _initializeData();
-        }
-      },
-      child: Scaffold(
-        body: RefreshIndicator(
-          onRefresh: _handleRefresh,
-          child: Column(
-            children: [
-              // Purple header with title and notification
-              Container(
-                padding: const EdgeInsets.fromLTRB(16, 48, 16, 16),
-                decoration: const BoxDecoration(
-                  color: Color(0xFF6C5CE7), // Purple color from the image
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Task title
+            Text(
+              task.title,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            // Task description
+            Text(
+              task.description,
+              style: TextStyle(color: Colors.grey[600]),
+            ),
+            const SizedBox(height: 12),
+            // Task details row
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Category chip
+                Chip(
+                  label: Text(task.category),
+                  backgroundColor: const Color(0xFF6C5CE7).withOpacity(0.2),
+                  labelStyle: const TextStyle(color: Color(0xFF6C5CE7)),
                 ),
-                child: Row(
-                  children: [
-                    const Spacer(),
-                    const Text(
-                      'My Tasks',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const Spacer(),
-                    IconButton(
-                      icon: const Icon(Icons.notifications_outlined,
-                          color: Colors.white),
-                      onPressed: () {
-                        // Handle notification tap
-                      },
-                    ),
-                  ],
+                // Date
+                Text(
+                  DateFormat('MMM dd, yyyy').format(task.scheduledTime),
+                  style: TextStyle(color: Colors.grey[600]),
                 ),
-              ),
-
-              // Role selector tabs
-              Container(
-                margin: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade200,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () => ref.read(taskRoleProvider.notifier).state =
-                            'poster',
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          decoration: BoxDecoration(
-                            color: role == 'poster'
-                                ? const Color(0xFF6C5CE7)
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            'As Poster',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: role == 'poster'
-                                  ? Colors.white
-                                  : Colors.grey.shade700,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () => ref.read(taskRoleProvider.notifier).state =
-                            'tasker',
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          decoration: BoxDecoration(
-                            color: role == 'tasker'
-                                ? const Color(0xFF6C5CE7)
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            'As Tasker',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: role == 'tasker'
-                                  ? Colors.white
-                                  : Colors.grey.shade700,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // Status selector tabs
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  children: [
-                    _buildStatusTab(
-                        'awaiting_offers', 'Awaiting offers', status),
-                    const SizedBox(width: 8),
-                    _buildStatusTab('upcoming_tasks', 'Upcoming tasks', status),
-                    const SizedBox(width: 8),
-                    _buildStatusTab('completed', 'Completed', status),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              // Task list
-              Expanded(
-                child: TaskListView(),
-              ),
-            ],
-          ),
-        ),
-        floatingActionButton: const CreateTaskButton(),
-        // Removed the bottomNavigationBar to avoid duplication
-      ),
-    );
-  }
-
-  Widget _buildStatusTab(String value, String label, String currentStatus) {
-    final isSelected = currentStatus == value;
-
-    return GestureDetector(
-      onTap: () => ref.read(taskStatusProvider.notifier).state = value,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? const Color(0xFF6C5CE7)
-              : const Color(0xFF6C5CE7).withOpacity(0.1),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: isSelected ? Colors.white : const Color(0xFF6C5CE7),
-            fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
-          ),
+              ],
+            ),
+          ],
         ),
       ),
     );

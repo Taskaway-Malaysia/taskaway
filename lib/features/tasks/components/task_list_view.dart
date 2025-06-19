@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../providers/task_providers.dart';
-import '../controllers/task_controller.dart' show taskStreamProvider;
+import '../controllers/task_controller.dart' show taskStreamProvider, filteredTasksProvider;
 import 'task_card.dart';
 
 class TaskListView extends ConsumerWidget {

@@ -13,13 +13,14 @@ class TaskCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final currencyFormat = NumberFormat.currency(locale: 'ms_MY', symbol: 'RM ', decimalDigits: 0);
-    
+    final currencyFormat =
+        NumberFormat.currency(locale: 'ms_MY', symbol: 'RM ', decimalDigits: 0);
+
     // Format date based on task scheduled time
     String formattedDate = '';
     final now = DateTime.now();
     final scheduledDate = task.scheduledTime;
-    
+
     if (scheduledDate.isBefore(now)) {
       formattedDate = 'Before ${DateFormat('E, d MMM').format(scheduledDate)}';
     } else {
@@ -44,9 +45,10 @@ class TaskCard extends StatelessWidget {
               children: [
                 // Status badge
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF6C5CE7).withOpacity(0.1),
+                    color: const Color(0xFF6C5CE7).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: const Text(
@@ -58,7 +60,7 @@ class TaskCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                
+
                 // Price
                 Text(
                   currencyFormat.format(task.price),
@@ -69,9 +71,9 @@ class TaskCard extends StatelessWidget {
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // Task title
             Text(
               task.title,
@@ -80,14 +82,15 @@ class TaskCard extends StatelessWidget {
                 fontWeight: FontWeight.w500,
               ),
             ),
-            
+
             const SizedBox(height: 12),
-            
+
             // Date and Location
             Row(
               children: [
                 // Calendar icon and date
-                Icon(Icons.calendar_today_outlined, size: 16, color: Colors.grey.shade600),
+                Icon(Icons.calendar_today_outlined,
+                    size: 16, color: Colors.grey.shade600),
                 const SizedBox(width: 8),
                 Text(
                   formattedDate,
@@ -98,13 +101,14 @@ class TaskCard extends StatelessWidget {
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 8),
-            
+
             // Location
             Row(
               children: [
-                Icon(Icons.location_on_outlined, size: 16, color: Colors.grey.shade600),
+                Icon(Icons.location_on_outlined,
+                    size: 16, color: Colors.grey.shade600),
                 const SizedBox(width: 8),
                 Text(
                   task.location,
@@ -115,9 +119,9 @@ class TaskCard extends StatelessWidget {
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // Offers count and View button
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -131,7 +135,7 @@ class TaskCard extends StatelessWidget {
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                
+
                 // View button
                 TextButton(
                   onPressed: () => context.push('/home/tasks/${task.id}'),
@@ -149,7 +153,7 @@ class TaskCard extends StatelessWidget {
       ),
     );
   }
-  
+
   String _getOffersText(Task task) {
     // This would normally come from the task data
     // For now using a placeholder based on task price

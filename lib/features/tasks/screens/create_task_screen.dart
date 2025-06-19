@@ -26,7 +26,7 @@ final createTaskDataProvider = StateProvider<Map<String, dynamic>>((ref) => {
       'images': <File>[],
     });
 
-class CreateTaskScreen extends StatelessWidget {
+class CreateTaskScreen extends ConsumerStatefulWidget {
   const CreateTaskScreen({super.key});
 
   @override
@@ -36,7 +36,6 @@ class CreateTaskScreen extends StatelessWidget {
 class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
   final _formKeys = List.generate(4, (_) => GlobalKey<FormState>());
   bool _isLoading = false;
-  String? _errorMessage;
 
   // Controllers for form fields
   final _titleController = TextEditingController();
@@ -66,7 +65,6 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
   Future<void> _handleSubmit() async {
     setState(() {
       _isLoading = true;
-      _errorMessage = '';
     });
 
     try {
@@ -112,13 +110,13 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
       }
     } catch (e) {
       print('Error creating task: $e');
-      setState(() {
-        _errorMessage = 'Failed to create task: ${e.toString()}';
-      });
       if (mounted) {
         setState(() {
           _isLoading = false;
         });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${e.toString()}')),
+        );
       }
     }
   }
@@ -208,46 +206,15 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
     }
   }
 
-  // Select date and time for the task
-  Future<void> _selectDateTime() async {
-    final taskData =
-        Map<String, dynamic>.from(ref.read(createTaskDataProvider));
-    final currentDateTime = taskData['scheduledTime'] ??
-        DateTime.now().add(const Duration(days: 1));
-
-    final date = await showDatePicker(
-      context: context,
-      initialDate: currentDateTime,
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
-    );
-    if (date == null) return;
-
-    if (!mounted) return;
-
-    final time = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.fromDateTime(currentDateTime),
-    );
-    if (time == null) return;
-
-    final newDateTime = DateTime(
-      date.year,
-      date.month,
-      date.day,
-      time.hour,
-      time.minute,
-    );
-
-    taskData['scheduledTime'] = newDateTime;
-    ref.read(createTaskDataProvider.notifier).state = taskData;
-  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final currentStep = ref.watch(createTaskStepProvider);
     final taskData = ref.watch(createTaskDataProvider);
+    
+    // Use taskData for debugging or validation if needed
+    debugPrint('Current task data: ${taskData.toString()}');
 
     // Load data when step changes
     WidgetsBinding.instance.addPostFrameCallback((_) {

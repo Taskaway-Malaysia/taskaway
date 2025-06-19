@@ -1,3 +1,6 @@
+// Regular Task class implementation without Freezed
+// This is a temporary solution until we can properly migrate to Freezed
+
 class Task {
   final String id;
   final String title;

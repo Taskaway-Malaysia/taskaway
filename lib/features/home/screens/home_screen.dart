@@ -71,11 +71,8 @@ class HomeScreen extends ConsumerWidget {
                 NavigationDestination(
                   icon: Icon(Icons.mail_outline),
                   label: 'Messages',
-                  icon: Icon(Icons.mail_outline),
-                  label: 'Messages',
                 ),
                 NavigationDestination(
-                  icon: Icon(Icons.person_outline),
                   icon: Icon(Icons.person_outline),
                   label: 'Profile',
                 ),
