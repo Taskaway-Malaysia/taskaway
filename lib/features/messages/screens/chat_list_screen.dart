@@ -2,9 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/constants/style_constants.dart';
-import '../../auth/controllers/auth_controller.dart';
-import '../controllers/message_controller.dart';
 import '../providers/mock_data_provider.dart'; // Import mock data provider
 
 class ChatListScreen extends ConsumerWidget {
@@ -13,15 +10,12 @@ class ChatListScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final user = ref.watch(currentUserProvider);
-    // Use mock data instead of real data
     final channelsList = ref.watch(mockChannelsProvider);
-    final dateFormat = DateFormat('MMM d, y h:mm a');
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Messages'),
-        backgroundColor: const Color(0xFF6C5CE7), // Updated to match home/tasks purple color
+        backgroundColor: const Color(0xFF6C5CE7),
         foregroundColor: Colors.white,
         centerTitle: true,
         actions: [
@@ -61,9 +55,8 @@ class ChatListScreen extends ConsumerWidget {
                 final otherPersonName = isCurrentUserPoster
                     ? channel.taskerName
                     : channel.posterName;
-                final otherPersonId = isCurrentUserPoster
-                    ? channel.taskerId
-                    : channel.posterId;
+                final otherPersonId =
+                    isCurrentUserPoster ? channel.taskerId : channel.posterId;
 
                 return InkWell(
                   onTap: () {
@@ -106,7 +99,8 @@ class ChatListScreen extends ConsumerWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   // Person name
                                   Text(
@@ -143,7 +137,8 @@ class ChatListScreen extends ConsumerWidget {
                                 children: [
                                   Expanded(
                                     child: Text(
-                                      channel.lastMessageContent ?? 'No messages yet',
+                                      channel.lastMessageContent ??
+                                          'No messages yet',
                                       style: TextStyle(
                                         color: channel.unreadCount > 0
                                             ? Colors.black
@@ -191,36 +186,36 @@ class ChatListScreen extends ConsumerWidget {
 
   String _getFormattedTime(DateTime? dateTime) {
     if (dateTime == null) return '';
-    
+
     final now = DateTime.now();
     final difference = now.difference(dateTime);
-    
+
     // Just now (less than 1 minute)
     if (difference.inMinutes < 1) {
       return 'Just now';
     }
-    
+
     // Minutes ago (less than 1 hour)
     if (difference.inHours < 1) {
       return '${difference.inMinutes} min ago';
     }
-    
+
     // Hours ago (less than 1 day)
     if (difference.inDays < 1) {
       return '${difference.inHours} h ago';
     }
-    
+
     // Yesterday
     if (difference.inDays == 1) {
       return 'Yesterday';
     }
-    
+
     // Days of the week (less than 7 days)
     if (difference.inDays < 7) {
       final weekday = DateFormat('EEEE').format(dateTime);
       return weekday;
     }
-    
+
     // Date format (more than 7 days)
     return DateFormat('d MMM').format(dateTime);
   }

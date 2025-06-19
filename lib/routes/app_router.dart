@@ -244,11 +244,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             path: '/home/browse',
             name: 'browse',
             builder: (context, state) => const MyTaskScreen(),
-          ),
-          GoRoute(
-            path: '/home/browse',
-            name: 'browse',
-            builder: (context, state) => const MyTaskScreen(),
             routes: [
               GoRoute(
                 path: ':id',
