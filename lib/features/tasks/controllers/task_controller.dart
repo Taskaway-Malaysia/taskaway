@@ -2,8 +2,10 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/task.dart';
+import '../models/category.dart';
 import '../repositories/task_repository.dart';
 import '../../../core/services/supabase_service.dart';
+import '../../../core/constants/db_constants.dart';
 
 final taskControllerProvider = Provider((ref) {
   final repository = ref.watch(taskRepositoryProvider);
@@ -36,6 +38,11 @@ final filteredTasksProvider = Provider<AsyncValue<List<Task>>>((ref) {
 
 final searchQueryProvider = StateProvider<String>((ref) => '');
 final selectedCategoriesProvider = StateProvider<List<String>>((ref) => []);
+
+// Provider to expose categories
+final categoriesProvider = FutureProvider<List<Category>>((ref) {
+  return ref.watch(taskControllerProvider).getCategories();
+});
 
 class TaskController {
   final TaskRepository _repository;
@@ -162,5 +169,90 @@ class TaskController {
       print('Error deleting task: $e');
       return false;
     }
+  }
+  
+  // Get all available categories from the database
+  Future<List<Category>> getCategories() async {
+    try {
+      final response = await _supabase
+          .from(DbConstants.categoriesTable)
+          .select()
+          .order('name');
+      
+      return response.map((json) => Category.fromJson(json)).toList();
+    } catch (e) {
+      print('Error fetching categories: $e');
+      // Return default categories if there's an error
+      return _getDefaultCategories();
+    }
+  }
+  
+  // Fallback method to provide default categories if DB fetch fails
+  List<Category> _getDefaultCategories() {
+    return [
+      Category(
+        id: 'handyman',
+        name: 'Handyman',
+        icon: 'handyman_outlined',
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      ),
+      Category(
+        id: 'cleaning',
+        name: 'Cleaning',
+        icon: 'cleaning_services_outlined',
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      ),
+      Category(
+        id: 'gardening',
+        name: 'Gardening',
+        icon: 'yard_outlined',
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      ),
+      Category(
+        id: 'painting',
+        name: 'Painting',
+        icon: 'format_paint_outlined',
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      ),
+      Category(
+        id: 'organizing',
+        name: 'Organizing',
+        icon: 'inventory_2_outlined',
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      ),
+      Category(
+        id: 'pet_care',
+        name: 'Pet Care',
+        icon: 'pets_outlined',
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      ),
+      Category(
+        id: 'self_care',
+        name: 'Self Care',
+        icon: 'spa_outlined',
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      ),
+      Category(
+        id: 'events_photography',
+        name: 'Events & Photography',
+        icon: 'camera_alt_outlined',
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      ),
+      Category(
+        id: 'others',
+        name: 'Others',
+        icon: 'more_horiz',
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      ),
+    ];
   }
 }

@@ -73,20 +73,35 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
       final user = ref.read(currentUserProvider)!;
       final taskData = ref.read(createTaskDataProvider);
       
+      // Print debug info
+      print('Submitting task: $taskData');
+      
+      // Ensure price is a double
+      double price = 0.0;
+      if (taskData['price'] is String) {
+        price = double.tryParse(taskData['price']) ?? 0.0;
+      } else if (taskData['price'] is num) {
+        price = (taskData['price'] as num).toDouble();
+      }
+      
+      // Ensure we have a valid category
+      String category = taskData['category'] ?? 'other';
+      
+      // Create the task
       await ref.read(taskControllerProvider).createTask(
         title: taskData['title'],
         description: taskData['description'],
-        category: taskData['category'],
-        price: taskData['price'],
-        location: taskData['location'],
-        scheduledTime: taskData['scheduledTime'],
+        category: category,
+        price: price,
+        location: taskData['location'] ?? '',
+        scheduledTime: taskData['scheduledTime'] ?? DateTime.now(),
         posterId: user.id,
         dateOption: taskData['dateOption'],
         needsSpecificTime: taskData['needsSpecificTime'],
         timeOfDay: taskData['timeOfDay'],
         locationType: taskData['locationType'],
         providesMaterials: taskData['providesMaterials'],
-        images: taskData['images'],
+        images: taskData['images'] is List<File> ? taskData['images'] : <File>[],
       );
 
       if (mounted) {
@@ -94,6 +109,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
         ref.read(createTaskStepProvider.notifier).state = 4;
       }
     } catch (e) {
+      print('Error creating task: $e');
       setState(() {
         _errorMessage = 'Failed to create task: ${e.toString()}';
       });
@@ -244,9 +260,17 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
             color: Colors.white,
           ),
         ),
+        automaticallyImplyLeading: false, // Disable automatic back button
         leading: currentStep == 4 ? null : IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: _goToPreviousStep,
+          onPressed: () {
+            if (currentStep > 0) {
+              _goToPreviousStep();
+            } else {
+              // If on first step, go back to previous screen
+              Navigator.of(context).pop();
+            }
+          },
         ),
       ),
       body: Column(
@@ -411,6 +435,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
   Widget _buildCategoryAndTitleStep(ThemeData theme) {
     final taskData = ref.watch(createTaskDataProvider);
     final selectedCategory = taskData['category'];
+    final categoriesAsync = ref.watch(categoriesProvider);
     
     return Form(
       key: _formKeys[0],
@@ -423,7 +448,32 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
           ),
           const SizedBox(height: 16),
           // Category selection
-          _buildCategoryOption('painting', 'Painting', selectedCategory, theme),
+          categoriesAsync.when(
+            data: (categories) {
+              return Column(
+                children: categories.map((category) {
+                  return _buildCategoryOption(
+                    category.id,
+                    category.name,
+                    selectedCategory,
+                    theme
+                  );
+                }).toList(),
+              );
+            },
+            loading: () => const Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 20),
+                child: CircularProgressIndicator(),
+              ),
+            ),
+            error: (error, stack) => Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                child: Text('Error loading categories: $error'),
+              ),
+            ),
+          ),
           const SizedBox(height: 24),
           
           // Title field
