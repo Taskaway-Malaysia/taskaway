@@ -8,62 +8,53 @@ import 'package:taskaway/features/tasks/models/task.dart';
 import 'package:taskaway/features/tasks/models/task_status.dart';
 import 'dart:developer' as dev;
 
-// Provider for role selection (Poster or Tasker)
-final taskRoleProvider = StateProvider.autoDispose<String>((ref) => 'poster');
-
-// Provider for task status filter
-final taskStatusProvider =
-    StateProvider.autoDispose<String>((ref) => 'awaiting_offers');
-
-// Provider for filtered tasks that combines search, category, role and status filters
-final filteredTasksProvider =
-    Provider.autoDispose<AsyncValue<List<Task>>>((ref) {
-  final tasks = ref.watch(taskStreamProvider);
-  final searchQuery = ref.watch(searchTextProvider);
-  final selectedCategories = ref.watch(selectedCategoriesProvider);
-  final role = ref.watch(taskRoleProvider);
-  final status = ref.watch(taskStatusProvider);
-
-  return tasks.whenData((tasks) {
-    return tasks.where((task) {
-      // Filter by role (poster or tasker)
-      final matchesRole =
-          (role == 'poster' && task.posterId == 'current_user_id') ||
-              (role == 'tasker' && task.taskerId == 'current_user_id');
-
-      // Filter by status
-      final matchesStatus =
-          status == 'all' || mapStatusToFilter(task.status) == status;
-
-      // Filter by search query
-      final matchesSearch = searchQuery.isEmpty ||
-          task.title.toLowerCase().contains(searchQuery.toLowerCase()) ||
-          task.description.toLowerCase().contains(searchQuery.toLowerCase());
-
-      // Filter by categories
-      final matchesCategories = selectedCategories.isEmpty ||
-          selectedCategories.contains(task.category);
-
-      return matchesRole && matchesStatus && matchesSearch && matchesCategories;
-    }).toList();
-  });
-});
-
-// Helper function to map task status to filter value
-String mapStatusToFilter(String status) {
-  switch (status.toLowerCase()) {
-    case 'open':
-      return 'awaiting_offers';
-    case 'assigned':
-    case 'in_progress':
-      return 'upcoming_tasks';
-    case 'completed':
-    case 'cancelled':
-      return 'completed';
-    default:
-      return 'awaiting_offers';
-  }
-}
+// Mock data for now
+final List<Task> _mockTasks = [
+  Task(
+    id: '1',
+    title: 'I am currently in need of the services of a maid',
+    description: 'Detailed description for maid services.',
+    category: 'Home Services',
+    price: 100.00,
+    location: 'Petaling Jaya',
+    scheduledTime: DateTime.now().add(const Duration(days: 2)),
+    status: TaskStatus.open,
+    posterId: 'user1',
+    createdAt: DateTime.now(),
+    updatedAt: DateTime.now(),
+    // posterAvatarUrl: 'https://example.com/avatar1.png', // Example
+    // offerCount: 2, // Example
+  ),
+  Task(
+    id: '2',
+    title: 'I am currently in need of the services of a maid',
+    description: 'Another maid service request.',
+    category: 'Home Services',
+    price: 1000.00,
+    location: 'Usj 4, Subang Jaya',
+    scheduledTime: DateTime.now().add(const Duration(days: 3)),
+    status: TaskStatus.open,
+    posterId: 'user2',
+    createdAt: DateTime.now(),
+    updatedAt: DateTime.now(),
+    // posterAvatarUrl: 'https://example.com/avatar2.png', // Example
+    // offerCount: 0, // Example
+  ),
+  Task(
+    id: '3',
+    title: 'I am currently in need of the services of a maid',
+    description: 'A different task.',
+    category: 'Cleaning',
+    price: 30.00,
+    location: 'Bukit Jelutong',
+    scheduledTime: DateTime.now().add(const Duration(days: 1)), // "Any day" can be represented by a flexible date or specific logic later
+    status: TaskStatus.open,
+    posterId: 'user3',
+    createdAt: DateTime.now(),
+    updatedAt: DateTime.now(),
+    // offerCount: 1, // Example
+  ),
+];
 
 class TasksScreen extends ConsumerWidget {
   const TasksScreen({super.key});
@@ -71,10 +62,10 @@ class TasksScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-
+    
     // Watch current profile to get the user role
     final profileAsync = ref.watch(currentProfileProvider);
-
+    
     // Determine the header color based on user role
     Color headerColor;
     if (profileAsync.value?.role == 'poster') {
@@ -83,8 +74,7 @@ class TasksScreen extends ConsumerWidget {
     } else {
       // Default to tasker color for taskers and when profile is still loading
       headerColor = StyleConstants.taskerColorPrimary; // Tasker Orange
-      dev.log(
-          'User is a tasker or profile still loading, using tasker theme colors');
+      dev.log('User is a tasker or profile still loading, using tasker theme colors');
     }
     return Scaffold(
       body: Column(
@@ -154,13 +144,7 @@ class TasksScreen extends ConsumerWidget {
                     Expanded(
                       child: FilterDropdown(
                         hintText: 'Select category',
-                        items: const [
-                          'Select category',
-                          'Home Services',
-                          'Cleaning',
-                          'Delivery',
-                          'IT & Tech'
-                        ],
+                        items: const ['Select category', 'Home Services', 'Cleaning', 'Delivery', 'IT & Tech'],
                         onChanged: (value) {
                           dev.log('Category filter changed to: $value');
                         },
@@ -170,13 +154,7 @@ class TasksScreen extends ConsumerWidget {
                     Expanded(
                       child: FilterDropdown(
                         hintText: 'Sort',
-                        items: const [
-                          'Sort',
-                          'Price: Low to High',
-                          'Price: High to Low',
-                          'Date: Newest',
-                          'Date: Oldest'
-                        ],
+                        items: const ['Sort', 'Price: Low to High', 'Price: High to Low', 'Date: Newest', 'Date: Oldest'],
                         onChanged: (value) {
                           dev.log('Sort option changed to: $value');
                         },
@@ -187,14 +165,13 @@ class TasksScreen extends ConsumerWidget {
                 const SizedBox(height: 12.0), // Spacing before the text
                 // "Grab a Task. Earn Money." Text - MOVED HERE (Inside Header, after filters)
                 Container(
-                  width: double
-                      .infinity, // Ensure it takes full width for left alignment
+                  width: double.infinity, // Ensure it takes full width for left alignment
                   // padding: const EdgeInsets.only(top: 12.0), // Padding already handled by SizedBox and Column's padding
                   child: Text(
                     'Grab a Task. Earn Money.',
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                      color: Colors.black87, 
                     ),
                     textAlign: TextAlign.left,
                   ),
@@ -246,8 +223,7 @@ class FilterDropdown extends StatelessWidget {
           border: InputBorder.none,
           hintText: hintText,
           hintStyle: TextStyle(color: Colors.grey.shade600, fontSize: 13),
-          contentPadding:
-              const EdgeInsets.symmetric(vertical: 4.0, horizontal: 0),
+          contentPadding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 0),
         ),
         hint: Text(hintText),
         isExpanded: true, // Ensure dropdown expands to fill available space
@@ -272,163 +248,159 @@ class TaskCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final role = ref.watch(taskRoleProvider);
-    final status = ref.watch(taskStatusProvider);
+    final theme = Theme.of(context);
+    final taskerPrimaryColor = theme.secondaryHeaderColor; // Tasker Primary (StyleConstants.taskerColorPrimary)
+    final posterPrimaryColor = theme.colorScheme.primary; // Poster Primary
 
-    return Focus(
-      focusNode: _focusNode,
-      onFocusChange: (hasFocus) {
-        if (hasFocus && mounted) {
-          _initializeData();
-        }
-      },
-      child: Scaffold(
-        body: RefreshIndicator(
-          onRefresh: _handleRefresh,
-          child: Column(
-            children: [
-              // Purple header with title and notification
-              Container(
-                padding: const EdgeInsets.fromLTRB(16, 48, 16, 16),
-                decoration: const BoxDecoration(
-                  color: Color(0xFF6C5CE7), // Purple color from the image
+    // Date formatting
+    String formattedDate = 'Any day';
+    try {
+      // Example: "Before Thu, 18 Jan"
+      // For "Any day", we might need a specific flag in the model or handle it differently
+      if (task.scheduledTime.year != 1) { // A way to check if it's a specific date
+         formattedDate = 'Before ${DateFormat('E, d MMM').format(task.scheduledTime)}';
+      }
+    } catch (e) {
+      // log('Error formatting date: $e');
+    }
+
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 8.0),
+      elevation: 2.0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Text(
+                    task.title,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-                child: Row(
-                  children: [
-                    const Spacer(),
-                    const Text(
-                      'My Tasks',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
+                const SizedBox(width: 16),
+                Text(
+                  'RM ${task.price.toStringAsFixed(0)}', // Assuming price doesn't need .00
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                ),
+              ],
+            ),
+            const Divider(height: 24.0, thickness: 1, color: Colors.grey), // height includes space above (11.5) and below (11.5) + thickness (1)
+            Row(
+              children: [
+                // Status and Offer Count Column
+                Container(
+                  width: 70, // Fixed width for the status column
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center, // Center text horizontally
+                    mainAxisAlignment: MainAxisAlignment.center, // Center vertically if row allows
+                    children: [
+                      Text(
+                        task.status.name.toUpperCase(), // e.g., "OPEN"
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          color: posterPrimaryColor, // Poster color for "Open"
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
                       ),
-                    ),
-                    const Spacer(),
-                    IconButton(
-                      icon: const Icon(Icons.notifications_outlined,
-                          color: Colors.white),
-                      onPressed: () {
-                        // Handle notification tap
-                      },
-                    ),
-                  ],
+                      // Horizontal divider within status column
+                      Container(
+                        height: 1,
+                        width: 20, // Adjust width as needed for the short line
+                        color: Colors.grey.shade400,
+                        margin: const EdgeInsets.symmetric(vertical: 2.0),
+                      ),
+                      Text(
+                        '2 Offer(s)', // Mocked for now
+                        style: theme.textTheme.bodySmall?.copyWith(
+                            color: Colors.grey.shade600, fontSize: 11),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-
-              // Role selector tabs
-              Container(
-                margin: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade200,
-                  borderRadius: BorderRadius.circular(12),
+                const SizedBox(width: 12.0),
+                // Vertical Divider between status column and avatar
+                Container(
+                  height: 60, // Adjust height to match content
+                  margin: const EdgeInsets.symmetric(horizontal: 4.0),
+                  child: VerticalDivider(
+                    width: 1.0,
+                    thickness: 1,
+                    color: Colors.grey.shade300,
+                  ),
                 ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () => ref.read(taskRoleProvider.notifier).state =
-                            'poster',
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          decoration: BoxDecoration(
-                            color: role == 'poster'
-                                ? const Color(0xFF6C5CE7)
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            'As Poster',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: role == 'poster'
-                                  ? Colors.white
-                                  : Colors.grey.shade700,
-                              fontWeight: FontWeight.w500,
+                const SizedBox(width: 8.0),
+                // Avatar
+                CircleAvatar(
+                  radius: 20,
+                  backgroundColor: Colors.grey.shade300,
+                  child: Icon(Icons.person, color: Colors.grey.shade700),
+                ),
+                const SizedBox(width: 12.0),
+                // Date and Location Column - Wrapped with Expanded
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center, // Align items vertically in the center
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.calendar_today_outlined, size: 14, color: Colors.grey.shade700),
+                          const SizedBox(width: 4.0),
+                          Flexible( // Allow text to wrap or truncate if needed
+                            child: Text(
+                              formattedDate,
+                              style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey.shade700),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                        ),
+                        ],
                       ),
-                    ),
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () => ref.read(taskRoleProvider.notifier).state =
-                            'tasker',
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          decoration: BoxDecoration(
-                            color: role == 'tasker'
-                                ? const Color(0xFF6C5CE7)
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            'As Tasker',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: role == 'tasker'
-                                  ? Colors.white
-                                  : Colors.grey.shade700,
-                              fontWeight: FontWeight.w500,
+                      const SizedBox(height: 4.0),
+                      Row(
+                        children: [
+                          Icon(Icons.location_on_outlined, size: 14, color: Colors.grey.shade700),
+                          const SizedBox(width: 4.0),
+                          Flexible( // Allow text to wrap or truncate
+                            child: Text(
+                              task.location,
+                              style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey.shade700),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                        ),
+                        ],
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-
-              // Status selector tabs
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  children: [
-                    _buildStatusTab(
-                        'awaiting_offers', 'Awaiting offers', status),
-                    const SizedBox(width: 8),
-                    _buildStatusTab('upcoming_tasks', 'Upcoming tasks', status),
-                    const SizedBox(width: 8),
-                    _buildStatusTab('completed', 'Completed', status),
-                  ],
+                // View Button
+                TextButton(
+                  onPressed: () {
+                    // TODO: Navigate to task details screen
+                    // context.go('/home/browse/${task.id}');
+                  },
+                  child: Text(
+                    'View',
+                    style: TextStyle(
+                        color: taskerPrimaryColor, fontWeight: FontWeight.bold),
+                  ),
                 ),
-              ),
-
-              const SizedBox(height: 16),
-
-              // Task list
-              Expanded(
-                child: TaskListView(),
-              ),
-            ],
-          ),
-        ),
-        floatingActionButton: const CreateTaskButton(),
-        // Removed the bottomNavigationBar to avoid duplication
-      ),
-    );
-  }
-
-  Widget _buildStatusTab(String value, String label, String currentStatus) {
-    final isSelected = currentStatus == value;
-
-    return GestureDetector(
-      onTap: () => ref.read(taskStatusProvider.notifier).state = value,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? const Color(0xFF6C5CE7)
-              : const Color(0xFF6C5CE7).withOpacity(0.1),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: isSelected ? Colors.white : const Color(0xFF6C5CE7),
-            fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
-          ),
+              ],
+            ),
+          ],
         ),
       ),
     );

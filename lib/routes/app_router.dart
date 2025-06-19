@@ -1,9 +1,9 @@
-import 'dart:async';
-import 'package:flutter/material.dart';
+import 'dart:async'; 
+import 'package:flutter/material.dart'; 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:taskaway/features/auth/controllers/auth_controller.dart';
+import 'package:supabase_flutter/supabase_flutter.dart'; 
+import 'package:taskaway/features/auth/controllers/auth_controller.dart'; 
 import 'dart:developer' as dev; // For logging
 import '../features/splash/screens/splash_screen.dart';
 import '../features/auth/screens/auth_screen.dart';
@@ -12,9 +12,9 @@ import '../features/auth/screens/otp_verification_screen.dart';
 import '../features/auth/screens/create_profile_screen.dart';
 import '../features/auth/screens/signup_success_screen.dart';
 import '../features/home/screens/home_screen.dart';
-import '../features/profile/screens/profile_screen.dart';
+import '../features/profile/screens/profile_screen.dart'; 
 import '../features/tasks/screens/tasks_screen.dart';
-import '../features/tasks/screens/my_tasks_screen.dart';
+import '../features/tasks/screens/my_tasks_screen.dart'; 
 import '../features/tasks/screens/create_task_screen.dart';
 import '../features/tasks/screens/task_details_screen.dart';
 import '../features/tasks/screens/apply_task_screen.dart';
@@ -22,24 +22,26 @@ import '../features/payments/screens/payment_completion_screen.dart';
 import '../features/messages/screens/chat_list_screen.dart';
 import '../features/messages/screens/chat_screen.dart';
 import '../features/messages/models/channel.dart';
-import '../features/profile/screens/profile_screen.dart';
+import 'package:taskaway/features/auth/widgets/guest_prompt_overlay.dart';
+import '../features/auth/screens/forgot_password_screen.dart';
+import '../features/auth/screens/change_password_screen.dart';
+import '../features/auth/screens/change_password_success_screen.dart';
+import '../features/onboarding/screens/onboarding_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
+
   return GoRouter(
     initialLocation: '/',
     refreshListenable: ref.watch(authNotifierProvider),
     redirect: (BuildContext context, GoRouterState state) async {
       // Use ref.read for providers within redirect to avoid assertion errors
-      final authValue =
-          ProviderScope.containerOf(context).read(authStateProvider);
+      final authValue = ProviderScope.containerOf(context).read(authStateProvider);
       final user = authValue.asData?.value.session?.user;
       final bool isLoggedIn = user != null;
-      final bool isGuest =
-          ProviderScope.containerOf(context).read(isGuestModeProvider);
+      final bool isGuest = ProviderScope.containerOf(context).read(isGuestModeProvider);
       final String location = state.uri.toString(); // Use full URI
 
-      dev.log(
-          'GoRouter Redirect: Loc: $location, User: ${user?.id}, LoggedIn: $isLoggedIn, Guest: $isGuest');
+      dev.log('GoRouter Redirect: Loc: $location, User: ${user?.id}, LoggedIn: $isLoggedIn, Guest: $isGuest');
 
       // Base public routes accessible to anyone, including guests if not specifically redirected elsewhere
       final basePublicRoutes = [
@@ -57,29 +59,22 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // Define routes that are part of the profile creation flow
       final profileCreationRoutes = ['/create-profile', '/signup-success'];
       // Define routes for password recovery flow
-      final passwordRecoveryRoutes = [
-        '/change-password',
-        '/change-password-success'
-      ];
+      final passwordRecoveryRoutes = ['/change-password', '/change-password-success'];
 
       // Guest mode logic
       if (isGuest && isLoggedIn) {
-        dev.log(
-            'GoRouter Redirect: User is logged in while in guest mode. Turning off guest mode.');
+        dev.log('GoRouter Redirect: User is logged in while in guest mode. Turning off guest mode.');
         // Schedule as a microtask to avoid modifying state during build/redirect.
-        await Future.microtask(
-            () => ref.read(isGuestModeProvider.notifier).state = false);
+        await Future.microtask(() => ref.read(isGuestModeProvider.notifier).state = false);
         // Redirect will re-run due to authState change or next navigation attempt.
         // For this run, let it proceed; the state will be updated for the next evaluation.
       } else if (isGuest && !isLoggedIn) {
         // Check if guest is trying to access an allowed location
-        if (basePublicRoutes.contains(location) ||
-            location.startsWith('/home/browse')) {
+        if (basePublicRoutes.contains(location) || location.startsWith('/home/browse')) {
           dev.log('GoRouter Redirect: Guest accessing allowed area $location.');
           return null; // Allow access
         } else {
-          dev.log(
-              'GoRouter Redirect: Guest trying to access restricted area $location. Redirecting to /guest-prompt.');
+          dev.log('GoRouter Redirect: Guest trying to access restricted area $location. Redirecting to /guest-prompt.');
           return '/guest-prompt'; // Redirect to guest prompt
         }
       }
@@ -100,43 +95,32 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           hasProfile = profileResponse != null;
           dev.log('GoRouter Redirect: User ${user.id} hasProfile: $hasProfile');
         } catch (e) {
-          dev.log(
-              'GoRouter Redirect: Error checking profile for ${user.id}: $e. Assuming no profile.');
+          dev.log('GoRouter Redirect: Error checking profile for ${user.id}: $e. Assuming no profile.');
         }
-
-        if (!hasProfile &&
-            !profileCreationRoutes.contains(location) &&
-            location != '/login') {
-          dev.log(
-              'GoRouter Redirect: Logged in, no profile. Redirecting to /create-profile.');
+      
+        if (!hasProfile && !profileCreationRoutes.contains(location) && location != '/login') {
+          dev.log('GoRouter Redirect: Logged in, no profile. Redirecting to /create-profile.');
           return '/create-profile';
         }
 
         // If logged in and has profile, but on a public route (like /login) or profile creation route
         // (excluding '/', which is SplashScreen, and auth in-progress routes like OTP)
-        final isOnPasswordRecoveryRoute =
-            passwordRecoveryRoutes.contains(location);
-        dev.log(
-            'GoRouter Redirect: Check passwordRecoveryRoutes.contains($location): $isOnPasswordRecoveryRoute. Routes: $passwordRecoveryRoutes');
+        final isOnPasswordRecoveryRoute = passwordRecoveryRoutes.contains(location);
+        dev.log('GoRouter Redirect: Check passwordRecoveryRoutes.contains($location): $isOnPasswordRecoveryRoute. Routes: $passwordRecoveryRoutes');
 
         if (hasProfile &&
-                basePublicRoutes
-                    .contains(location) && // Is it a general public route?
-                !profileCreationRoutes
-                    .contains(location) && // Not part of profile creation flow?
-                !isOnPasswordRecoveryRoute && // Not part of password recovery flow?
-                !location
-                    .startsWith('/home') && // Not already in a /home section?
-                location != '/' // Not the splash screen itself?
-            ) {
-          dev.log(
-              'GoRouter Redirect: Logged in with profile, on a generic public page ($location) that is not home, profile, or recovery flow. Redirecting to /home.');
-          return '/home';
-        }
-      } else {
-        // Not logged in (and not a guest, or guest logic already handled returning null)
-        if (!basePublicRoutes.contains(location) &&
-            location != '/guest-prompt') {
+          basePublicRoutes.contains(location) && // Is it a general public route?
+          !profileCreationRoutes.contains(location) && // Not part of profile creation flow?
+          !isOnPasswordRecoveryRoute && // Not part of password recovery flow?
+          !location.startsWith('/home') && // Not already in a /home section?
+          location != '/' // Not the splash screen itself?
+          ) {
+        dev.log(
+            'GoRouter Redirect: Logged in with profile, on a generic public page ($location) that is not home, profile, or recovery flow. Redirecting to /home.');
+        return '/home';
+      }
+      } else { // Not logged in (and not a guest, or guest logic already handled returning null)
+        if (!basePublicRoutes.contains(location) && location != '/guest-prompt') {
           dev.log(
               'GoRouter Redirect: Not logged in (and not guest), trying to access $location. Redirecting to /login.');
           return '/login';
@@ -145,7 +129,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       dev.log('GoRouter Redirect: No redirect needed for $location.');
       return null;
     },
-    routes: [
+    routes: [ 
       GoRoute(
         path: '/guest-prompt',
         name: 'guest-prompt',
@@ -214,19 +198,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: 'payment-callback',
         builder: (context, state) {
           final paymentId = state.pathParameters['id']!;
-          final queryParams =
-              Map<String, String>.from(state.uri.queryParameters);
+          final queryParams = Map<String, String>.from(state.uri.queryParameters);
           return PaymentCompletionScreen(
             paymentId: paymentId,
             billplzParams: queryParams,
           );
         },
-      ),
-      // Create Task screen - moved outside ShellRoute to hide navigation bar
-      GoRoute(
-        path: '/create-task',
-        name: 'create-task',
-        builder: (context, state) => const CreateTaskScreen(),
       ),
       ShellRoute(
         builder: (context, state, child) => HomeScreen(child: child),
@@ -234,24 +211,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/home',
             name: 'home',
+            // Default to browse, which is the first item in new nav bar
             redirect: (context, state) => '/home/browse',
           ),
-          // Browse screen (index 0)
-          GoRoute(
-            path: '/home/browse',
-            name: 'browse',
-            builder: (context, state) =>
-                const TasksScreen(), // Reusing TasksScreen for now
-          ),
-          // My Tasks screen (index 1)
           GoRoute(
             path: '/home/browse', // Renamed from /home/tasks
-            name: 'browse', // Renamed from tasks
-            builder: (context, state) =>
-                const TasksScreen(), // TasksScreen will serve as Browse screen
+            name: 'browse',       // Renamed from tasks
+            builder: (context, state) => const TasksScreen(), // TasksScreen will serve as Browse screen
             routes: [
+              // Task details and apply task are sub-routes of browsing tasks
               GoRoute(
-                path: ':id',
+                path: ':id', // e.g., /home/browse/task_id
                 name: 'task-details',
                 builder: (context, state) => TaskDetailsScreen(
                   taskId: state.pathParameters['id']!,
@@ -268,15 +238,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               ),
             ],
           ),
-          // Post Task screen (index 2)
           GoRoute(
-            path: '/home/post',
-            name: 'post-task',
-            builder: (context, state) => const CreateTaskScreen(),
-            redirect: (context, state) =>
-                '/create-task', // Redirect to the standalone route
+            path: '/home/my-tasks',
+            name: 'my-tasks',
+            builder: (context, state) => const MyTasksScreen(), // Placeholder for now
           ),
-          // Messages screen (index 3)
+          GoRoute(
+            path: '/home/post-task',
+            name: 'post-task',
+            builder: (context, state) => const CreateTaskScreen(), // CreateTaskScreen directly accessible
+          ),
           GoRoute(
             path: '/home/chat',
             name: 'chat',
@@ -291,14 +262,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               ),
             ],
           ),
-          // Profile screen (index 4)
           GoRoute(
             path: '/home/profile',
             name: 'profile',
-            builder: (context, state) => const ProfileScreen(),
+            builder: (context, state) => const ProfileScreen(), // Use the new ProfileScreen
           ),
         ],
       ),
     ],
   );
-});
+}); 
