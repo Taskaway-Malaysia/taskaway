@@ -1,56 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart'; // For date formatting
-import 'package:taskaway/core/constants/style_constants.dart'; // For theme colors
-import 'package:taskaway/core/utils/states.dart'; // For location dropdown
-import 'package:taskaway/features/auth/controllers/auth_controller.dart'; // For currentProfileProvider
+import 'package:intl/intl.dart';
 import 'package:taskaway/features/tasks/controllers/task_controller.dart';
 import 'package:taskaway/features/tasks/models/task.dart';
-import 'dart:developer' as dev;
 
-// Provider for role selection (Poster or Tasker)
-final taskRoleProvider = StateProvider.autoDispose<String>((ref) => 'poster');
-
-// Provider for task status filter
-final taskStatusProvider =
-    StateProvider.autoDispose<String>((ref) => 'awaiting_offers');
-
-// Search text provider for task filtering
-final searchTextProvider = StateProvider<String>((ref) => '');
-
-// Provider for filtered tasks that combines search, category, role and status filters
-final filteredTasksProvider =
-    Provider.autoDispose<AsyncValue<List<Task>>>((ref) {
+final roleProvider = StateProvider<String>((ref) => 'poster');
+final statusProvider = StateProvider<String>((ref) => 'awaiting_offers');
+final selectedTasksProvider = Provider<AsyncValue<List<Task>>>((ref) {
   final tasks = ref.watch(taskStreamProvider);
-  final searchQuery = ref.watch(searchTextProvider);
-  final selectedCategories = ref.watch(selectedCategoriesProvider);
-  final role = ref.watch(taskRoleProvider);
-  final status = ref.watch(taskStatusProvider);
+  final role = ref.watch(roleProvider);
+  final status = ref.watch(statusProvider);
 
-  return tasks.whenData((tasks) {
-    return tasks.where((task) {
-      // Filter by role (poster or tasker)
-      final matchesRole =
-          (role == 'poster' && task.posterId == 'current_user_id') ||
-              (role == 'tasker' && task.taskerId == 'current_user_id');
-
-      // Filter by status
-      final matchesStatus =
-          status == 'all' || mapStatusToFilter(task.status) == status;
-
-      // Filter by search query
-      final matchesSearch = searchQuery.isEmpty ||
-          task.title.toLowerCase().contains(searchQuery.toLowerCase()) ||
-          task.description.toLowerCase().contains(searchQuery.toLowerCase());
-
-      // Filter by categories
-      final matchesCategories = selectedCategories.isEmpty ||
-          selectedCategories.contains(task.category);
-
-      return matchesRole && matchesStatus && matchesSearch && matchesCategories;
-    }).toList();
-  });
+  return tasks.whenData((tasks) => tasks.where((task) {
+        final isCorrectRole = role == 'poster'
+            ? task.posterId == 'current_user_id'
+            : task.taskerId == 'current_user_id';
+        final isCorrectStatus = task.status == status;
+        return isCorrectRole && isCorrectStatus;
+      }).toList());
 });
+
+// Status tabs list
+final statusTabs = ['awaiting_offers', 'upcoming_tasks', 'completed'];
+final statusLabels = {
+  'awaiting_offers': 'Awaiting offers',
+  'upcoming_tasks': 'Upcoming tasks',
+  'completed': 'Completed',
+};
 
 // Helper function to map task status to filter value
 String mapStatusToFilter(String status) {
@@ -73,255 +49,367 @@ class MyTaskScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-
-    // Watch current profile to get the user role
-    final profileAsync = ref.watch(currentProfileProvider);
-
-    // Determine the header color based on user role
-    Color headerColor;
-    if (profileAsync.value?.role == 'poster') {
-      headerColor = StyleConstants.posterColorPrimary; // Poster Purple
-      dev.log('User is a poster, using poster theme colors');
-    } else {
-      // Default to tasker color for taskers and when profile is still loading
-      headerColor = StyleConstants.taskerColorPrimary; // Tasker Orange
-      dev.log(
-          'User is a tasker or profile still loading, using tasker theme colors');
-    }
+    final role = ref.watch(roleProvider);
+    final status = ref.watch(statusProvider);
     return Scaffold(
-      body: Column(
-        children: [
-          // Header Section
-          Container(
-            padding: const EdgeInsets.only(
-              top: kToolbarHeight, // Approx status bar height + appbar
-              left: 16.0,
-              right: 16.0,
-              bottom: 16.0,
-            ),
-            decoration: BoxDecoration(
-              color: headerColor, // Dynamically set based on user role
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(20.0),
-                bottomRight: Radius.circular(20.0),
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        backgroundColor: const Color(0xFFF2F2F7),
+        body: SafeArea(
+          child: Column(
+            children: [
+              // Header Section - Centered title with notification icon
+              Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0, vertical: 16.0),
+                alignment: Alignment.center,
+                child: Stack(
+                  alignment: Alignment.center,
                   children: [
-                    Text(
-                      'Browse Tasks',
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        color: Colors.black87, // Explicitly dark color
+                    // Centered title
+                    const Text(
+                      'My Tasks',
+                      style: TextStyle(
+                        fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    Row(
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.search, color: Colors.black),
-                          onPressed: () {
-                            // TODO: Implement search functionality
-                          },
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.notifications_none,
-                              color: Colors.black),
-                          onPressed: () {
-                            // TODO: Implement notification functionality
-                          },
-                        ),
-                      ],
+                    // Right-aligned notification icon
+                    Positioned(
+                      right: 0,
+                      child: IconButton(
+                        icon: const Icon(Icons.notifications_outlined),
+                        onPressed: () {},
+                      ),
                     ),
                   ],
                 ),
+              ),
 
-                const SizedBox(height: 16.0),
-                // Filter Dropdowns
-                Row(
+              // Role Toggle - Poster/Tasker
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16.0),
+                height: 48,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE8E8F0),
+                  borderRadius: BorderRadius.circular(12.0),
+                ),
+                padding: const EdgeInsets.all(4),
+                child: Row(
                   children: [
+                    // As Poster Tab
                     Expanded(
-                      child: FilterDropdown(
-                        hintText: 'Entire Malaysia',
-                        items: ['Entire Malaysia', ...states],
-                        onChanged: (value) {
-                          dev.log('Location filter changed to: $value');
-                        },
+                      child: GestureDetector(
+                        onTap: () =>
+                            ref.read(roleProvider.notifier).state = 'poster',
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: role == 'poster'
+                                ? const Color(0xFF7267CB)
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(8.0),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            'As Poster',
+                            style: TextStyle(
+                              color: role == 'poster'
+                                  ? Colors.white
+                                  : Colors.grey[600],
+                              fontWeight: FontWeight.w500,
+                              fontSize: 15,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                    const SizedBox(width: 8.0),
+                    // As Tasker Tab
                     Expanded(
-                      child: FilterDropdown(
-                        hintText: 'Select category',
-                        items: const [
-                          'Select category',
-                          'Home Services',
-                          'Cleaning',
-                          'Delivery',
-                          'IT & Tech'
-                        ],
-                        onChanged: (value) {
-                          dev.log('Category filter changed to: $value');
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 8.0),
-                    Expanded(
-                      child: FilterDropdown(
-                        hintText: 'Sort',
-                        items: const [
-                          'Sort',
-                          'Price: Low to High',
-                          'Price: High to Low',
-                          'Date: Newest',
-                          'Date: Oldest'
-                        ],
-                        onChanged: (value) {
-                          dev.log('Sort option changed to: $value');
-                        },
+                      child: GestureDetector(
+                        onTap: () =>
+                            ref.read(roleProvider.notifier).state = 'tasker',
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: role == 'tasker'
+                                ? const Color(0xFF7267CB)
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(8.0),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            'As Tasker',
+                            style: TextStyle(
+                              color: role == 'tasker'
+                                  ? Colors.white
+                                  : Colors.grey[600],
+                              fontWeight: FontWeight.w500,
+                              fontSize: 15,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12.0), // Spacing before the text
-                // "Grab a Task. Earn Money." Text - MOVED HERE (Inside Header, after filters)
-                Container(
-                  width: double
-                      .infinity, // Ensure it takes full width for left alignment
-                  // padding: const EdgeInsets.only(top: 12.0), // Padding already handled by SizedBox and Column's padding
-                  child: Text(
-                    'Grab a Task. Earn Money.',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+              ),
+
+              // Status Tabs - Awaiting/Upcoming/Completed
+              Container(
+                margin: const EdgeInsets.symmetric(
+                    vertical: 16.0, horizontal: 16.0),
+                height: 40,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE8E8F0),
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+                child: Row(
+                  children: statusTabs
+                      .map((tab) => Expanded(
+                            child: GestureDetector(
+                              onTap: () =>
+                                  ref.read(statusProvider.notifier).state = tab,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: status == tab
+                                      ? const Color(0xFF7267CB)
+                                      : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(0),
+                                ),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  statusLabels[tab] ?? tab,
+                                  style: TextStyle(
+                                    color: status == tab
+                                        ? Colors.white
+                                        : Colors.grey[600],
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ))
+                      .toList(),
+                ),
+              ),
+              // Task List
+              Expanded(
+                child: ref.watch(selectedTasksProvider).when<Widget>(
+                      data: (tasks) => tasks.isEmpty
+                          ? const Center(child: Text('No tasks found'))
+                          : ListView.builder(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 16.0),
+                              itemCount: tasks.length,
+                              itemBuilder: (context, index) {
+                                final task = tasks[index];
+                                return Container(
+                                  margin: const EdgeInsets.only(bottom: 16.0),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(8.0),
+                                    border:
+                                        Border.all(color: Colors.grey.shade200),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.grey.withOpacity(0.05),
+                                        spreadRadius: 0,
+                                        blurRadius: 4,
+                                        offset: const Offset(0, 1),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      // Top section with title and price
+                                      Container(
+                                        padding: const EdgeInsets.all(16.0),
+                                        decoration: const BoxDecoration(
+                                          border: Border(
+                                            bottom: BorderSide(
+                                                color: Color(0xFFEEEEEE),
+                                                width: 1),
+                                          ),
+                                        ),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                task.title,
+                                                style: const TextStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                            ),
+                                            Text(
+                                              'RM ${task.budget.toStringAsFixed(0)}',
+                                              style: const TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+
+                                      // Bottom section with status, date, location and view button
+                                      Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          // Left side - Status/Offers
+                                          Container(
+                                            width: 100,
+                                            padding: const EdgeInsets.symmetric(
+                                                vertical: 16.0,
+                                                horizontal: 12.0),
+                                            decoration: const BoxDecoration(
+                                              border: Border(
+                                                right: BorderSide(
+                                                    color: Color(0xFFEEEEEE),
+                                                    width: 1),
+                                              ),
+                                            ),
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.center,
+                                              children: [
+                                                Text(
+                                                  'Open',
+                                                  style: TextStyle(
+                                                    color:
+                                                        const Color(0xFF7267CB),
+                                                    fontWeight: FontWeight.w500,
+                                                    fontSize: 14,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Text(
+                                                  task.offers != null &&
+                                                          task.offers!
+                                                              .isNotEmpty
+                                                      ? '${task.offers!.length} ${task.offers!.length == 1 ? 'Offer' : 'Offers'}'
+                                                      : '—',
+                                                  style: TextStyle(
+                                                    color: Colors.grey[600],
+                                                    fontSize: 13,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+
+                                          // Right side - Date, location, view button
+                                          Expanded(
+                                            child: Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      vertical: 12.0,
+                                                      horizontal: 12.0),
+                                              child: Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.center,
+                                                children: [
+                                                  // Date and location column
+                                                  Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      // Date row
+                                                      Row(
+                                                        children: [
+                                                          const Icon(
+                                                            Icons
+                                                                .calendar_today_outlined,
+                                                            size: 14,
+                                                            color: Colors.grey,
+                                                          ),
+                                                          const SizedBox(
+                                                              width: 4),
+                                                          Text(
+                                                            'On ${DateFormat('EEE, d MMM').format(task.scheduledTime)}',
+                                                            style: TextStyle(
+                                                              color: Colors
+                                                                  .grey[700],
+                                                              fontSize: 12,
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                      const SizedBox(height: 8),
+                                                      // Location row
+                                                      Row(
+                                                        children: [
+                                                          const Icon(
+                                                            Icons
+                                                                .location_on_outlined,
+                                                            size: 14,
+                                                            color: Colors.grey,
+                                                          ),
+                                                          const SizedBox(
+                                                              width: 4),
+                                                          Text(
+                                                            task.location,
+                                                            style: TextStyle(
+                                                              color: Colors
+                                                                  .grey[700],
+                                                              fontSize: 12,
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ],
+                                                  ),
+
+                                                  // View button
+                                                  TextButton(
+                                                    onPressed: () {},
+                                                    style: TextButton.styleFrom(
+                                                      foregroundColor:
+                                                          const Color(
+                                                              0xFF7267CB),
+                                                      padding: EdgeInsets.zero,
+                                                      minimumSize:
+                                                          const Size(40, 30),
+                                                      tapTargetSize:
+                                                          MaterialTapTargetSize
+                                                              .shrinkWrap,
+                                                    ),
+                                                    child: const Text(
+                                                      'View',
+                                                      style: TextStyle(
+                                                        fontSize: 14,
+                                                        fontWeight:
+                                                            FontWeight.w500,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
+                      loading: () =>
+                          const Center(child: CircularProgressIndicator()),
+                      error: (error, stack) =>
+                          Center(child: Text('Error: $error')),
                     ),
-                    textAlign: TextAlign.left,
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-          // Task List
-          Expanded(
-            child: ref.watch(filteredTasksProvider).when(
-              data: (tasks) => tasks.isEmpty
-                  ? const Center(child: Text('No tasks found'))
-                  : ListView.builder(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      shrinkWrap: true,
-                      itemCount: tasks.length,
-                      itemBuilder: (context, index) {
-                        return TaskCard(task: tasks[index]);
-                      },
-                    ),
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, stack) => Center(child: Text('Error: $error')),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class FilterDropdown extends StatelessWidget {
-  final String hintText;
-  final List<String> items;
-  final ValueChanged<String?> onChanged;
-
-  const FilterDropdown({
-    required this.hintText,
-    required this.items,
-    required this.onChanged,
-    super.key,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 40.0,
-      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8.0),
-        border: Border.all(color: Colors.grey.shade300),
-      ),
-      child: DropdownButtonFormField<String>(
-        decoration: InputDecoration(
-          border: InputBorder.none,
-          hintText: hintText,
-          hintStyle: TextStyle(color: Colors.grey.shade600, fontSize: 13),
-          contentPadding:
-              const EdgeInsets.symmetric(vertical: 4.0, horizontal: 0),
-        ),
-        hint: Text(hintText),
-        isExpanded: true, // Ensure dropdown expands to fill available space
-        icon: const Icon(Icons.arrow_drop_down, size: 20.0), // Smaller icon
-        onChanged: onChanged, // Add back the onChanged callback
-        itemHeight: 48,
-        items: items.map((String value) {
-          return DropdownMenuItem<String>(
-            value: value,
-            child: Text(value, style: const TextStyle(fontSize: 13)),
-          );
-        }).toList(),
-      ),
-    );
-  }
-}
-
-class TaskCard extends ConsumerWidget {
-  final Task task;
-
-  const TaskCard({required this.task, super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Task title
-            Text(
-              task.title,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            // Task description
-            Text(
-              task.description,
-              style: TextStyle(color: Colors.grey[600]),
-            ),
-            const SizedBox(height: 12),
-            // Task details row
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // Category chip
-                Chip(
-                  label: Text(task.category),
-                  backgroundColor: const Color(0xFF6C5CE7).withOpacity(0.2),
-                  labelStyle: const TextStyle(color: Color(0xFF6C5CE7)),
-                ),
-                // Date
-                Text(
-                  DateFormat('MMM dd, yyyy').format(task.scheduledTime),
-                  style: TextStyle(color: Colors.grey[600]),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
+        ));
   }
 }

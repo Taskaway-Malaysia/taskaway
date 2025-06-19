@@ -264,6 +264,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             ],
           ),
           GoRoute(
+            path: '/home/tasks',
+            name: 'tasks',
+            builder: (context, state) => const MyTaskScreen(),
+          ),
+          GoRoute(
             path: '/home/post',
             name: 'post-task',
             builder: (context, state) => const CreateTaskScreen(),

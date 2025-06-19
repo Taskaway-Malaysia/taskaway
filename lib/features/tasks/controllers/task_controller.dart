@@ -21,23 +21,67 @@ final filteredTasksProvider = Provider<AsyncValue<List<Task>>>((ref) {
   final tasks = ref.watch(taskStreamProvider);
   final searchQuery = ref.watch(searchQueryProvider);
   final selectedCategories = ref.watch(selectedCategoriesProvider);
+  final role = ref.watch(roleProvider);
+  final status = ref.watch(statusProvider);
+  final currentUserId = ref.watch(currentUserIdProvider);
   
   return tasks.whenData((tasks) {
     return tasks.where((task) {
+      // Role filter
+      final matchesRole = role == 'poster' 
+          ? task.posterId == currentUserId 
+          : task.taskerId == currentUserId;
+
+      // Status filter
+      final matchesStatus = mapStatusToFilter(task.status) == status;
+
+      // Search filter
       final matchesSearch = searchQuery.isEmpty ||
           task.title.toLowerCase().contains(searchQuery.toLowerCase()) ||
           task.description.toLowerCase().contains(searchQuery.toLowerCase());
           
+      // Category filter
       final matchesCategories = selectedCategories.isEmpty ||
           selectedCategories.any((category) => category == task.category);
           
-      return matchesSearch && matchesCategories;
+      return matchesRole && matchesStatus && matchesSearch && matchesCategories;
     }).toList();
   });
 });
 
+// Provider for current user ID
+final currentUserIdProvider = Provider<String>((ref) {
+  // TODO: Replace with actual auth user ID
+  return 'current_user_id';
+});
+
+// User role provider (poster/tasker)
+final roleProvider = StateProvider<String>((ref) => 'poster');
+
+// Task status provider
+final statusProvider = StateProvider<String>((ref) => 'awaiting_offers');
+
+// Search query provider
 final searchQueryProvider = StateProvider<String>((ref) => '');
+
+// Selected categories provider
 final selectedCategoriesProvider = StateProvider<List<String>>((ref) => []);
+
+// Helper function to map task status to filter value
+String mapStatusToFilter(String status) {
+  switch (status.toLowerCase()) {
+    case 'open':
+      return 'awaiting_offers';
+    case 'assigned':
+    case 'in_progress':
+      return 'upcoming_tasks';
+    case 'completed':
+    case 'cancelled':
+      return 'completed';
+    default:
+      return 'awaiting_offers';
+  }
+}
 
 // Provider to expose categories
 final categoriesProvider = FutureProvider<List<Category>>((ref) {
