@@ -19,7 +19,6 @@ import '../features/auth/screens/signup_success_screen.dart';
 import '../features/home/screens/home_screen.dart';
 import '../features/profile/screens/profile_screen.dart';
 import '../features/tasks/screens/my_task_screen.dart';
-import '../features/tasks/screens/my_task_screen.dart';
 import '../features/tasks/screens/create_task_screen.dart';
 import '../features/tasks/screens/task_details_screen.dart';
 import '../features/tasks/screens/apply_task_screen.dart';
@@ -271,6 +270,24 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             path: '/home/tasks',
             name: 'tasks',
             builder: (context, state) => const MyTaskScreen(),
+            routes: [
+              GoRoute(
+                path: ':id',
+                name: 'task-details-from-tasks',
+                builder: (context, state) => TaskDetailsScreen(
+                  taskId: state.pathParameters['id']!,
+                ),
+                routes: [
+                  GoRoute(
+                    path: 'apply',
+                    name: 'apply-task-from-tasks',
+                    builder: (context, state) => ApplyTaskScreen(
+                      taskId: state.pathParameters['id']!,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
           GoRoute(
             path: '/home/post',

@@ -6,6 +6,9 @@ class ApiConstants {
   static const String supabaseUrl = 'https://txojopmkgjbqsfcacglz.supabase.co';
   static const String supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR4b2pvcG1rZ2picXNmY2FjZ2x6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk0MzMxODcsImV4cCI6MjA2NTAwOTE4N30.5itLemoP3J_05zZW9qS7yRb4RbBlZ2dy3J6GkDA1rkY';
   
+  // Storage Buckets
+  static const String taskImagesBucket = 'task-images';
+  
   // API Endpoints
   static const String billplzApiEndpoint = 'https://www.billplz-sandbox.com/api/v3';
   static const String billplzCallbackUrl = 'https://aytxvyemlspkzzmwpqkz.functions.supabase.co/billplz-callback';

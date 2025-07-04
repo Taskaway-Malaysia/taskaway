@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
 
 /// Constants for route paths used in the app router
 class RouteConstants {

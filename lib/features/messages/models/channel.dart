@@ -1,8 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:logger/logger.dart';
-
-final _logger = Logger();
+import 'dart:developer' as dev;
 
 @immutable
 class Channel {
@@ -114,7 +112,7 @@ class Channel {
       final count = (response as List).length;
       return channel.copyWith(unreadCount: count);
     } catch (e) {
-      _logger.e('Error getting unread count: $e');
+      dev.log('Error getting unread count: $e');
       return channel;
     }
   }

@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/style_constants.dart';
 import '../../auth/controllers/auth_controller.dart';
+import '../../auth/models/profile.dart'; // Import for Profile model
+import '../../tasks/screens/create_task_screen.dart'; // Import for createTaskDataProvider
 
 final currentIndexProvider = StateProvider<int>((ref) => 0);
 
@@ -18,7 +20,6 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final currentIndex = ref.watch(currentIndexProvider);
     final user = ref.watch(currentUserProvider);
-    final theme = Theme.of(context);
     final currentLocation = GoRouterState.of(context).uri.toString();
 
     // Only show the home content if we're on the browse route
@@ -82,11 +83,78 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
+  // Helper method to build category item widget
+  Widget _buildCategoryItem(BuildContext context, String title, IconData icon) {
+    // Convert display title to category ID format (lowercase with underscores)
+    String categoryId = title.toLowerCase().replaceAll(' & ', '_').replaceAll(' ', '_');
+    
+    // Handle special case for "Events & Photography"
+    if (categoryId == 'events_photography') {
+      categoryId = 'events_photography';
+    }
+    
+    return Consumer(builder: (context, ref, _) {
+      return InkWell(
+        onTap: () {
+          // Navigate to create task screen with pre-selected category
+          final currentTaskData = ref.read(createTaskDataProvider);
+          ref.read(createTaskDataProvider.notifier).state = {
+            ...currentTaskData,
+            'category': categoryId,
+          };
+          
+          // Navigate to the create task screen
+          context.go('/home/post');
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Column(
+          children: [
+            CircleAvatar(
+              backgroundColor: const Color(0xFF6C5CE7),
+              radius: 30,
+              child: Icon(icon, color: Colors.white, size: 24),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 12),
+            ),
+          ],
+        ),
+      );
+    });
+  }
+
   // Extracted home content into a separate method
   Widget _buildHomeContent(BuildContext context, dynamic user) {
     final screenHeight = MediaQuery.of(context).size.height;
     final headerHeight = screenHeight / 3; // 2/6 = 1/3 of screen height
+    
+    // Use Consumer to access the profile data
+    return Consumer(builder: (context, ref, child) {
+      // Get the profile data using the currentProfileProvider
+      final profileAsync = ref.watch(currentProfileProvider);
+      
+      return profileAsync.when(
+        data: (profile) => _buildHomeContentWithProfile(context, headerHeight, profile),
+        loading: () => _buildHomeContentWithProfile(context, headerHeight, null),
+        error: (error, stackTrace) => _buildHomeContentWithProfile(context, headerHeight, null),
+      );
+    });
+  }
 
+  // Build home content with profile data
+  Widget _buildHomeContentWithProfile(BuildContext context, double headerHeight, Profile? profile) {
+    // Get the first letter of the user's name for the avatar
+    String avatarText = 'U';
+    String displayName = 'User';
+    
+    if (profile != null) {
+      displayName = profile.fullName;
+      avatarText = profile.fullName.isNotEmpty ? profile.fullName[0].toUpperCase() : 'U';
+    }
+    
     return Column(
       children: [
         // Purple header with user info and notification
@@ -116,11 +184,7 @@ class HomeScreen extends ConsumerWidget {
                           radius: 24,
                           backgroundColor: Colors.white,
                           child: Text(
-                            user?.userMetadata?['name']
-                                    ?.toString()
-                                    .substring(0, 1)
-                                    .toUpperCase() ??
-                                'U',
+                            avatarText,
                             style: const TextStyle(
                                 color: Color(0xFF6C5CE7), fontSize: 18),
                           ),
@@ -135,7 +199,7 @@ class HomeScreen extends ConsumerWidget {
                                   color: Colors.white70, fontSize: 14),
                             ),
                             Text(
-                              user?.userMetadata?['name']?.toString() ?? 'User',
+                              displayName,
                               style: const TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
@@ -263,27 +327,5 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildCategoryItem(BuildContext context, String title, IconData icon) {
-    return InkWell(
-      onTap: () {
-        // Handle category tap
-      },
-      borderRadius: BorderRadius.circular(12),
-      child: Column(
-        children: [
-          CircleAvatar(
-            backgroundColor: const Color(0xFF6C5CE7),
-            radius: 30,
-            child: Icon(icon, color: Colors.white, size: 24),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 12),
-          ),
-        ],
-      ),
-    );
-  }
+
 }

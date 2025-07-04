@@ -20,7 +20,7 @@ if (keystorePropertiesFile.exists()) {
 android {
     namespace = "my.taskaway.taskaway"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = "27.0.12077973" // Updated to match plugin requirements
+    ndkVersion = "27.0.12077973"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11

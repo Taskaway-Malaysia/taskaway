@@ -88,16 +88,6 @@ taskaway/
 │   │   │   └── services/
 │   │   │       └── billplz_service.dart  # Billplz integration
 │   │   │
-│   │   ├── onboarding/     # Onboarding flow
-│   │   │   ├── controllers/
-│   │   │   │   └── onboarding_controller.dart  # Onboarding state management
-│   │   │   │
-│   │   │   ├── models/
-│   │   │   │   └── onboarding_page_model.dart  # Onboarding page data model
-│   │   │   │
-│   │   │   └── screens/
-│   │   │       └── onboarding_screen.dart  # Onboarding UI and flow
-│   │   │
 │   │   ├── profile/       # User profile management
 │   │   │   └── screens/
 │   │   │       └── profile_screen.dart  # User profile

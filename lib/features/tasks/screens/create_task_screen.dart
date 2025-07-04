@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -7,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../controllers/task_controller.dart';
 import '../../../core/services/analytics_service.dart';
+import 'dart:developer' as dev;
 
 // Provider to track current step in task creation process
 final createTaskStepProvider = StateProvider<int>((ref) => 0);
@@ -24,7 +26,8 @@ final createTaskDataProvider = StateProvider<Map<String, dynamic>>((ref) => {
       'timeOfDay': null,
       'locationType': 'physical',
       'providesMaterials': false,
-      'images': <File>[],
+      'images': <dynamic>[],
+
     });
 
 class CreateTaskScreen extends ConsumerStatefulWidget {
@@ -73,7 +76,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
       final taskData = ref.read(createTaskDataProvider);
 
       // Print debug info
-      print('Submitting task: $taskData');
+      dev.log('Submitting task: $taskData');
 
       // Ensure price is a double
       double price = 0.0;
@@ -100,9 +103,10 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
             timeOfDay: taskData['timeOfDay'],
             locationType: taskData['locationType'],
             providesMaterials: taskData['providesMaterials'],
-            images: taskData['images'] is List<File>
+            images: taskData['images'] is List
                 ? taskData['images']
-                : <File>[],
+                : <dynamic>[],
+
           );
 
       // Log analytics event for task creation
@@ -116,9 +120,13 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
       if (mounted) {
         // Show task posted success screen instead of popping
         ref.read(createTaskStepProvider.notifier).state = 4;
+        // Turn off loading state after success
+        setState(() {
+          _isLoading = false;
+        });
       }
     } catch (e) {
-      print('Error creating task: $e');
+      dev.log('Error creating task: $e');
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -250,8 +258,8 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                   if (currentStep > 0) {
                     _goToPreviousStep();
                   } else {
-                    // If on first step, go back to previous screen
-                    Navigator.of(context).pop();
+                    // If on first step, go back to home screen
+                    context.go('/home');
                   }
                 },
               ),
@@ -309,7 +317,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                 onPressed: _isLoading
                     ? null
                     : currentStep == 4
-                        ? () => context.go('/tasks') // Navigate to tasks screen
+                        ? () => context.go('/home/tasks') // Navigate to tasks screen
                         : _goToNextStep,
                 child: _isLoading
                     ? const SizedBox(
@@ -355,6 +363,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
   Widget _buildTaskPostedScreen(ThemeData theme) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min, // Set to min to prevent unbounded height issues
       children: [
         const SizedBox(height: 40),
         // Success checkmark icon
@@ -387,7 +396,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
         _buildNextStep(2, 'Accept an offer'),
         const SizedBox(height: 16),
         _buildNextStep(3, 'Chat and get your task done!'),
-        const Spacer(),
+        const SizedBox(height: 60), // Fixed height instead of Spacer
       ],
     );
   }
@@ -603,8 +612,8 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
 
         // Task details list
         _buildTaskDetailItem(
-          Icons.category_outlined,
-          taskData['category'] ?? 'None',
+          _getCategoryIcon(taskData['category'] ?? 'others'),
+          taskData['category'] != null ? _capitalizeCategoryName(taskData['category']) : 'None',
           onEdit: () => ref.read(createTaskStepProvider.notifier).state = 0,
         ),
         _buildTaskDetailItem(
@@ -636,7 +645,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
         ),
         _buildTaskDetailItem(
           Icons.attach_money_outlined,
-          'MYR ${taskData['price'] ?? '0'}${taskData['providesMaterials'] == true ? ' (Only paints are provided)' : ''}',
+          'MYR ${taskData['price'] ?? '0'}${taskData['providesMaterials'] == true ? ' (Materials provided)' : ''}',
           onEdit: () => ref.read(createTaskStepProvider.notifier).state = 2,
         ),
       ],
@@ -666,6 +675,38 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
         ],
       ),
     );
+  }
+
+  // Helper method to capitalize category names
+  String _capitalizeCategoryName(String category) {
+    // Convert snake_case to Title Case
+    final words = category.split('_');
+    return words.map((word) => word[0].toUpperCase() + word.substring(1)).join(' ');
+  }
+
+  // Helper method to get the appropriate icon for a category
+  IconData _getCategoryIcon(String category) {
+    switch (category) {
+      case 'cleaning':
+        return Icons.cleaning_services_outlined;
+      case 'handyman':
+        return Icons.handyman_outlined;
+      case 'gardening':
+        return Icons.yard_outlined;
+      case 'painting':
+        return Icons.format_paint_outlined;
+      case 'organizing':
+        return Icons.inventory_2_outlined;
+      case 'pet_care':
+        return Icons.pets_outlined;
+      case 'self_care':
+        return Icons.spa_outlined;
+      case 'events_photography':
+        return Icons.photo_camera_outlined;
+      case 'others':
+      default:
+        return Icons.category_outlined;
+    }
   }
 
   // Helper method to get the time of day text
@@ -846,7 +887,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
         decoration: BoxDecoration(
           color: isSelected
-              ? const Color(0xFF6C5CE7).withOpacity(0.1)
+              ? const Color(0xFF6C5CE7).withValues(alpha: 0.1)
               : Colors.grey.shade200,
           borderRadius: BorderRadius.circular(8),
           border: isSelected
@@ -995,41 +1036,53 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
               const SizedBox(width: 12),
               if (taskData['images'] != null &&
                   (taskData['images'] as List).isNotEmpty)
-                ...(taskData['images'] as List)
-                    .map((image) => Padding(
-                          padding: const EdgeInsets.only(right: 12),
-                          child: Stack(
-                            children: [
-                              Container(
-                                width: 80,
-                                height: 80,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(8),
-                                  image: DecorationImage(
-                                    image: FileImage(image),
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: List.generate(
+                    (taskData['images'] as List).length,
+                    (index) {
+                      final image = (taskData['images'] as List)[index];
+                      return Stack(
+                        children: [
+                          Container(
+                            height: 80,
+                            width: 80,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: Colors.grey.shade300,
                               ),
-                              Positioned(
-                                top: 4,
-                                right: 4,
-                                child: InkWell(
-                                  onTap: () => _removeImage(image),
-                                  child: Container(
-                                    padding: const EdgeInsets.all(4),
-                                    decoration: const BoxDecoration(
-                                      color: Colors.white,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Icon(Icons.close, size: 16),
-                                  ),
-                                ),
-                              ),
-                            ],
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(7),
+                              child: _buildImagePreview(image),
+                            ),
                           ),
-                        ))
-                    .toList(),
+                          Positioned(
+                            right: 0,
+                            top: 0,
+                            child: GestureDetector(
+                              onTap: () => _removeImage(image),
+                              child: Container(
+                                padding: const EdgeInsets.all(2),
+                                decoration: const BoxDecoration(
+                                  color: Colors.red,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.close,
+                                  size: 16,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
             ],
           ),
 
@@ -1070,6 +1123,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
           ),
           const SizedBox(height: 8),
           Row(
+            mainAxisSize: MainAxisSize.min, // Prevent unbounded constraints
             children: [
               Checkbox(
                 value: taskData['providesMaterials'] ?? false,
@@ -1083,7 +1137,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                 ),
                 activeColor: const Color(0xFF6C5CE7),
               ),
-              const Text('I will provide the required material(s)'),
+              const Flexible(child: Text('I will provide the required material(s)')),
             ],
           ),
         ],
@@ -1099,8 +1153,18 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
 
     return InkWell(
       onTap: () {
+        // Create a new map from the existing task data
         final updatedData = Map<String, dynamic>.from(taskData);
+        // Update location type
         updatedData['locationType'] = value;
+        // Save current text field values before updating state
+        if (_locationController.text.isNotEmpty) {
+          updatedData['location'] = _locationController.text;
+        }
+        if (_priceController.text.isNotEmpty) {
+          updatedData['price'] = double.tryParse(_priceController.text) ?? 0.0;
+        }
+        // Update state with the preserved values
         ref.read(createTaskDataProvider.notifier).state = updatedData;
       },
       borderRadius: BorderRadius.circular(8),
@@ -1164,8 +1228,15 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
         return;
       }
 
-      final imageFile = File(pickedFile.path);
-      images.add(imageFile);
+      // Handle image file differently for web vs mobile
+      if (kIsWeb) {
+        // For web, store the XFile directly
+        images.add(pickedFile);
+      } else {
+        // For mobile, convert to File
+        final imageFile = File(pickedFile.path);
+        images.add(imageFile);
+      }
 
       taskData['images'] = images;
       ref.read(createTaskDataProvider.notifier).state = taskData;
@@ -1179,7 +1250,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
   }
 
   // Remove image from the list
-  void _removeImage(File image) {
+  void _removeImage(dynamic image) {
     final taskData =
         Map<String, dynamic>.from(ref.read(createTaskDataProvider));
     final images = taskData['images'] as List;
@@ -1187,5 +1258,30 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
 
     taskData['images'] = images;
     ref.read(createTaskDataProvider.notifier).state = taskData;
+  }
+
+  // Helper to get preview widget for an image (works for both File and XFile)
+  Widget _buildImagePreview(dynamic imageObj) {
+    if (kIsWeb) {
+      if (imageObj is XFile) {
+        // For XFile on web, use network image with the objectUrl
+        return Image.network(
+          imageObj.path,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return const Center(child: Icon(Icons.broken_image, color: Colors.red));
+          },
+        );
+      }
+    }
+    // For File objects (mobile)
+    if (imageObj is File) {
+      return Image.file(
+        imageObj,
+        fit: BoxFit.cover,
+      );
+    }
+    // Fallback
+    return const Center(child: Icon(Icons.image_not_supported));
   }
 }

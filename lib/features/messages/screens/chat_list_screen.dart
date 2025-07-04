@@ -55,8 +55,6 @@ class ChatListScreen extends ConsumerWidget {
                 final otherPersonName = isCurrentUserPoster
                     ? channel.taskerName
                     : channel.posterName;
-                final otherPersonId =
-                    isCurrentUserPoster ? channel.taskerId : channel.posterId;
 
                 return InkWell(
                   onTap: () {

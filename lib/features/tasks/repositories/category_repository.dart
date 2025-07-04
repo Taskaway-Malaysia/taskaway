@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/category.dart';
-import '../../../core/constants/db_constants.dart';
+import 'dart:developer' as dev;
 
 final categoryRepositoryProvider = Provider<CategoryRepository>((ref) {
   return CategoryRepository(
@@ -11,26 +11,16 @@ final categoryRepositoryProvider = Provider<CategoryRepository>((ref) {
 
 class CategoryRepository {
   final SupabaseClient supabase;
-  final String _tableName = DbConstants.categoriesTable;
 
   CategoryRepository({required this.supabase});
 
   Future<List<Category>> getCategories() async {
-    try {
-      final response = await supabase
-          .from(_tableName)
-          .select()
-          .order('name');
-      
-      return response.map((json) => Category.fromJson(json)).toList();
-    } catch (e) {
-      print('Error fetching categories: $e');
-      // Return default categories if there's an error
-      return _getDefaultCategories();
-    }
+    // Since taskaway_categories is an ENUM and not a table, we'll use the hardcoded values
+    dev.log('Using hardcoded categories since taskaway_categories is an ENUM');
+    return _getDefaultCategories();
   }
 
-  // Fallback method to provide default categories if DB fetch fails
+  // Method to provide categories based on the Supabase ENUM
   List<Category> _getDefaultCategories() {
     return [
       Category(
@@ -41,9 +31,9 @@ class CategoryRepository {
         updatedAt: DateTime.now(),
       ),
       Category(
-        id: 'painting',
-        name: 'Painting',
-        icon: 'painting',
+        id: 'handyman',
+        name: 'Handyman',
+        icon: 'handyman',
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       ),
@@ -55,16 +45,44 @@ class CategoryRepository {
         updatedAt: DateTime.now(),
       ),
       Category(
-        id: 'delivery',
-        name: 'Delivery',
-        icon: 'delivery',
+        id: 'painting',
+        name: 'Painting',
+        icon: 'painting',
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       ),
       Category(
-        id: 'handyman',
-        name: 'Handyman',
-        icon: 'handyman',
+        id: 'organizing',
+        name: 'Organizing',
+        icon: 'organizing',
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      ),
+      Category(
+        id: 'pet_care',
+        name: 'Pet Care',
+        icon: 'pet_care',
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      ),
+      Category(
+        id: 'self_care',
+        name: 'Self Care',
+        icon: 'self_care',
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      ),
+      Category(
+        id: 'events_photography',
+        name: 'Events & Photography',
+        icon: 'events_photography',
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      ),
+      Category(
+        id: 'others',
+        name: 'Others',
+        icon: 'others',
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       ),

@@ -1,20 +1,29 @@
-import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/task.dart';
 import '../models/category.dart';
 import '../repositories/task_repository.dart';
+import '../repositories/category_repository.dart';
 import '../../../core/services/supabase_service.dart';
-import '../../../core/constants/db_constants.dart';
+import '../../messages/controllers/message_controller.dart';
+import '../../auth/models/profile.dart';
+import 'dart:developer' as dev;
+import '../../../core/constants/api_constants.dart';
 
-final taskControllerProvider = Provider((ref) {
+final taskControllerProvider = Provider<TaskController>((ref) {
   final repository = ref.watch(taskRepositoryProvider);
-  return TaskController(repository);
+  final categoryRepository = ref.watch(categoryRepositoryProvider);
+  return TaskController(ref: ref, repository: repository, categoryRepository: categoryRepository);
 });
 
 // Stream of all tasks
 final taskStreamProvider = StreamProvider<List<Task>>((ref) {
   return ref.watch(taskControllerProvider).watchTasks();
+});
+
+// Provider for a single task by ID
+final taskProvider = StreamProvider.family<Task, String>((ref, taskId) {
+  return ref.watch(taskControllerProvider).watchTask(taskId);
 });
 
 final filteredTasksProvider = Provider<AsyncValue<List<Task>>>((ref) {
@@ -90,10 +99,18 @@ final categoriesProvider = FutureProvider<List<Category>>((ref) {
 
 class TaskController {
   final TaskRepository _repository;
+  final CategoryRepository _categoryRepository;
+  final Ref _ref;
   final _supabase = Supabase.instance.client;
   final SupabaseService _supabaseService = SupabaseService();
 
-  TaskController(this._repository);
+  TaskController({
+    required TaskRepository repository,
+    required CategoryRepository categoryRepository,
+    required Ref ref
+  }) : _repository = repository,
+       _categoryRepository = categoryRepository,
+       _ref = ref;
 
   Stream<List<Task>> watchTasks() => _repository.watchTasks();
   
@@ -102,9 +119,9 @@ class TaskController {
   Future<Task> getTaskById(String id) => _repository.getTaskById(id);
 
   // Upload images to Supabase storage and return URLs
-  Future<List<String>> _uploadTaskImages(List<File> images, String taskId) async {
+  Future<List<String>> _uploadTaskImages(List<dynamic> images, String taskId) async {
     return await _supabaseService.uploadFiles(
-      bucket: 'task_images',
+      bucket: ApiConstants.taskImagesBucket,
       folderPath: 'tasks/$taskId',
       files: images,
     );
@@ -123,7 +140,7 @@ class TaskController {
     String? timeOfDay,
     String? locationType,
     bool? providesMaterials,
-    List<File>? images,
+    List<dynamic>? images,
   }) async {
     // Create the task first to get an ID
     final task = Task(
@@ -183,6 +200,203 @@ class TaskController {
     return _repository.updateTask(id, dbData);
   }
 
+  // Add an offer to a task
+  Future<Task> addOffer(String taskId, Map<String, dynamic> offer) async {
+    // Get the current task first
+    final task = await _repository.getTaskById(taskId);
+    
+    // Get the current offers or initialize an empty list
+    final List<Map<String, dynamic>> currentOffers = 
+        (task.offers ?? []).map((o) => Map<String, dynamic>.from(o)).toList();
+    
+    // Add the new offer
+    currentOffers.add(offer);
+    
+    // Update the task with the new offers list
+    return await _repository.updateTask(taskId, {
+      'offers': currentOffers,
+      'updated_at': DateTime.now().toIso8601String(),
+    });
+  }
+
+  // Accept an offer for a task and create a chat channel
+  Future<Task> acceptOffer(String taskId, String offerId, String taskerId) async {
+    // Get the current task
+    final task = await _repository.getTaskById(taskId);
+    
+    // Verify the current user is the poster
+    final currentUserId = _supabase.auth.currentUser?.id;
+    if (currentUserId != task.posterId) {
+      throw Exception('Only the task poster can accept offers');
+    }
+    
+    // Check if taskerId is the same as posterId (prevent self-acceptance)
+    if (taskerId == task.posterId) {
+      throw Exception('You cannot accept your own offer');
+    }
+    
+    // Update the offers to mark the accepted one
+    final List<Map<String, dynamic>> updatedOffers = 
+        (task.offers ?? []).map((o) {
+          final Map<String, dynamic> offer = Map<String, dynamic>.from(o);
+          // Update the status of the offer
+          if (offer['id'] == offerId) {
+            offer['status'] = 'accepted';
+          } else {
+            offer['status'] = 'rejected';
+          }
+          return offer;
+        }).toList();
+    
+    // Update the task
+    final updatedTask = await _repository.updateTask(taskId, {
+      'status': 'assigned',
+      'tasker_id': taskerId,
+      'offers': updatedOffers,
+      'updated_at': DateTime.now().toIso8601String(),
+    });
+
+    // After successful offer acceptance, create a chat channel between poster and tasker
+    try {
+      // Get names for poster and tasker from profiles
+      final posterProfile = await _fetchProfile(task.posterId);
+      final taskerProfile = await _fetchProfile(taskerId);
+
+      final posterName = posterProfile?.fullName ?? 'Task Poster';
+      final taskerName = taskerProfile?.fullName ?? 'Tasker';
+
+      // Create a new chat channel using MessageController
+      final messageController = _ref.read(messageControllerProvider);
+      await messageController.createChannel(
+        taskId: taskId,
+        taskTitle: task.title,
+        posterId: task.posterId,
+        posterName: posterName,
+        taskerId: taskerId,
+        taskerName: taskerName,
+      );
+    } catch (e) {
+      // Log the error but don't fail the entire operation
+      dev.log('Error creating chat channel: $e');
+    }
+    
+    return updatedTask;
+  }
+
+  // Helper method to fetch a user profile by ID
+  Future<Profile?> _fetchProfile(String userId) async {
+    try {
+      final data = await _supabase
+          .from('taskaway_profiles')
+          .select()
+          .eq('id', userId)
+          .single();
+      return Profile.fromJson(data);
+    } catch (e) {
+      dev.log('Error fetching profile for $userId: $e');
+      return null;
+    }
+  }
+  
+  // Start a task (update status to in_progress)
+  Future<Task> startTask(String taskId) async {
+    // Get the current task
+    final task = await _repository.getTaskById(taskId);
+    final currentUserId = _supabase.auth.currentUser?.id;
+    
+    // Verify the current user is the tasker
+    if (currentUserId != task.taskerId) {
+      throw Exception('Only the assigned tasker can start this task');
+    }
+    
+    // Verify the task is in the correct state
+    if (task.status != 'assigned') {
+      throw Exception('This task cannot be started. Current status: ${task.status}');
+    }
+    
+    // Update the task
+    return await _repository.updateTask(taskId, {
+      'status': 'in_progress',
+      'updated_at': DateTime.now().toIso8601String(),
+    });
+  }
+  
+  // Mark a task as completed (update status to pending_approval)
+  Future<Task> completeTask(String taskId) async {
+    // Get the current task
+    final task = await _repository.getTaskById(taskId);
+    final currentUserId = _supabase.auth.currentUser?.id;
+    
+    // Verify the current user is the tasker
+    if (currentUserId != task.taskerId) {
+      throw Exception('Only the assigned tasker can complete this task');
+    }
+    
+    // Verify the task is in the correct state
+    if (task.status != 'in_progress') {
+      throw Exception('This task cannot be marked as complete. Current status: ${task.status}');
+    }
+    
+    // Update the task
+    return await _repository.updateTask(taskId, {
+      'status': 'pending_approval',
+      'updated_at': DateTime.now().toIso8601String(),
+    });
+  }
+  
+  // Approve a completed task (update status to completed)
+  Future<Task> approveTask(String taskId) async {
+    // Get the current task
+    final task = await _repository.getTaskById(taskId);
+    final currentUserId = _supabase.auth.currentUser?.id;
+    
+    // Verify the current user is the poster
+    if (currentUserId != task.posterId) {
+      throw Exception('Only the task poster can approve this task');
+    }
+    
+    // Verify the task is in the correct state
+    if (task.status != 'pending_approval') {
+      throw Exception('This task cannot be approved. Current status: ${task.status}');
+    }
+    
+    // Update the task
+    return await _repository.updateTask(taskId, {
+      'status': 'completed',
+      'updated_at': DateTime.now().toIso8601String(),
+    });
+  }
+  
+  // Request revisions to a task (update status back to in_progress)
+  Future<Task> requestRevisions(String taskId, String? revisionNotes) async {
+    // Get the current task
+    final task = await _repository.getTaskById(taskId);
+    final currentUserId = _supabase.auth.currentUser?.id;
+    
+    // Verify the current user is the poster
+    if (currentUserId != task.posterId) {
+      throw Exception('Only the task poster can request revisions');
+    }
+    
+    // Verify the task is in the correct state
+    if (task.status != 'pending_approval') {
+      throw Exception('Revisions can only be requested for tasks pending approval');
+    }
+    
+    // Update the task
+    final Map<String, dynamic> updateData = {
+      'status': 'in_progress',
+      'updated_at': DateTime.now().toIso8601String(),
+    };
+    
+    // Add revision notes if provided
+    if (revisionNotes != null && revisionNotes.isNotEmpty) {
+      updateData['revision_notes'] = revisionNotes;
+    }
+    
+    return await _repository.updateTask(taskId, updateData);
+  }
+
   Future<bool> deleteTask(String id) async {
     try {
       // Get the task to access its images
@@ -203,100 +417,20 @@ class TaskController {
         }).toList();
         
         await _supabaseService.deleteFiles(
-          bucket: 'task_images',
+          bucket: ApiConstants.taskImagesBucket,
           filePaths: filePaths,
         );
       }
       
       return true;
     } catch (e) {
-      print('Error deleting task: $e');
+      dev.log('Error deleting task: $e');
       return false;
     }
   }
   
   // Get all available categories from the database
   Future<List<Category>> getCategories() async {
-    try {
-      final response = await _supabase
-          .from(DbConstants.categoriesTable)
-          .select()
-          .order('name');
-      
-      return response.map((json) => Category.fromJson(json)).toList();
-    } catch (e) {
-      print('Error fetching categories: $e');
-      // Return default categories if there's an error
-      return _getDefaultCategories();
-    }
-  }
-  
-  // Fallback method to provide default categories if DB fetch fails
-  List<Category> _getDefaultCategories() {
-    return [
-      Category(
-        id: 'handyman',
-        name: 'Handyman',
-        icon: 'handyman_outlined',
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      ),
-      Category(
-        id: 'cleaning',
-        name: 'Cleaning',
-        icon: 'cleaning_services_outlined',
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      ),
-      Category(
-        id: 'gardening',
-        name: 'Gardening',
-        icon: 'yard_outlined',
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      ),
-      Category(
-        id: 'painting',
-        name: 'Painting',
-        icon: 'format_paint_outlined',
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      ),
-      Category(
-        id: 'organizing',
-        name: 'Organizing',
-        icon: 'inventory_2_outlined',
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      ),
-      Category(
-        id: 'pet_care',
-        name: 'Pet Care',
-        icon: 'pets_outlined',
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      ),
-      Category(
-        id: 'self_care',
-        name: 'Self Care',
-        icon: 'spa_outlined',
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      ),
-      Category(
-        id: 'events_photography',
-        name: 'Events & Photography',
-        icon: 'camera_alt_outlined',
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      ),
-      Category(
-        id: 'others',
-        name: 'Others',
-        icon: 'more_horiz',
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      ),
-    ];
+    return await _categoryRepository.getCategories();
   }
 }

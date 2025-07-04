@@ -1,5 +1,12 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../constants/db_constants.dart';
+import 'dart:developer' as dev;
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:typed_data';
+import 'dart:io';
+import 'dart:async';
+import 'package:image_picker/image_picker.dart';
+import '../constants/api_constants.dart';
 
 // Define RealtimeListenTypes enum to match Supabase's expected values
 enum RealtimeListenTypes {
@@ -184,54 +191,110 @@ class SupabaseService {
         )
         .subscribe();
   }
-  
-  // Storage Methods
+
+  // Upload a single file to Supabase Storage
   Future<String?> uploadFile({
-    required String bucket,
     required String filePath,
     required dynamic file,
+    String? bucket,
     FileOptions? options,
   }) async {
+    // Use the constant from ApiConstants or fallback to the provided bucket
+    final storageBucket = bucket ?? ApiConstants.taskImagesBucket;
     try {
-      await client.storage.from(bucket).upload(
-        filePath,
-        file,
-        fileOptions: options ?? const FileOptions(cacheControl: '3600', upsert: false),
-      );
-      
-      return client.storage.from(bucket).getPublicUrl(filePath);
+      // Handle different file types based on platform
+      if (kIsWeb) {
+        // For web platform
+        if (file is XFile) {
+          // Handle XFile (from image_picker) for web
+          final bytes = await _readBytesFromXFile(file);
+          await client.storage.from(storageBucket).uploadBinary(
+            filePath,
+            bytes,
+            fileOptions: options ?? const FileOptions(cacheControl: '3600', upsert: false),
+          );
+        } else {
+          // Try direct upload which might work for some types
+          await client.storage.from(storageBucket).upload(
+            filePath,
+            file,
+            fileOptions: options ?? const FileOptions(cacheControl: '3600', upsert: false),
+          );
+        }
+      } else {
+        // For mobile platforms
+        if (file is File) {
+          await client.storage.from(storageBucket).upload(
+            filePath,
+            file,
+            fileOptions: options ?? const FileOptions(cacheControl: '3600', upsert: false),
+          );
+        } else if (file is XFile) {
+          // Handle XFile for mobile
+          final bytes = await _readBytesFromXFile(file);
+          await client.storage.from(storageBucket).uploadBinary(
+            filePath,
+            bytes,
+            fileOptions: options ?? const FileOptions(cacheControl: '3600', upsert: false),
+          );
+        } else {
+          throw Exception('Unsupported file type: ${file.runtimeType}');
+        }
+      }
+
+      return client.storage.from(storageBucket).getPublicUrl(filePath);
     } catch (e) {
-      print('Error uploading file: $e');
+      dev.log('Error uploading file: $e');
       return null;
     }
   }
-  
-  Future<List<String>> uploadFiles({
-    required String bucket,
-    required String folderPath,
-    required List<dynamic> files,
-  }) async {
-    final uploadedUrls = <String>[];
-    
-    for (final file in files) {
-      final fileExt = file.path.split('.').last;
-      final fileName = '${DateTime.now().millisecondsSinceEpoch}_${uploadedUrls.length}.$fileExt';
-      final filePath = '$folderPath/$fileName';
-      
-      final url = await uploadFile(
-        bucket: bucket,
-        filePath: filePath,
-        file: file,
-      );
-      
-      if (url != null) {
-        uploadedUrls.add(url);
-      }
+
+  // Helper method to read bytes from XFile (works on both web and mobile)
+  Future<Uint8List> _readBytesFromXFile(XFile file) async {
+    try {
+      return await file.readAsBytes();
+    } catch (e) {
+      dev.log('Error reading XFile bytes: $e');
+      throw Exception('Failed to read file: $e');
     }
-    
-    return uploadedUrls;
   }
-  
+
+  // Upload multiple files to Supabase Storage
+  Future<List<String>> uploadFiles({
+    required List<dynamic> files,
+    String? bucket,
+    String? folderPath,
+    FileOptions? options,
+  }) async {
+    // Use the constant from ApiConstants or fallback to the provided bucket
+    final storageBucket = bucket ?? ApiConstants.taskImagesBucket;
+    final List<String> uploadedUrls = [];
+    
+    try {
+      for (int i = 0; i < files.length; i++) {
+        final file = files[i];
+        final timestamp = DateTime.now().millisecondsSinceEpoch;
+        final fileName = '${timestamp}_$i.png';
+        final filePath = folderPath != null ? '$folderPath/$fileName' : fileName;
+        
+        final url = await uploadFile(
+          bucket: storageBucket,
+          filePath: filePath,
+          file: file,
+          options: options,
+        );
+        
+        if (url != null) {
+          uploadedUrls.add(url);
+        }
+      }
+      return uploadedUrls;
+    } catch (e) {
+      dev.log('Error uploading files: $e');
+      return [];
+    }
+  }
+
   Future<bool> deleteFile({
     required String bucket,
     required String filePath,
@@ -240,7 +303,7 @@ class SupabaseService {
       await client.storage.from(bucket).remove([filePath]);
       return true;
     } catch (e) {
-      print('Error deleting file: $e');
+      dev.log('Error deleting file: $e');
       return false;
     }
   }
@@ -253,7 +316,7 @@ class SupabaseService {
       await client.storage.from(bucket).remove(filePaths);
       return true;
     } catch (e) {
-      print('Error deleting files: $e');
+      dev.log('Error deleting files: $e');
       return false;
     }
   }
