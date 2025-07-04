@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:taskaway/core/constants/style_constants.dart';
 
 enum KeyboardLayout { lowercase, uppercase, numbers, symbols }
@@ -26,11 +27,46 @@ class QwertyOverlay extends StatefulWidget {
 }
 
 class _QwertyOverlayState extends State<QwertyOverlay> {
+  final FocusNode _focusNode = FocusNode();
   KeyboardLayout _currentLayout = KeyboardLayout.lowercase;
   bool _capsLockEnabled = false;
   bool _showPassword = false;
-  // Track the last time shift was pressed for double-tap detection
   int _lastShiftPressTime = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      FocusScope.of(context).requestFocus(_focusNode);
+    });
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
+    if (event is KeyDownEvent) {
+      final key = event.logicalKey;
+
+      if (key == LogicalKeyboardKey.backspace) {
+        widget.onBackspacePressed();
+        return KeyEventResult.handled;
+      } else if (key == LogicalKeyboardKey.enter || key == LogicalKeyboardKey.numpadEnter) {
+        widget.onConfirmPressed();
+        return KeyEventResult.handled;
+      } else if (key == LogicalKeyboardKey.space) {
+        widget.onCharacterPressed(' ');
+        return KeyEventResult.handled;
+      } else if (event.character != null && event.character!.isNotEmpty) {
+        widget.onCharacterPressed(event.character!); 
+        return KeyEventResult.handled;
+      }
+    }
+    return KeyEventResult.ignored;
+  }
 
   // Layouts
   static const List<String> _row1Lower = ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'];
@@ -49,28 +85,24 @@ class _QwertyOverlayState extends State<QwertyOverlay> {
   static const List<String> _row2Sym = ['_', '\\', '|', '~', '<', '>', '€', '£', '¥', '•'];
   static const List<String> _row3Sym = ['.', ',', '?', '!', "'"];
 
-
   void _toggleShift() {
     final now = DateTime.now().millisecondsSinceEpoch;
     final doubleTapDetected = now - _lastShiftPressTime < 300;
-    
+
     setState(() {
       if (_capsLockEnabled) {
-        // If caps lock is on, turn it off and go back to lowercase
         _capsLockEnabled = false;
         _currentLayout = KeyboardLayout.lowercase;
       } else if (doubleTapDetected) {
-        // If shift was double-tapped, enable caps lock
         _capsLockEnabled = true;
         _currentLayout = KeyboardLayout.uppercase;
       } else {
-        // Regular shift toggle behavior
         _currentLayout = _currentLayout == KeyboardLayout.lowercase
             ? KeyboardLayout.uppercase
             : KeyboardLayout.lowercase;
       }
     });
-    
+
     _lastShiftPressTime = now;
   }
 
@@ -81,7 +113,7 @@ class _QwertyOverlayState extends State<QwertyOverlay> {
           : KeyboardLayout.numbers;
     });
   }
-  
+
   void _toggleSymbols() {
     setState(() {
       _currentLayout = _currentLayout == KeyboardLayout.symbols
@@ -90,35 +122,38 @@ class _QwertyOverlayState extends State<QwertyOverlay> {
     });
   }
 
-
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(8.0),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(20.0),
-          topRight: Radius.circular(20.0),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            spreadRadius: 0,
-            blurRadius: 10,
-            offset: const Offset(0, -5),
+    return Focus(
+      focusNode: _focusNode,
+      onKeyEvent: _handleKeyEvent,
+      child: Container(
+        padding: const EdgeInsets.all(8.0),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(20.0),
+            topRight: Radius.circular(20.0),
           ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _buildHandle(context),
-          _buildPreview(context),
-          const SizedBox(height: 12),
-          _buildKeyboard(context),
-          const SizedBox(height: 8),
-        ],
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.1),
+              spreadRadius: 0,
+              blurRadius: 10,
+              offset: const Offset(0, -5),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildHandle(context),
+            _buildPreview(context),
+            const SizedBox(height: 12),
+            _buildKeyboard(context),
+            const SizedBox(height: 8),
+          ],
+        ),
       ),
     );
   }
