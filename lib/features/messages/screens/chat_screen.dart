@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import '../models/channel.dart';
 import '../models/message.dart';
+import '../controllers/message_controller.dart';
+import '../../auth/controllers/auth_controller.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   final Channel channel;
@@ -20,72 +23,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   final _scrollController = ScrollController();
   bool _isLoading = false;
   late Channel _channel;
-  late List<Message> _messages;
 
   @override
   void initState() {
     super.initState();
-
-    // Set channel from widget
     _channel = widget.channel;
-
-    // Initialize with hardcoded messages
-    _initializeHardcodedMessages();
-
-    // Schedule scroll to bottom after build
+    
+    // Mark channel as read when opening
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _scrollToBottom();
+      ref.read(messageControllerProvider).markChannelAsRead(_channel.id);
     });
-  }
-
-  void _initializeHardcodedMessages() {
-    final now = DateTime.now();
-    final yesterday = now.subtract(const Duration(days: 1));
-
-    _messages = [
-      Message(
-        id: '1',
-        channelId: _channel.id,
-        senderId: _channel.posterId,
-        content:
-            'Hi, thank you for accepting my task! I\'m really glad to have your help.',
-        createdAt: yesterday.add(const Duration(hours: 10)),
-        senderName: _channel.posterName,
-      ),
-      Message(
-        id: '2',
-        channelId: _channel.id,
-        senderId: _channel.taskerId,
-        content: 'you\'re welcome! So, do you still have all the parts?',
-        createdAt: yesterday.add(const Duration(hours: 10)),
-        senderName: _channel.taskerName,
-      ),
-      Message(
-        id: '3',
-        channelId: _channel.id,
-        senderId: _channel.posterId,
-        content:
-            'Yes, I still have all the parts? Do you think you\'ll be available to start tomorrow?',
-        createdAt: now.add(const Duration(hours: 10)),
-        senderName: _channel.posterName,
-      ),
-      Message(
-        id: '4',
-        channelId: _channel.id,
-        senderId: _channel.taskerId,
-        content: 'Absolutely, I can definitely start tomorrow.',
-        createdAt: now.add(const Duration(hours: 10)),
-        senderName: _channel.taskerName,
-      ),
-      Message(
-        id: '5',
-        channelId: _channel.id,
-        senderId: _channel.posterId,
-        content: 'I\'ll be available to assist if needed.',
-        createdAt: now.add(const Duration(hours: 10, minutes: 1)),
-        senderName: _channel.posterName,
-      ),
-    ];
   }
 
   @override
@@ -96,7 +43,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 
   void _scrollToBottom() {
-    if (_scrollController.hasClients && _messages.isNotEmpty) {
+    if (_scrollController.hasClients) {
       _scrollController.animateTo(
         _scrollController.position.maxScrollExtent,
         duration: const Duration(milliseconds: 300),
@@ -105,7 +52,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     }
   }
 
-  void _sendMessage() {
+  Future<void> _sendMessage() async {
     final text = _messageController.text.trim();
     if (text.isEmpty || _isLoading) return;
 
@@ -113,32 +60,53 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       _isLoading = true;
     });
 
-    // Create a new message and add it to the list
-    final newMessage = Message(
-      id: 'msg-${DateTime.now().millisecondsSinceEpoch}',
-      channelId: _channel.id,
-      senderId: _channel.taskerId, // Assuming current user is the tasker
-      content: text,
-      createdAt: DateTime.now(),
-      senderName: _channel.taskerName,
-    );
-
-    setState(() {
-      _messages = [..._messages, newMessage];
-      _isLoading = false;
+    try {
+      await ref.read(messageControllerProvider).sendMessage(
+        channelId: _channel.id,
+        content: text,
+      );
+      
       _messageController.clear();
-    });
-
-    // Schedule scroll to bottom after the message is added
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _scrollToBottom();
-    });
+      
+      // Scroll to bottom after sending
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scrollToBottom();
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to send message: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Assuming current user is the tasker for this example
-    final currentUserId = _channel.taskerId;
+    final currentUser = ref.watch(currentUserProvider);
+    final messagesAsync = ref.watch(channelMessagesProvider(_channel.id));
+    
+    if (currentUser == null) {
+      return Scaffold(
+        appBar: AppBar(
+          backgroundColor: const Color(0xFF6C5CE7),
+          foregroundColor: Colors.white,
+          title: const Text('Chat'),
+        ),
+        body: const Center(
+          child: Text('Please log in to view messages'),
+        ),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -154,7 +122,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               radius: 16,
               backgroundColor: Colors.white,
               child: Text(
-                _channel.posterName.substring(0, 1).toUpperCase(),
+                _getOtherPersonName(currentUser.id).substring(0, 1).toUpperCase(),
                 style: const TextStyle(color: Color(0xFF6C5CE7)),
               ),
             ),
@@ -164,7 +132,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    _channel.posterName,
+                    _getOtherPersonName(currentUser.id),
                     style: const TextStyle(fontSize: 16),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -190,30 +158,82 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       ),
       body: Column(
         children: [
-          // Date separators and messages
+          // Messages list
           Expanded(
-            child: ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.all(16),
-              itemCount: _messages.length + 2, // +2 for date separators
-              itemBuilder: (context, index) {
-                // Add date separators
-                if (index == 0) {
-                  return _buildDateSeparator('Yesterday');
-                } else if (index == 3) {
-                  return _buildDateSeparator('Today');
+            child: messagesAsync.when(
+              loading: () => const Center(
+                child: CircularProgressIndicator(),
+              ),
+              error: (error, stackTrace) => Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.error_outline,
+                      size: 64,
+                      color: Colors.red,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Failed to load messages',
+                      style: Theme.of(context).textTheme.bodyLarge,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      error.toString(),
+                      style: Theme.of(context).textTheme.bodySmall,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () => ref.refresh(channelMessagesProvider(_channel.id)),
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              ),
+              data: (messages) {
+                if (messages.isEmpty) {
+                  return const Center(
+                    child: Text(
+                      'No messages yet. Start the conversation!',
+                      style: TextStyle(
+                        color: Colors.grey,
+                        fontSize: 16,
+                      ),
+                    ),
+                  );
                 }
 
-                // Adjust index for actual messages
-                final messageIndex = index < 3 ? index - 1 : index - 2;
-                if (messageIndex < 0 || messageIndex >= _messages.length) {
-                  return const SizedBox.shrink();
-                }
+                // Auto-scroll to bottom when messages are loaded
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  _scrollToBottom();
+                });
 
-                final message = _messages[messageIndex];
-                final isCurrentUser = message.senderId == currentUserId;
+                return ListView.builder(
+                  controller: _scrollController,
+                  padding: const EdgeInsets.all(16),
+                  itemCount: messages.length,
+                  itemBuilder: (context, index) {
+                    final message = messages[index];
+                    final isCurrentUser = message.senderId == currentUser.id;
+                    
+                    // Show date separator if this is the first message of a new day
+                    bool showDateSeparator = false;
+                    if (index == 0 || 
+                        !_isSameDay(message.createdAt, messages[index - 1].createdAt)) {
+                      showDateSeparator = true;
+                    }
 
-                return _buildMessageBubble(message, isCurrentUser);
+                    return Column(
+                      children: [
+                        if (showDateSeparator)
+                          _buildDateSeparator(message.createdAt),
+                        _buildMessageBubble(message, isCurrentUser),
+                      ],
+                    );
+                  },
+                );
               },
             ),
           ),
@@ -250,6 +270,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     ),
                     textInputAction: TextInputAction.send,
                     onSubmitted: (_) => _sendMessage(),
+                    enabled: !_isLoading,
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -281,7 +302,31 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     );
   }
 
-  Widget _buildDateSeparator(String date) {
+  String _getOtherPersonName(String currentUserId) {
+    return _channel.posterId == currentUserId 
+        ? _channel.taskerName 
+        : _channel.posterName;
+  }
+
+  bool _isSameDay(DateTime date1, DateTime date2) {
+    return date1.year == date2.year &&
+        date1.month == date2.month &&
+        date1.day == date2.day;
+  }
+
+  Widget _buildDateSeparator(DateTime date) {
+    final now = DateTime.now();
+    final difference = now.difference(date).inDays;
+    
+    String displayText;
+    if (difference == 0) {
+      displayText = 'Today';
+    } else if (difference == 1) {
+      displayText = 'Yesterday';
+    } else {
+      displayText = DateFormat('MMMM d, y').format(date);
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 16),
       child: Center(
@@ -292,7 +337,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             borderRadius: BorderRadius.circular(16),
           ),
           child: Text(
-            date,
+            displayText,
             style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
           ),
         ),
@@ -335,33 +380,25 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   decoration: BoxDecoration(
                     color: isCurrentUser
-                        ? const Color(0xFFE9ECEF) // Light gray for current user
-                        : const Color(
-                            0xFFFFF8E1), // Light yellow for other user
+                        ? const Color(0xFF6C5CE7) // Purple for current user
+                        : const Color(0xFFF0F0F0), // Light gray for other user
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Text(
                     message.content,
-                    style: const TextStyle(color: Colors.black87),
+                    style: TextStyle(
+                      color: isCurrentUser ? Colors.white : Colors.black87,
+                    ),
                   ),
                 ),
                 Padding(
                   padding: const EdgeInsets.only(top: 4, left: 4, right: 4),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        '10:00 AM',
-                        style: TextStyle(
-                            fontSize: 10, color: Colors.grey.shade600),
-                      ),
-                      if (isCurrentUser)
-                        Padding(
-                          padding: const EdgeInsets.only(left: 4),
-                          child: Icon(Icons.done_all,
-                              size: 14, color: Colors.orange.shade300),
-                        ),
-                    ],
+                  child: Text(
+                    DateFormat('h:mm a').format(message.createdAt),
+                    style: TextStyle(
+                      fontSize: 10, 
+                      color: Colors.grey.shade600,
+                    ),
                   ),
                 ),
               ],

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/style_constants.dart';
+import '../../../insert_sample_data_helper.dart'; // Import for sample data helper
 import '../../auth/controllers/auth_controller.dart';
 import '../../auth/models/profile.dart'; // Import for Profile model
 import '../../tasks/screens/create_task_screen.dart'; // Import for createTaskDataProvider
@@ -282,15 +283,30 @@ class HomeScreen extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Padding(
-                    padding: EdgeInsets.only(left: 8.0, bottom: 0.0),
-                    child: Text(
-                      'Categories',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.only(left: 8.0, bottom: 0.0),
+                        child: Text(
+                          'Categories',
+                          style:
+                              TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      // Sample data button
+                      TextButton.icon(
+                        onPressed: () => showSampleDataDialog(context),
+                        icon: const Icon(Icons.message, size: 16),
+                        label: const Text('Sample Data', style: TextStyle(fontSize: 12)),
+                        style: TextButton.styleFrom(
+                          foregroundColor: const Color(0xFF6C5CE7),
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 0),
+                  const SizedBox(height: 8),
                   GridView.count(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),

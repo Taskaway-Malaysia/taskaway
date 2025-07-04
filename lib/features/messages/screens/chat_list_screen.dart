@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
-import '../providers/mock_data_provider.dart'; // Import mock data provider
+import '../controllers/message_controller.dart';
+import '../../auth/controllers/auth_controller.dart';
 
 class ChatListScreen extends ConsumerWidget {
   const ChatListScreen({super.key});
@@ -10,7 +11,8 @@ class ChatListScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final channelsList = ref.watch(mockChannelsProvider);
+    final currentUser = ref.watch(currentUserProvider);
+    final userChannelsAsync = ref.watch(userChannelsProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -27,8 +29,67 @@ class ChatListScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: channelsList.isEmpty
-          ? Center(
+      body: userChannelsAsync.when(
+        loading: () => const Center(
+          child: CircularProgressIndicator(),
+        ),
+        error: (error, stackTrace) => Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.error_outline,
+                size: 64,
+                color: theme.colorScheme.error,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Failed to load messages',
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  color: theme.colorScheme.error,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                error.toString(),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () => ref.refresh(userChannelsProvider),
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+        data: (channelsList) {
+          if (currentUser == null) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.login,
+                    size: 64,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.2),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Please log in to view messages',
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          if (channelsList.isEmpty) {
+            return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -44,141 +105,159 @@ class ChatListScreen extends ConsumerWidget {
                       color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                     ),
                   ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Start a conversation by accepting a task or posting one!',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
                 ],
               ),
-            )
-          : ListView.builder(
-              itemCount: channelsList.length,
-              itemBuilder: (context, index) {
-                final channel = channelsList[index];
-                final isCurrentUserPoster = channel.posterId == currentUserId;
-                final otherPersonName = isCurrentUserPoster
-                    ? channel.taskerName
-                    : channel.posterName;
+            );
+          }
 
-                return InkWell(
-                  onTap: () {
-                    // Navigate to chat screen with the channel object as extra data
-                    context.push('/home/chat/${channel.id}', extra: channel);
-                  },
-                  child: Container(
-                    decoration: BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(
-                          color: Colors.grey.shade200,
-                          width: 1,
-                        ),
+          return ListView.builder(
+            itemCount: channelsList.length,
+            itemBuilder: (context, index) {
+              final channel = channelsList[index];
+              final isCurrentUserPoster = channel.posterId == currentUser.id;
+              final otherPersonName = isCurrentUserPoster
+                  ? channel.taskerName
+                  : channel.posterName;
+
+              return InkWell(
+                onTap: () {
+                  // Mark channel as read when opening it
+                  ref.read(messageControllerProvider).markChannelAsRead(channel.id);
+                  
+                  // Navigate to chat screen with the channel object as extra data
+                  context.push('/home/chat/${channel.id}', extra: channel);
+                },
+                child: Container(
+                  decoration: BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(
+                        color: Colors.grey.shade200,
+                        width: 1,
                       ),
                     ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                    child: Row(
-                      children: [
-                        // Avatar
-                        CircleAvatar(
-                          radius: 24,
-                          backgroundColor: Colors.grey.shade300,
-                          child: Text(
-                            otherPersonName.isNotEmpty
-                                ? otherPersonName[0].toUpperCase()
-                                : '?',
-                            style: const TextStyle(
-                              color: Colors.black54,
-                              fontWeight: FontWeight.bold,
-                            ),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  child: Row(
+                    children: [
+                      // Avatar
+                      CircleAvatar(
+                        radius: 24,
+                        backgroundColor: Colors.grey.shade300,
+                        child: Text(
+                          otherPersonName.isNotEmpty
+                              ? otherPersonName[0].toUpperCase()
+                              : '?',
+                          style: const TextStyle(
+                            color: Colors.black54,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        // Message content
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  // Person name
-                                  Text(
+                      ),
+                      const SizedBox(width: 12),
+                      // Message content
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment:
+                                  MainAxisAlignment.spaceBetween,
+                              children: [
+                                // Person name
+                                Expanded(
+                                  child: Text(
                                     otherPersonName,
                                     style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 16,
                                     ),
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                  // Time
-                                  Text(
-                                    _getFormattedTime(channel.lastMessageAt),
-                                    style: TextStyle(
-                                      color: Colors.grey.shade600,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 4),
-                              // Task title
-                              Text(
-                                channel.taskTitle,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 14,
                                 ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                                // Time
+                                Text(
+                                  _getFormattedTime(channel.lastMessageAt),
+                                  style: TextStyle(
+                                    color: Colors.grey.shade600,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            // Task title
+                            Text(
+                              channel.taskTitle,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
                               ),
-                              const SizedBox(height: 4),
-                              // Last message with unread indicator
-                              Row(
-                                children: [
-                                  Expanded(
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 4),
+                            // Last message with unread indicator
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    channel.lastMessageContent ??
+                                        'No messages yet',
+                                    style: TextStyle(
+                                      color: channel.unreadCount > 0
+                                          ? Colors.black
+                                          : Colors.grey.shade600,
+                                      fontWeight: channel.unreadCount > 0
+                                          ? FontWeight.w500
+                                          : FontWeight.normal,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                if (channel.unreadCount > 0)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF8B5CF6),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
                                     child: Text(
-                                      channel.lastMessageContent ??
-                                          'No messages yet',
-                                      style: TextStyle(
-                                        color: channel.unreadCount > 0
-                                            ? Colors.black
-                                            : Colors.grey.shade600,
-                                        fontWeight: channel.unreadCount > 0
-                                            ? FontWeight.w500
-                                            : FontWeight.normal,
+                                      channel.unreadCount.toString(),
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
                                       ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
-                                  if (channel.unreadCount > 0)
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 4,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFF8B5CF6),
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: Text(
-                                        channel.unreadCount.toString(),
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ],
-                          ),
+                              ],
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                );
-              },
-            ),
+                ),
+              );
+            },
+          );
+        },
+      ),
     );
   }
 
