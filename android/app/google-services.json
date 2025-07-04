@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "189891927637",
+    "project_id": "flutter-staging-taskaway",
+    "storage_bucket": "flutter-staging-taskaway.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:189891927637:android:087a000b2e89b29d203edc",
+        "android_client_info": {
+          "package_name": "my.taskaway.taskaway"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD0vKeCvlWnowfYZlDQXykmHocbXOtQFdk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

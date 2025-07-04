@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/foundation.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 // Only import web plugins when needed
 import 'core/constants/api_constants.dart';
 import 'core/constants/style_constants.dart';
@@ -23,6 +25,12 @@ void main() async {
   }
 
   try {
+    // Initialize Firebase
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    dev.log('Firebase initialized successfully');
+    
     // Initialize Supabase
     await Supabase.initialize(
       url: ApiConstants.supabaseUrl,
@@ -31,7 +39,7 @@ void main() async {
     );
     dev.log('Supabase initialized successfully');
   } catch (e) {
-    dev.log('Error initializing Supabase: $e');
+    dev.log('Error initializing services: $e');
     return;
   }
 

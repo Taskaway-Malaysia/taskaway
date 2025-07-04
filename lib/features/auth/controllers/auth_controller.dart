@@ -4,10 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:taskaway/features/auth/models/profile.dart'; // For Profile model
 import 'dart:developer' as dev;
+import 'package:taskaway/core/services/analytics_service.dart';
 
 final authControllerProvider = StateNotifierProvider<AuthController, bool>((ref) {
   return AuthController(
     supabase: Supabase.instance.client,
+    analytics: ref.read(analyticsServiceProvider),
   );
 });
 
@@ -56,8 +58,9 @@ final currentProfileProvider = FutureProvider<Profile?>((ref) async {
 
 class AuthController extends StateNotifier<bool> {
   final SupabaseClient supabase;
+  final AnalyticsService analytics;
 
-  AuthController({required this.supabase}) : super(false);
+  AuthController({required this.supabase, required this.analytics}) : super(false);
   
   // Get the current user
   User? get currentUser => supabase.auth.currentUser;
@@ -74,6 +77,13 @@ class AuthController extends StateNotifier<bool> {
         password: password,
         data: data,
       );
+      
+      // Log analytics event
+      if (response.user != null) {
+        await analytics.logSignUp(signUpMethod: 'email');
+        await analytics.setUserId(response.user!.id);
+      }
+      
       return response;
     } finally {
       state = false;
@@ -90,6 +100,13 @@ class AuthController extends StateNotifier<bool> {
         email: email,
         password: password,
       );
+      
+      // Log analytics event
+      if (response.user != null) {
+        await analytics.logLogin(loginMethod: 'email');
+        await analytics.setUserId(response.user!.id);
+      }
+      
       return response;
     } finally {
       state = false;
@@ -99,6 +116,7 @@ class AuthController extends StateNotifier<bool> {
   Future<void> signOut() async {
     state = true;
     try {
+      await analytics.logLogout();
       await supabase.auth.signOut();
     } finally {
       state = false;
