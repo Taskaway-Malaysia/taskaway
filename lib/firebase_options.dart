@@ -53,6 +53,7 @@ class DefaultFirebaseOptions {
     projectId: 'flutter-staging-taskaway',
     authDomain: 'flutter-staging-taskaway.firebaseapp.com',
     storageBucket: 'flutter-staging-taskaway.firebasestorage.app',
+    measurementId: 'G-JZGP3T566H',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
@@ -71,4 +72,5 @@ class DefaultFirebaseOptions {
     storageBucket: 'flutter-staging-taskaway.firebasestorage.app',
     iosBundleId: 'my.taskaway.taskaway',
   );
+
 }
