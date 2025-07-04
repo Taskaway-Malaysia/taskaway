@@ -19,6 +19,8 @@ import '../features/auth/screens/signup_success_screen.dart';
 import '../features/home/screens/home_screen.dart';
 import '../features/profile/screens/profile_screen.dart';
 import '../features/tasks/screens/my_task_screen.dart';
+import '../features/tasks/screens/browse_tasks_screen.dart';
+import '../features/tasks/screens/post_task_screen.dart';
 import '../features/tasks/screens/create_task_screen.dart';
 import '../features/tasks/screens/task_details_screen.dart';
 import '../features/tasks/screens/apply_task_screen.dart';
@@ -241,7 +243,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/home/browse',
             name: 'browse',
-            builder: (context, state) => const MyTaskScreen(),
+            builder: (context, state) => const BrowseTasksScreen(),
             routes: [
               GoRoute(
                 path: ':id',
@@ -287,8 +289,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/home/post',
             name: 'post-task',
-            builder: (context, state) => const CreateTaskScreen(),
-            redirect: (context, state) => '/create-task',
+            builder: (context, state) => const PostTaskScreen(),
           ),
           GoRoute(
             path: '/home/chat',

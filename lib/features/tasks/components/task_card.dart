@@ -5,8 +5,9 @@ import 'package:taskaway/features/tasks/models/task.dart';
 
 class TaskCard extends StatelessWidget {
   final Task task;
+  final Color? accentColor;
 
-  const TaskCard({super.key, required this.task});
+  const TaskCard({super.key, required this.task, this.accentColor});
 
   String _getFormattedDate(DateTime date) {
     final now = DateTime.now();
@@ -24,6 +25,7 @@ class TaskCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final currencyFormat =
         NumberFormat.currency(locale: 'ms_MY', symbol: 'RM ', decimalDigits: 0);
+    final primaryColor = accentColor ?? const Color(0xFF7B61FF);
 
     return GestureDetector(
       onTap: () => GoRouter.of(context).go('/home/tasks/${task.id}'),
@@ -78,8 +80,8 @@ class TaskCard extends StatelessWidget {
                         children: [
                           Text(
                             task.status.toUpperCase(),
-                            style: const TextStyle(
-                              color: Color(0xFF7B61FF),
+                            style: TextStyle(
+                              color: primaryColor,
                               fontWeight: FontWeight.bold,
                               fontSize: 12,
                             ),
@@ -88,7 +90,7 @@ class TaskCard extends StatelessWidget {
                           Container(
                             height: 2,
                             width: 30,
-                            color: const Color(0xFF7B61FF),
+                            color: primaryColor,
                           ),
                           const SizedBox(height: 4),
                           Text(
@@ -151,10 +153,10 @@ class TaskCard extends StatelessWidget {
                               ),
                             ],
                           ),
-                          const Text(
+                          Text(
                             'View',
                             style: TextStyle(
-                              color: Color(0xFF7B61FF),
+                              color: primaryColor,
                               fontWeight: FontWeight.bold,
                               fontSize: 14,
                             ),
