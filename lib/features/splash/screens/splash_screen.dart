@@ -1,11 +1,12 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:taskaway/core/constants/asset_constants.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:taskaway/core/constants/asset_constants.dart';
 import 'package:taskaway/features/auth/controllers/auth_controller.dart';
+import 'package:taskaway/features/onboarding/controllers/onboarding_controller.dart';
 import 'dart:developer' as dev;
-import 'dart:async';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -17,20 +18,32 @@ class SplashScreen extends ConsumerStatefulWidget {
 class _SplashScreenState extends ConsumerState<SplashScreen> {
   bool _minimumTimeElapsed = false;
   bool _authFlowCompleted = false;
+  bool _showInitialWhiteScreen = true;
   String? _targetRoute;
   Timer? _timer;
+  Timer? _whiteScreenTimer;
 
   @override
   void initState() {
     super.initState();
     dev.log('SplashScreen initState');
 
-    _timer = Timer(const Duration(milliseconds: 2500), () {
+    // First show white screen for 0.5 seconds
+    _whiteScreenTimer = Timer(const Duration(milliseconds: 500), () {
       if (mounted) {
         setState(() {
-          _minimumTimeElapsed = true;
+          _showInitialWhiteScreen = false;
         });
-        _navigateIfReady();
+        
+        // After white screen, show splash content for 2.5 seconds
+        _timer = Timer(const Duration(milliseconds: 2500), () {
+          if (mounted) {
+            setState(() {
+              _minimumTimeElapsed = true;
+            });
+            _navigateIfReady();
+          }
+        });
       }
     });
 
@@ -108,21 +121,23 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
   void _navigateIfReady() {
     dev.log('Attempting navigation: MinTime: $_minimumTimeElapsed, AuthFlow: $_authFlowCompleted, Route: $_targetRoute');
-    if (_minimumTimeElapsed && _authFlowCompleted && _targetRoute != null && mounted) {
-      // Ensure we don't get stuck in a loop if already on the target route or splash
-      final currentLocation = GoRouterState.of(context).matchedLocation;
-      if (_targetRoute == '/login' && (currentLocation == '/login' || currentLocation == '/')) {
-        if (currentLocation == '/') {
-            dev.log('SplashScreen: Conditions met, already on / and target is /login. Navigating to $_targetRoute');
-            context.go(_targetRoute!); 
-        } else {
-            dev.log('SplashScreen: Conditions met, but already on /login. No navigation needed.');
-        }
-      } else if (currentLocation != _targetRoute) {
-        dev.log('SplashScreen: Conditions met. Navigating to $_targetRoute');
-        context.go(_targetRoute!); 
+    if (_minimumTimeElapsed && _authFlowCompleted && mounted && _targetRoute != null) {
+      // Check if onboarding has been completed
+      final bool onboardingCompleted = ref.read(onboardingCompletedProvider);
+      
+      // If onboarding not completed, navigate to onboarding first
+      if (!onboardingCompleted && (_targetRoute == '/login' || _targetRoute == '/home')) {
+        dev.log('SplashScreen: Navigating to onboarding');
+        context.go('/onboarding');
       } else {
-        dev.log('SplashScreen: Conditions met, but already on target route $_targetRoute. No navigation needed.');
+        // Ensure we don't get stuck in a loop if already on the target route or splash
+        final currentLocation = GoRouterState.of(context).matchedLocation;
+        if (currentLocation != _targetRoute) {
+          dev.log('SplashScreen: Conditions met. Navigating to $_targetRoute');
+          context.go(_targetRoute!); 
+        } else {
+          dev.log('SplashScreen: Conditions met, but already on target route $_targetRoute. No navigation needed.');
+        }
       }
     }
   }
@@ -130,12 +145,13 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   @override
   void dispose() {
     _timer?.cancel();
+    _whiteScreenTimer?.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    dev.log('SplashScreen build');
+    dev.log('SplashScreen build: showWhiteScreen=$_showInitialWhiteScreen');
 
     // Listen to authStateProvider changes within the build method.
     // This is the correct place for ref.listen according to Riverpod guidelines.
@@ -146,6 +162,15 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       }
     });
 
+    // Show white screen for first 0.5 seconds
+    if (_showInitialWhiteScreen) {
+      return const Scaffold(
+        backgroundColor: Colors.white,
+        body: SizedBox.expand(),
+      );
+    }
+    
+    // Then show the actual splash screen content for 2.5 seconds
     return const Scaffold(
       body: Center(
         child: Column(

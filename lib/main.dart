@@ -2,21 +2,25 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_web_plugins/flutter_web_plugins.dart';
+// Only import web plugins when needed
 import 'core/constants/api_constants.dart';
 import 'core/constants/style_constants.dart';
 import 'core/theme/app_theme.dart';
 import 'routes/app_router.dart';
-import 'package:logger/logger.dart';
+import 'dart:developer' as dev;
 
-final _logger = Logger();
+// We'll conditionally initialize web-specific functionality
 
 void main() async {
-  // Use path URL strategy for web
-  if (kIsWeb) {
-    setUrlStrategy(PathUrlStrategy());
-  }
+  // Initialize Flutter binding
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Configure web URL strategy if running on web
+  // This is handled separately to avoid import errors on mobile
+  if (kIsWeb) {
+    // Web-specific initialization will be handled by the Flutter framework
+    // We don't need to manually set the URL strategy for this app on mobile
+  }
 
   try {
     // Initialize Supabase
@@ -25,9 +29,9 @@ void main() async {
       anonKey: ApiConstants.supabaseAnonKey,
       debug: true, // Enable debug mode to see detailed logs
     );
-    _logger.i('Supabase initialized successfully');
+    dev.log('Supabase initialized successfully');
   } catch (e) {
-    _logger.e('Error initializing Supabase: $e');
+    dev.log('Error initializing Supabase: $e');
     return;
   }
 
@@ -48,8 +52,8 @@ class TaskawayApp extends ConsumerWidget {
     return MaterialApp.router(
       title: StyleConstants.appName,
       theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system,
+      darkTheme: AppTheme.lightTheme, // Using lightTheme for darkTheme as well
+      themeMode: ThemeMode.light, // Force light mode regardless of system settings
       debugShowCheckedModeBanner: false,
       routerConfig: router,
     );

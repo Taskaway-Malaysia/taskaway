@@ -1,9 +1,7 @@
 import 'dart:convert';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/constants/api_constants.dart';
-import 'package:logger/logger.dart';
-
-final _logger = Logger();
+import 'dart:developer' as dev;
 
 class BillplzService {
   final _supabase = Supabase.instance.client;
@@ -22,13 +20,13 @@ class BillplzService {
     required String redirectUrl,
   }) async {
     try {
-      _logger.i('Creating bill with params:'); // Debug log
-      _logger.i('- Customer Name: $customerName');
-      _logger.i('- Customer Email: $customerEmail');
-      _logger.i('- Customer Phone: ${customerPhone ?? "Not provided"}');
-      _logger.i('- Amount: RM ${amount.toStringAsFixed(2)}');
-      _logger.i('- Description: $description');
-      _logger.i('- Redirect URL: $redirectUrl');
+      dev.log('Creating bill with params:'); // Debug log
+      dev.log('- Customer Name: $customerName');
+      dev.log('- Customer Email: $customerEmail');
+      dev.log('- Customer Phone: ${customerPhone ?? "Not provided"}');
+      dev.log('- Amount: RM ${amount.toStringAsFixed(2)}');
+      dev.log('- Description: $description');
+      dev.log('- Redirect URL: $redirectUrl');
 
       // Get current session for auth header
       final session = _supabase.auth.currentSession;
@@ -47,7 +45,7 @@ class BillplzService {
         'redirect_url': redirectUrl,
       };
 
-      _logger.i('Invoking Edge Function with data: ${jsonEncode(requestData)}'); // Debug log
+      dev.log('Invoking Edge Function with data: ${jsonEncode(requestData)}'); // Debug log
 
       final response = await _supabase.functions.invoke(
         'create-bill',
@@ -60,8 +58,8 @@ class BillplzService {
         onTimeout: () => throw Exception('Request timed out'),
       );
 
-      _logger.i('Edge Function Response Status: ${response.status}'); // Debug log
-      _logger.i('Edge Function Response Data: ${response.data}'); // Debug log
+      dev.log('Edge Function Response Status: ${response.status}'); // Debug log
+      dev.log('Edge Function Response Data: ${response.data}'); // Debug log
 
       if (response.status != 200) {
         final errorMessage = response.data is Map 
@@ -76,15 +74,15 @@ class BillplzService {
 
       return response.data;
     } catch (e, stackTrace) {
-      _logger.e('Error creating bill: $e'); // Debug log
-      _logger.e('Stack trace: $stackTrace'); // Debug log for troubleshooting
+      dev.log('Error creating bill: $e'); // Debug log
+      dev.log('Stack trace: $stackTrace'); // Debug log for troubleshooting
       throw Exception('Failed to create bill: $e');
     }
   }
 
   Future<Map<String, dynamic>> getBillStatus(String billId) async {
     try {
-      _logger.i('Getting status for bill: $billId'); // Debug log
+      dev.log('Getting status for bill: $billId'); // Debug log
 
       // Get current session for auth header
       final session = _supabase.auth.currentSession;
@@ -106,8 +104,8 @@ class BillplzService {
         onTimeout: () => throw Exception('Request timed out'),
       );
 
-      _logger.i('Edge Function Response Status: ${response.status}'); // Debug log
-      _logger.i('Edge Function Response Data: ${response.data}'); // Debug log
+      dev.log('Edge Function Response Status: ${response.status}'); // Debug log
+      dev.log('Edge Function Response Data: ${response.data}'); // Debug log
 
       if (response.status != 200) {
         final errorMessage = response.data is Map 
@@ -122,8 +120,8 @@ class BillplzService {
 
       return response.data;
     } catch (e, stackTrace) {
-      _logger.e('Error getting bill status: $e'); // Debug log
-      _logger.e('Stack trace: $stackTrace'); // Debug log for troubleshooting
+      dev.log('Error getting bill status: $e'); // Debug log
+      dev.log('Stack trace: $stackTrace'); // Debug log for troubleshooting
       throw Exception('Failed to get bill status: $e');
     }
   }
@@ -131,10 +129,10 @@ class BillplzService {
   // Test method to verify the payment flow
   Future<void> testPaymentFlow() async {
     try {
-      _logger.i('\n=== Starting Payment Flow Test ===\n');
+      dev.log('\n=== Starting Payment Flow Test ===\n');
 
       // Step 1: Create a test payment record
-      _logger.i('Step 1: Creating test payment record...');
+      dev.log('Step 1: Creating test payment record...');
       final paymentData = await _supabase.from('taskaway_payments').insert({
         'task_id': 'test-task-${DateTime.now().millisecondsSinceEpoch}',
         'payer_id': 'test-payer',
@@ -145,10 +143,10 @@ class BillplzService {
         'updated_at': DateTime.now().toIso8601String(),
       }).select().single();
 
-      _logger.i('Payment record created: ${jsonEncode(paymentData)}');
+      dev.log('Payment record created: ${jsonEncode(paymentData)}');
 
       // Step 2: Create Billplz bill
-      _logger.i('\nStep 2: Creating Billplz bill...');
+      dev.log('\nStep 2: Creating Billplz bill...');
       final billData = await createBill(
         customerName: 'Test User',
         customerEmail: 'test@example.com',
@@ -158,35 +156,35 @@ class BillplzService {
         redirectUrl: ApiConstants.getRedirectUrl(paymentData['id']),
       );
 
-      _logger.i('Bill created successfully:');
-      _logger.i('- Bill ID: ${billData['id']}');
-      _logger.i('- Payment URL: ${billData['url']}');
+      dev.log('Bill created successfully:');
+      dev.log('- Bill ID: ${billData['id']}');
+      dev.log('- Payment URL: ${billData['url']}');
 
       // Step 3: Update payment record with bill ID
-      _logger.i('\nStep 3: Updating payment record with bill ID...');
+      dev.log('\nStep 3: Updating payment record with bill ID...');
       await _supabase.from('taskaway_payments').update({
         'billplz_bill_id': billData['id'],
         'updated_at': DateTime.now().toIso8601String(),
       }).eq('id', paymentData['id']);
 
-      _logger.i('Payment record updated with bill ID');
+      dev.log('Payment record updated with bill ID');
 
       // Step 4: Check bill status
-      _logger.i('\nStep 4: Checking bill status...');
+      dev.log('\nStep 4: Checking bill status...');
       final statusData = await getBillStatus(billData['id']);
-      _logger.i('Current bill status: ${statusData['state']}');
+      dev.log('Current bill status: ${statusData['state']}');
 
-      _logger.i('\n=== Payment Flow Test Completed ===');
-      _logger.i('\nTo complete the payment, open this URL in your browser:');
-      _logger.i(billData['url']);
-      _logger.i('\nAfter payment, check the payment status using:');
-      _logger.i('Payment ID: ${paymentData['id']}');
-      _logger.i('Bill ID: ${billData['id']}');
+      dev.log('\n=== Payment Flow Test Completed ===');
+      dev.log('\nTo complete the payment, open this URL in your browser:');
+      dev.log(billData['url']);
+      dev.log('\nAfter payment, check the payment status using:');
+      dev.log('Payment ID: ${paymentData['id']}');
+      dev.log('Bill ID: ${billData['id']}');
 
     } catch (e, stackTrace) {
-      _logger.e('\n=== Payment Flow Test Failed ===');
-      _logger.e('Error: $e');
-      _logger.e('Stack trace: $stackTrace');
+      dev.log('\n=== Payment Flow Test Failed ===');
+      dev.log('Error: $e');
+      dev.log('Stack trace: $stackTrace');
       throw Exception('Payment flow test failed: $e');
     }
   }
