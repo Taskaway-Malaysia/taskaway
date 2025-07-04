@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../controllers/task_controller.dart';
+import '../../../core/services/analytics_service.dart';
 import 'dart:developer' as dev;
 
 // Provider to track current step in task creation process
@@ -89,7 +90,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
       String category = taskData['category'] ?? 'other';
 
       // Create the task
-      await ref.read(taskControllerProvider).createTask(
+      final createdTask = await ref.read(taskControllerProvider).createTask(
             title: taskData['title'],
             description: taskData['description'],
             category: category,
@@ -107,6 +108,14 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                 : <dynamic>[],
 
           );
+
+      // Log analytics event for task creation
+      final analytics = ref.read(analyticsServiceProvider);
+      await analytics.logTaskCreated(
+        taskId: createdTask.id,
+        category: category,
+        price: price,
+      );
 
       if (mounted) {
         // Show task posted success screen instead of popping

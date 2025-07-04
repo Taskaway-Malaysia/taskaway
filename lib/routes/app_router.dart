@@ -26,9 +26,14 @@ import '../features/payments/screens/payment_completion_screen.dart';
 import '../features/messages/screens/chat_list_screen.dart';
 import '../features/messages/screens/chat_screen.dart';
 import '../features/messages/models/channel.dart';
+import '../features/profile/screens/profile_screen.dart';
+import '../core/services/analytics_service.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
+  final analytics = ref.read(analyticsServiceProvider);
+  
   return GoRouter(
+    observers: [analytics.observer],
     initialLocation: '/',
     refreshListenable: ref.watch(authNotifierProvider),
     redirect: (BuildContext context, GoRouterState state) async {
