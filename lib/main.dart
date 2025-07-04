@@ -29,7 +29,7 @@ void main() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-    _logger.i('Firebase initialized successfully');
+    dev.log('Firebase initialized successfully');
     
     // Initialize Supabase
     await Supabase.initialize(
