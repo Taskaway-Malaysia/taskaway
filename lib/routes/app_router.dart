@@ -20,10 +20,12 @@ import '../features/home/screens/home_screen.dart';
 import '../features/profile/screens/profile_screen.dart';
 import '../features/tasks/screens/my_task_screen.dart';
 import '../features/tasks/screens/browse_tasks_screen.dart';
+import '../features/tasks/screens/browse_task_details_screen.dart';
 import '../features/tasks/screens/post_task_screen.dart';
 import '../features/tasks/screens/create_task_screen.dart';
 import '../features/tasks/screens/task_details_screen.dart';
 import '../features/tasks/screens/apply_task_screen.dart';
+import '../features/tasks/screens/report_screen.dart';
 import '../features/payments/screens/payment_completion_screen.dart';
 import '../features/messages/screens/chat_list_screen.dart';
 import '../features/messages/screens/chat_screen.dart';
@@ -232,6 +234,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: 'create-task',
         builder: (context, state) => const CreateTaskScreen(),
       ),
+      GoRoute(
+        path: '/report',
+        name: 'report',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>? ?? {};
+          return ReportScreen(
+            userId: extra['userId'] as String? ?? '',
+            userName: extra['userName'] as String? ?? 'Unknown User',
+            userAvatarUrl: extra['userAvatarUrl'] as String?,
+          );
+        },
+      ),
       ShellRoute(
         builder: (context, state, child) => HomeScreen(child: child),
         routes: [
@@ -247,16 +261,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: ':id',
-                name: 'task-details',
-                builder: (context, state) => TaskDetailsScreen(
+                name: 'browse-task-details',
+                builder: (context, state) => BrowseTaskDetailsScreen(
                   taskId: state.pathParameters['id']!,
                 ),
                 routes: [
                   GoRoute(
                     path: 'apply',
-                    name: 'apply-task',
+                    name: 'browse-apply-task',
                     builder: (context, state) => ApplyTaskScreen(
                       taskId: state.pathParameters['id']!,
+                      isBrowseContext: true,
+                      extra: state.extra as Map<String, dynamic>?,
                     ),
                   ),
                 ],

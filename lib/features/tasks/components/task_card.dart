@@ -6,8 +6,14 @@ import 'package:taskaway/features/tasks/models/task.dart';
 class TaskCard extends StatelessWidget {
   final Task task;
   final Color? accentColor;
+  final bool isBrowseContext;
 
-  const TaskCard({super.key, required this.task, this.accentColor});
+  const TaskCard({
+    super.key, 
+    required this.task, 
+    this.accentColor,
+    this.isBrowseContext = false,
+  });
 
   String _getFormattedDate(DateTime date) {
     final now = DateTime.now();
@@ -28,7 +34,13 @@ class TaskCard extends StatelessWidget {
     final primaryColor = accentColor ?? const Color(0xFF7B61FF);
 
     return GestureDetector(
-      onTap: () => GoRouter.of(context).go('/home/tasks/${task.id}'),
+      onTap: () {
+        if (isBrowseContext) {
+          GoRouter.of(context).go('/home/browse/${task.id}');
+        } else {
+          GoRouter.of(context).go('/home/tasks/${task.id}');
+        }
+      },
       child: Card(
         elevation: 0,
         margin: EdgeInsets.zero,

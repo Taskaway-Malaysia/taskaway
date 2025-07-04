@@ -4,6 +4,8 @@ import 'package:taskaway/features/tasks/components/task_card.dart';
 import 'package:taskaway/features/tasks/controllers/task_controller.dart';
 import 'package:taskaway/features/tasks/models/task.dart';
 import 'package:taskaway/features/auth/controllers/auth_controller.dart';
+import 'package:taskaway/core/widgets/multi_select_dropdown.dart';
+import 'package:taskaway/core/widgets/compact_dropdown.dart';
 
 // Provider to get all open tasks (available for taskers to browse)
 final browseTasksProvider = Provider.autoDispose<AsyncValue<List<Task>>>((ref) {
@@ -23,8 +25,8 @@ final browseTasksProvider = Provider.autoDispose<AsyncValue<List<Task>>>((ref) {
 });
 
 // State providers for filters
-final selectedRegionProvider = StateProvider<String?>((ref) => null);
-final selectedCategoryProvider = StateProvider<String?>((ref) => null);
+final selectedRegionsProvider = StateProvider<List<String>>((ref) => []);
+final selectedCategoriesProvider = StateProvider<List<String>>((ref) => []);
 final selectedSortProvider = StateProvider<String?>((ref) => null);
 final searchExpandedProvider = StateProvider<bool>((ref) => false);
 
@@ -129,6 +131,7 @@ class _BrowseTasksScreenState extends ConsumerState<BrowseTasksScreen> {
                       child: TaskCard(
                         task: filteredTasks[index],
                         accentColor: const Color(0xFFFF9500), // Orange color
+                        isBrowseContext: true,
                       ),
                     );
                   },
@@ -266,31 +269,31 @@ class _BrowseTasksScreenState extends ConsumerState<BrowseTasksScreen> {
             children: [
               // Region filter
               Expanded(
-                child: _buildDropdownFilter(
-                  'Region',
-                  ref.watch(selectedRegionProvider),
-                  _regions,
-                  (value) => ref.read(selectedRegionProvider.notifier).state = value,
+                child: MultiSelectDropdown(
+                  label: 'Region',
+                  selectedValues: ref.watch(selectedRegionsProvider),
+                  options: _regions,
+                  onChanged: (values) => ref.read(selectedRegionsProvider.notifier).state = values,
                 ),
               ),
               const SizedBox(width: 12),
               // Categories filter
               Expanded(
-                child: _buildDropdownFilter(
-                  'Categories',
-                  ref.watch(selectedCategoryProvider),
-                  _categories,
-                  (value) => ref.read(selectedCategoryProvider.notifier).state = value,
+                child: MultiSelectDropdown(
+                  label: 'Categories',
+                  selectedValues: ref.watch(selectedCategoriesProvider),
+                  options: _categories,
+                  onChanged: (values) => ref.read(selectedCategoriesProvider.notifier).state = values,
                 ),
               ),
               const SizedBox(width: 12),
               // Sort by filter
               Expanded(
-                child: _buildDropdownFilter(
-                  'Sort by',
-                  ref.watch(selectedSortProvider),
-                  _sortOptions,
-                  (value) => ref.read(selectedSortProvider.notifier).state = value,
+                child: CompactDropdown(
+                  label: 'Sort by',
+                  selectedValue: ref.watch(selectedSortProvider),
+                  options: _sortOptions,
+                  onChanged: (value) => ref.read(selectedSortProvider.notifier).state = value,
                 ),
               ),
             ],
@@ -302,51 +305,7 @@ class _BrowseTasksScreenState extends ConsumerState<BrowseTasksScreen> {
 
 
 
-  Widget _buildDropdownFilter(
-    String label,
-    String? selectedValue,
-    List<String> options,
-    Function(String?) onChanged,
-  ) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: Colors.grey.shade300),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: DropdownButton<String>(
-        value: selectedValue,
-        hint: Text(
-          label,
-          style: const TextStyle(
-            color: Colors.black,
-            fontSize: 14,
-          ),
-        ),
-        isExpanded: true,
-        underline: const SizedBox(),
-        icon: const Icon(Icons.keyboard_arrow_down, color: Colors.black),
-        style: const TextStyle(
-          color: Colors.black,
-          fontSize: 14,
-        ),
-        items: [
-          DropdownMenuItem<String>(
-            value: null,
-            child: Text(label),
-          ),
-          ...options.map((option) {
-            return DropdownMenuItem<String>(
-              value: option,
-              child: Text(option),
-            );
-          }),
-        ],
-        onChanged: onChanged,
-      ),
-    );
-  }
+
 
   List<Task> _filterTasks(List<Task> tasks) {
     var filteredTasks = tasks;
@@ -361,18 +320,20 @@ class _BrowseTasksScreenState extends ConsumerState<BrowseTasksScreen> {
     }
 
     // Apply region filter
-    final selectedRegion = ref.watch(selectedRegionProvider);
-    if (selectedRegion != null) {
+    final selectedRegions = ref.watch(selectedRegionsProvider);
+    if (selectedRegions.isNotEmpty) {
       filteredTasks = filteredTasks.where((task) {
-        return task.location.toLowerCase().contains(selectedRegion.toLowerCase());
+        return selectedRegions.any((region) =>
+          task.location.toLowerCase().contains(region.toLowerCase()));
       }).toList();
     }
 
     // Apply category filter
-    final selectedCategory = ref.watch(selectedCategoryProvider);
-    if (selectedCategory != null) {
+    final selectedCategories = ref.watch(selectedCategoriesProvider);
+    if (selectedCategories.isNotEmpty) {
       filteredTasks = filteredTasks.where((task) {
-        return task.category.toLowerCase().contains(selectedCategory.toLowerCase());
+        return selectedCategories.any((category) =>
+          task.category.toLowerCase().contains(category.toLowerCase()));
       }).toList();
     }
 

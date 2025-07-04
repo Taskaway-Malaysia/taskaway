@@ -11,7 +11,9 @@ final isSubmittingProvider = StateProvider.autoDispose<bool>((ref) => false);
 
 class ApplyTaskScreen extends ConsumerStatefulWidget {
   final String taskId;
-  const ApplyTaskScreen({super.key, required this.taskId});
+  final bool isBrowseContext;
+  final Map<String, dynamic>? extra;
+  const ApplyTaskScreen({super.key, required this.taskId, this.isBrowseContext = false, this.extra});
 
   @override
   ConsumerState<ApplyTaskScreen> createState() => _ApplyTaskScreenState();
@@ -23,6 +25,15 @@ class _ApplyTaskScreenState extends ConsumerState<ApplyTaskScreen> {
   final _amountController = TextEditingController();
   bool _isLoading = false;
   String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    // Set initial price from the modal if provided
+    if (widget.extra?['offerPrice'] != null) {
+      _amountController.text = widget.extra!['offerPrice'].toString();
+    }
+  }
 
   @override
   void dispose() {
@@ -94,15 +105,23 @@ class _ApplyTaskScreenState extends ConsumerState<ApplyTaskScreen> {
   @override
   Widget build(BuildContext context) {
     final task = ref.watch(taskProvider(widget.taskId));
+    final primaryColor = widget.isBrowseContext 
+        ? const Color(0xFFFF9500) 
+        : StyleConstants.primaryColor;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Apply for Task'),
         elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: widget.isBrowseContext 
+            ? const Color(0xFFFF9500) 
+            : Colors.white,
+        foregroundColor: widget.isBrowseContext 
+            ? Colors.white 
+            : Colors.black,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: Icon(Icons.arrow_back, 
+              color: widget.isBrowseContext ? Colors.white : Colors.black),
           onPressed: () => context.pop(),
         ),
       ),
@@ -124,7 +143,7 @@ class _ApplyTaskScreenState extends ConsumerState<ApplyTaskScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Budget: RM${taskData.budget.toStringAsFixed(2)}',
+                    'Budget: RM${taskData.price.toStringAsFixed(2)}',
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                   const SizedBox(height: 24),
@@ -221,7 +240,7 @@ class _ApplyTaskScreenState extends ConsumerState<ApplyTaskScreen> {
                     child: ElevatedButton(
                       onPressed: _isLoading ? null : _submitOffer,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: StyleConstants.primaryColor,
+                        backgroundColor: primaryColor,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
