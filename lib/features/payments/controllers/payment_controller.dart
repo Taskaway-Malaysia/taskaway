@@ -6,14 +6,13 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:developer' as dev;
 
-final paymentControllerProvider = Provider((ref) => PaymentController(ref));
+final paymentControllerProvider = Provider((ref) => PaymentController());
 
 class PaymentController {
-  final Ref _ref;
   final _supabase = Supabase.instance.client;
   final _billplzService = BillplzService();
 
-  PaymentController(this._ref);
+  PaymentController();
 
   Future<void> handleTaskApproval({
     required String taskId,
