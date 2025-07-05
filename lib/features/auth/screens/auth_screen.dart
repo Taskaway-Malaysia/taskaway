@@ -221,32 +221,34 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                             setState(() {
                               _isLoading = true;
                             });
-                            try {
-                              await ref
-                                  .read(authControllerProvider.notifier)
-                                  .signIn(
-                                    email: _emailController.text.trim(),
-                                    password: _passwordController.text,
-                                  );
-                              // Invalidate the authStateProvider to ensure listeners pick up the change.
-                              ref.invalidate(authStateProvider);
 
-                              // Diagnostic: Check auth state after a brief delay and attempt to re-trigger splash
-                              await Future.delayed(const Duration(milliseconds: 200));
+                            // Capture context-dependent objects before the async gap.
+                            final scaffoldMessenger = ScaffoldMessenger.of(context);
+                            final router = GoRouter.of(context);
+
+                            try {
+                              final authController = ref.read(authControllerProvider.notifier);
+                              final response = await authController.signIn(
+                                email: _emailController.text.trim(),
+                                password: _passwordController.text,
+                              );
+
+                              // Post-login checks and navigation
+                              dev.log('AuthScreen: Login successful. Response user: ${response.user?.id}');
                               final currentUserNow = ref.read(currentUserProvider);
                               final authStateValue = ref.read(authStateProvider).value;
                               dev.log('AuthScreen: Post-login check. CurrentUser: ${currentUserNow?.id}, AuthState Event: ${authStateValue?.event}');
 
                               if (mounted && currentUserNow != null) {
                                 dev.log('AuthScreen: User confirmed authenticated, navigating to / to re-trigger SplashScreen logic.');
-                                context.go('/');
+                                router.go('/');
                               } else {
                                 dev.log('AuthScreen: Post-login check. User still null or state not updated.');
                               }
                               // Navigation is ideally handled by AuthState listener in Splash Screen
                             } on AuthException catch (e) {
                               if (mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
+                                scaffoldMessenger.showSnackBar(
                                   SnackBar(
                                     content: Text(e.message),
                                     backgroundColor: Colors.red,
@@ -255,7 +257,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                               }
                             } catch (e) {
                               if (mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
+                                scaffoldMessenger.showSnackBar(
                                   const SnackBar(
                                     content: Text('An unexpected error occurred.'),
                                     backgroundColor: Colors.red,

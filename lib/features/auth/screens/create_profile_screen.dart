@@ -508,16 +508,19 @@ class _CreateProfileScreenState extends ConsumerState<CreateProfileScreen> {
                                 setState(() {
                                   _isLoading = true;
                                 });
-                                
+
+                                // Capture context-dependent objects before the async gap.
+                                final scaffoldMessenger = ScaffoldMessenger.of(context);
+                                final router = GoRouter.of(context);
+
                                 try {
-                                  // Get the current user from Supabase
                                   final authController = ref.read(authControllerProvider.notifier);
                                   final currentUser = authController.currentUser;
-                                  
+
                                   if (currentUser == null) {
                                     throw Exception('User not authenticated');
                                   }
-                                  
+
                                   final now = DateTime.now().toUtc();
 
                                   // Parse date and postcode safely
@@ -537,25 +540,24 @@ class _CreateProfileScreenState extends ConsumerState<CreateProfileScreen> {
                                     createdAt: now,
                                     updatedAt: now,
                                   );
-                                  
+
                                   // Convert to JSON. Fields like date_of_birth, postcode are NOT in taskaway_profiles table.
                                   final Map<String, dynamic> profileData = profile.toJson();
-                                  
+
                                   // Insert profile into Supabase
                                   await Supabase.instance.client.from(DbConstants.profilesTable).insert(profileData);
-                                  
+
                                   dev.log('Profile created successfully for user: ${currentUser.id}');
-                                  
-                                  
+
                                   if (mounted) {
                                     // Navigate to success screen using go() instead of push()
                                     // This ensures we replace the current route instead of stacking
-                                    context.go('/signup-success');
+                                    router.go('/signup-success');
                                   }
                                 } catch (e) {
                                   dev.log('Error creating profile: $e');
                                   if (mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
+                                    scaffoldMessenger.showSnackBar(
                                       SnackBar(
                                         content: Text('Error creating profile: ${e.toString()}'),
                                         backgroundColor: Colors.red,

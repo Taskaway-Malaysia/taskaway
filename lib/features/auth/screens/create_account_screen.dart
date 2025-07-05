@@ -291,35 +291,45 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
                               setState(() {
                                 _isLoading = true;
                               });
-                              
+                              // Capture context-dependent objects before the async gap.
+                              final scaffoldMessenger = ScaffoldMessenger.of(context);
+                              final router = GoRouter.of(context);
                               try {
                                 final authController = ref.read(authControllerProvider.notifier);
-                                
-                                // Call Supabase signUp method
                                 final response = await authController.signUp(
                                   email: _emailController.text.trim(),
                                   password: _passwordController.text,
                                 );
-                                
-                                dev.log('Sign up response: ${response.session != null}, user: ${response.user?.id}');
-                                
-                                if (mounted) {
+
+                                if (mounted && response.user != null) {
                                   // Navigate to OTP verification screen
-                                  await context.push('/otp-verification', extra: {'email': _emailController.text.trim(), 'type': OtpType.signup});
+                                  router.go(
+                                    '/otp-verification',
+                                    extra: {
+                                      'email': _emailController.text.trim(),
+                                      'type': OtpType.signup
+                                    },
+                                  );
                                 }
-                              } catch (e) {
-                                dev.log('Error signing up: $e');
-                                if (e is AuthException) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
+                              } on AuthException catch (e) {
+                                if (mounted) {
+                                  scaffoldMessenger.showSnackBar(
                                     SnackBar(
                                       content: Text(e.message),
                                       backgroundColor: Colors.red,
                                     ),
                                   );
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
+                                  // If user already exists (confirmed or unconfirmed), navigate to login
+                                  if (e.message.contains('already exists') || e.message.contains('have an account')) {
+                                    router.go('/login');
+                                  }
+                                }
+                              } catch (e) {
+                                dev.log('Unexpected error during sign up: $e');
+                                if (mounted) {
+                                  scaffoldMessenger.showSnackBar(
                                     const SnackBar(
-                                      content: Text('An error occurred during sign up. Please try again.'),
+                                      content: Text('An unexpected error occurred. Please try again.'),
                                       backgroundColor: Colors.red,
                                     ),
                                   );

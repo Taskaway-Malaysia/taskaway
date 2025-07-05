@@ -72,19 +72,35 @@ class AuthController extends StateNotifier<bool> {
   }) async {
     state = true;
     try {
+      // 1. Check if the user already exists using the Edge Function.
+      final userExistsResponse = await supabase.functions.invoke(
+        'check-user-exists',
+        body: {'email': email},
+      );
+
+      if (userExistsResponse.data['exists']) {
+        throw const AuthException('A user with this email already exists. Please sign in.');
+      }
+
+      // 2. If the user does not exist, proceed with sign-up.
       final response = await supabase.auth.signUp(
         email: email,
         password: password,
         data: data,
       );
-      
-      // Log analytics event
-      if (response.user != null) {
-        await analytics.logSignUp(signUpMethod: 'email');
-        await analytics.setUserId(response.user!.id);
+
+      final user = response.user;
+
+      // This check is for safety, though the edge function should prevent this.
+      if (user == null) {
+        throw const AuthException('An unexpected error occurred. Please try again.');
       }
-      
+
+      // 3. Log analytics for the new user.
+      await analytics.logSignUp(signUpMethod: 'email');
+      await analytics.setUserId(user.id);
       return response;
+
     } finally {
       state = false;
     }
@@ -196,20 +212,10 @@ class AuthController extends StateNotifier<bool> {
 
 // Notifier for GoRouter to listen to auth changes
 class AuthNotifier extends ChangeNotifier {
-  final Ref _ref;
-  late final StreamSubscription<AuthState> _authStateSubscription;
-
-  AuthNotifier(this._ref) {
-    // Listen to the authStateProvider's stream directly
-    _authStateSubscription = _ref.read(authStateProvider.stream).listen((_) {
+  AuthNotifier(Ref ref) {
+    ref.listen(authStateProvider, (_, __) {
       notifyListeners();
     });
-  }
-
-  @override
-  void dispose() {
-    _authStateSubscription.cancel();
-    super.dispose();
   }
 }
 

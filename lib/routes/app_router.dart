@@ -26,13 +26,16 @@ import '../features/payments/screens/payment_completion_screen.dart';
 import '../features/messages/screens/chat_list_screen.dart';
 import '../features/messages/screens/chat_screen.dart';
 import '../features/messages/models/channel.dart';
-import '../features/profile/screens/profile_screen.dart';
 import '../core/services/analytics_service.dart';
+import '../core/widgets/responsive_layout.dart';
+
+final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final analytics = ref.read(analyticsServiceProvider);
   
   return GoRouter(
+    navigatorKey: _rootNavigatorKey,
     observers: [analytics.observer],
     initialLocation: '/',
     refreshListenable: ref.watch(authNotifierProvider),
@@ -154,165 +157,176 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
-      GoRoute(
-        path: '/guest-prompt',
-        name: 'guest-prompt',
-        builder: (context, state) => const GuestPromptOverlay(),
-      ),
+      // Routes that should not have the boxed layout.
       GoRoute(
         path: '/',
         name: 'splash',
+        parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => const SplashScreen(),
       ),
-      GoRoute(
-        path: '/login',
-        name: 'login',
-        builder: (context, state) => const AuthScreen(),
-      ),
-      GoRoute(
-        path: '/create-account',
-        name: 'create-account',
-        builder: (context, state) => const CreateAccountScreen(),
-      ),
-      GoRoute(
-        path: '/otp-verification',
-        name: 'otp-verification',
-        builder: (context, state) {
-          final extra = state.extra as Map<String, dynamic>? ?? {};
-          final email = extra['email'] as String? ?? 'no-email-provided';
-          final type = extra['type'] as OtpType? ?? OtpType.signup;
-          return OtpVerificationScreen(email: email, type: type);
-        },
-      ),
-      GoRoute(
-        path: '/create-profile',
-        name: 'create-profile',
-        builder: (context, state) => const CreateProfileScreen(),
-      ),
-      GoRoute(
-        path: '/signup-success',
-        name: 'signup-success',
-        builder: (context, state) => const SignupSuccessScreen(),
-      ),
-      GoRoute(
-        path: '/forgot-password',
-        name: 'forgot-password',
-        builder: (context, state) => const ForgotPasswordScreen(),
-      ),
-      GoRoute(
-        path: '/change-password',
-        name: 'change-password',
-        builder: (context, state) {
-          final email = state.extra as String? ?? 'no-email-provided';
-          return ChangePasswordScreen(email: email);
-        },
-      ),
-      GoRoute(
-        path: '/change-password-success',
-        name: 'change-password-success',
-        builder: (context, state) => const ChangePasswordSuccessScreen(),
-      ),
-      GoRoute(
-        path: '/onboarding',
-        name: 'onboarding',
-        builder: (context, state) => const OnboardingScreen(),
-      ),
-      GoRoute(
-        path: '/payment/:id',
-        name: 'payment-callback',
-        builder: (context, state) {
-          final paymentId = state.pathParameters['id']!;
-          final queryParams =
-              Map<String, String>.from(state.uri.queryParameters);
-          return PaymentCompletionScreen(
-            paymentId: paymentId,
-            billplzParams: queryParams,
-          );
-        },
-      ),
-      GoRoute(
-        path: '/create-task',
-        name: 'create-task',
-        builder: (context, state) => const CreateTaskScreen(),
-      ),
+      // All other routes will be placed inside this ShellRoute for the boxed layout.
       ShellRoute(
-        builder: (context, state, child) => HomeScreen(child: child),
+        builder: (context, state, child) {
+          return ResponsiveLayout(child: child);
+        },
         routes: [
           GoRoute(
-            path: '/home',
-            name: 'home',
-            redirect: (context, state) => '/home/browse',
+            path: '/guest-prompt',
+            name: 'guest-prompt',
+            builder: (context, state) => const GuestPromptOverlay(),
           ),
           GoRoute(
-            path: '/home/browse',
-            name: 'browse',
-            builder: (context, state) => const MyTaskScreen(),
-            routes: [
-              GoRoute(
-                path: ':id',
-                name: 'task-details',
-                builder: (context, state) => TaskDetailsScreen(
-                  taskId: state.pathParameters['id']!,
-                ),
-                routes: [
-                  GoRoute(
-                    path: 'apply',
-                    name: 'apply-task',
-                    builder: (context, state) => ApplyTaskScreen(
-                      taskId: state.pathParameters['id']!,
-                    ),
-                  ),
-                ],
-              ),
-            ],
+            path: '/login',
+            name: 'login',
+            builder: (context, state) => const AuthScreen(),
           ),
           GoRoute(
-            path: '/home/tasks',
-            name: 'tasks',
-            builder: (context, state) => const MyTaskScreen(),
-            routes: [
-              GoRoute(
-                path: ':id',
-                name: 'task-details-from-tasks',
-                builder: (context, state) => TaskDetailsScreen(
-                  taskId: state.pathParameters['id']!,
-                ),
-                routes: [
-                  GoRoute(
-                    path: 'apply',
-                    name: 'apply-task-from-tasks',
-                    builder: (context, state) => ApplyTaskScreen(
-                      taskId: state.pathParameters['id']!,
-                    ),
-                  ),
-                ],
-              ),
-            ],
+            path: '/create-account',
+            name: 'create-account',
+            builder: (context, state) => const CreateAccountScreen(),
           ),
           GoRoute(
-            path: '/home/post',
-            name: 'post-task',
+            path: '/otp-verification',
+            name: 'otp-verification',
+            builder: (context, state) {
+              final args = state.extra as Map<String, dynamic>? ?? {};
+              return OtpVerificationScreen(
+                email: args['email'] as String? ?? 'no-email-provided',
+                type: args['type'] as OtpType? ?? OtpType.signup,
+              );
+            },
+          ),
+          GoRoute(
+            path: '/create-profile',
+            name: 'create-profile',
+            builder: (context, state) => const CreateProfileScreen(),
+          ),
+          GoRoute(
+            path: '/signup-success',
+            name: 'signup-success',
+            builder: (context, state) => const SignupSuccessScreen(),
+          ),
+          GoRoute(
+            path: '/forgot-password',
+            name: 'forgot-password',
+            builder: (context, state) => const ForgotPasswordScreen(),
+          ),
+          GoRoute(
+            path: '/change-password',
+            name: 'change-password',
+            builder: (context, state) {
+              final email = state.extra as String? ?? 'no-email-provided';
+              return ChangePasswordScreen(email: email);
+            },
+          ),
+          GoRoute(
+            path: '/change-password-success',
+            name: 'change-password-success',
+            builder: (context, state) => const ChangePasswordSuccessScreen(),
+          ),
+          GoRoute(
+            path: '/onboarding',
+            name: 'onboarding',
+            builder: (context, state) => const OnboardingScreen(),
+          ),
+          GoRoute(
+            path: '/payment/:id',
+            name: 'payment-callback',
+            builder: (context, state) {
+              final paymentId = state.pathParameters['id']!;
+              final queryParams =
+                  Map<String, String>.from(state.uri.queryParameters);
+              return PaymentCompletionScreen(
+                paymentId: paymentId,
+                billplzParams: queryParams,
+              );
+            },
+          ),
+          GoRoute(
+            path: '/create-task',
+            name: 'create-task',
             builder: (context, state) => const CreateTaskScreen(),
-            redirect: (context, state) => '/create-task',
           ),
-          GoRoute(
-            path: '/home/chat',
-            name: 'chat',
-            builder: (context, state) => const ChatListScreen(),
+          ShellRoute(
+            builder: (context, state, child) => HomeScreen(child: child),
             routes: [
               GoRoute(
-                path: ':id',
-                name: 'chat-room',
-                builder: (context, state) => ChatScreen(
-                  channel: state.extra as Channel,
-                ),
+                path: '/home',
+                name: 'home',
+                redirect: (context, state) => '/home/browse',
+              ),
+              GoRoute(
+                path: '/home/browse',
+                name: 'browse',
+                builder: (context, state) => const MyTaskScreen(),
+                routes: [
+                  GoRoute(
+                    path: ':id',
+                    name: 'task-details',
+                    builder: (context, state) => TaskDetailsScreen(
+                      taskId: state.pathParameters['id']!,
+                    ),
+                    routes: [
+                      GoRoute(
+                        path: 'apply',
+                        name: 'apply-task',
+                        builder: (context, state) => ApplyTaskScreen(
+                          taskId: state.pathParameters['id']!,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              GoRoute(
+                path: '/home/tasks',
+                name: 'tasks',
+                builder: (context, state) => const MyTaskScreen(),
+                routes: [
+                  GoRoute(
+                    path: ':id',
+                    name: 'task-details-from-tasks',
+                    builder: (context, state) => TaskDetailsScreen(
+                      taskId: state.pathParameters['id']!,
+                    ),
+                    routes: [
+                      GoRoute(
+                        path: 'apply',
+                        name: 'apply-task-from-tasks',
+                        builder: (context, state) => ApplyTaskScreen(
+                          taskId: state.pathParameters['id']!,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              GoRoute(
+                path: '/home/post',
+                name: 'post-task',
+                builder: (context, state) => const CreateTaskScreen(),
+                redirect: (context, state) => '/create-task',
+              ),
+              GoRoute(
+                path: '/home/chat',
+                name: 'chat',
+                builder: (context, state) => const ChatListScreen(),
+                routes: [
+                  GoRoute(
+                    path: ':id',
+                    name: 'chat-room',
+                    builder: (context, state) => ChatScreen(
+                      channel: state.extra as Channel,
+                    ),
+                  ),
+                ],
+              ),
+              GoRoute(
+                path: '/home/profile',
+                name: 'profile',
+                builder: (context, state) => const ProfileScreen(),
               ),
             ],
-          ),
-          GoRoute(
-            path: '/home/profile',
-            name: 'profile',
-            builder: (context, state) => const ProfileScreen(),
           ),
         ],
       ),
