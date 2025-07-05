@@ -20,7 +20,6 @@ import '../features/home/screens/home_screen.dart';
 import '../features/profile/screens/profile_screen.dart';
 import '../features/tasks/screens/my_task_screen.dart';
 import '../features/tasks/screens/browse_tasks_screen.dart';
-import '../features/tasks/screens/browse_task_details_screen.dart';
 import '../features/tasks/screens/post_task_screen.dart';
 import '../features/tasks/screens/create_task_screen.dart';
 import '../features/tasks/screens/task_details_screen.dart';
@@ -30,219 +29,66 @@ import '../features/payments/screens/payment_completion_screen.dart';
 import '../features/messages/screens/chat_list_screen.dart';
 import '../features/messages/screens/chat_screen.dart';
 import '../features/messages/models/channel.dart';
+import '../features/messages/controllers/message_controller.dart';
+import '../features/tasks/screens/review_tasker_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
+  final authController = ref.watch(authControllerProvider);
+  final messageController = ref.watch(messageControllerProvider);
+
   return GoRouter(
     initialLocation: '/',
-    refreshListenable: ref.watch(authNotifierProvider),
-    redirect: (BuildContext context, GoRouterState state) async {
-      // Use ref.read for providers within redirect to avoid assertion errors
-      final authValue =
-          ProviderScope.containerOf(context).read(authStateProvider);
-      final user = authValue.asData?.value.session?.user;
-      final bool isLoggedIn = user != null;
-      final bool isGuest =
-          ProviderScope.containerOf(context).read(isGuestModeProvider);
-      final String location = state.uri.toString(); // Use full URI
-
-      dev.log(
-          'GoRouter Redirect: Loc: $location, User: ${user?.id}, LoggedIn: $isLoggedIn, Guest: $isGuest');
-
-      // Base public routes accessible to anyone, including guests if not specifically redirected elsewhere
-      final basePublicRoutes = [
-        '/',
-        '/login',
-        '/create-account',
-        '/otp-verification',
-        '/signup-success',
-        '/guest-prompt',
-        '/forgot-password',
-        '/change-password',
-        '/change-password-success',
-        '/onboarding'
-      ];
-      // Define routes that are part of the profile creation flow
-      final profileCreationRoutes = ['/create-profile', '/signup-success'];
-      // Define routes for password recovery flow
-      final passwordRecoveryRoutes = [
-        '/change-password',
-        '/change-password-success'
-      ];
-
-      // Guest mode logic
-      if (isGuest && isLoggedIn) {
-        dev.log(
-            'GoRouter Redirect: User is logged in while in guest mode. Turning off guest mode.');
-        // Schedule as a microtask to avoid modifying state during build/redirect.
-        await Future.microtask(
-            () => ref.read(isGuestModeProvider.notifier).state = false);
-        // Redirect will re-run due to authState change or next navigation attempt.
-        // For this run, let it proceed; the state will be updated for the next evaluation.
-      } else if (isGuest && !isLoggedIn) {
-        // Check if guest is trying to access an allowed location
-        if (basePublicRoutes.contains(location) ||
-            location.startsWith('/home/browse')) {
-          dev.log('GoRouter Redirect: Guest accessing allowed area $location.');
-          return null; // Allow access
-        } else {
-          dev.log(
-              'GoRouter Redirect: Guest trying to access restricted area $location. Redirecting to /guest-prompt.');
-          return '/guest-prompt'; // Redirect to guest prompt
-        }
-      }
-
-      // ---- If not a guest (or guest mode was just turned off and isGuest will be false on next run) ----
-
-      // Authenticated user logic (or user who just logged in, causing guest mode to turn off)
-      if (isLoggedIn) {
-        // User is logged in
-        bool hasProfile = false;
-        // Ensure user is not null before trying to fetch profile
-        try {
-          final profileResponse = await Supabase.instance.client
-              .from('taskaway_profiles')
-              .select('id')
-              .eq('id', user.id) // Use user.id from auth
-              .maybeSingle();
-          hasProfile = profileResponse != null;
-          dev.log('GoRouter Redirect: User ${user.id} hasProfile: $hasProfile');
-        } catch (e) {
-          dev.log(
-              'GoRouter Redirect: Error checking profile for ${user.id}: $e. Assuming no profile.');
-        }
-
-        if (!hasProfile &&
-            !profileCreationRoutes.contains(location) &&
-            location != '/login') {
-          dev.log(
-              'GoRouter Redirect: Logged in, no profile. Redirecting to /create-profile.');
-          return '/create-profile';
-        }
-
-        // If logged in and has profile, but on a public route (like /login) or profile creation route
-        // (excluding '/', which is SplashScreen, and auth in-progress routes like OTP)
-        final isOnPasswordRecoveryRoute =
-            passwordRecoveryRoutes.contains(location);
-        dev.log(
-            'GoRouter Redirect: Check passwordRecoveryRoutes.contains($location): $isOnPasswordRecoveryRoute. Routes: $passwordRecoveryRoutes');
-
-        if (hasProfile &&
-                basePublicRoutes
-                    .contains(location) && // Is it a general public route?
-                !profileCreationRoutes
-                    .contains(location) && // Not part of profile creation flow?
-                !isOnPasswordRecoveryRoute && // Not part of password recovery flow?
-                !location
-                    .startsWith('/home') && // Not already in a /home section?
-                location != '/' // Not the splash screen itself?
-            ) {
-          dev.log(
-              'GoRouter Redirect: Logged in with profile, on a generic public page ($location) that is not home, profile, or recovery flow. Redirecting to /home.');
-          return '/home';
-        }
-      } else {
-        // Not logged in (and not a guest, or guest logic already handled returning null)
-        if (!basePublicRoutes.contains(location) &&
-            location != '/guest-prompt') {
-          dev.log(
-              'GoRouter Redirect: Not logged in (and not guest), trying to access $location. Redirecting to /login.');
-          return '/login';
-        }
-      }
-      dev.log('GoRouter Redirect: No redirect needed for $location.');
-      return null;
-    },
     routes: [
       GoRoute(
-        path: '/guest-prompt',
-        name: 'guest-prompt',
-        builder: (context, state) => const GuestPromptOverlay(),
-      ),
-      GoRoute(
         path: '/',
-        name: 'splash',
         builder: (context, state) => const SplashScreen(),
       ),
       GoRoute(
-        path: '/login',
-        name: 'login',
-        builder: (context, state) => const AuthScreen(),
-      ),
-      GoRoute(
-        path: '/create-account',
-        name: 'create-account',
-        builder: (context, state) => const CreateAccountScreen(),
-      ),
-      GoRoute(
-        path: '/otp-verification',
-        name: 'otp-verification',
-        builder: (context, state) {
-          final extra = state.extra as Map<String, dynamic>? ?? {};
-          final email = extra['email'] as String? ?? 'no-email-provided';
-          final type = extra['type'] as OtpType? ?? OtpType.signup;
-          return OtpVerificationScreen(email: email, type: type);
-        },
-      ),
-      GoRoute(
-        path: '/create-profile',
-        name: 'create-profile',
-        builder: (context, state) => const CreateProfileScreen(),
-      ),
-      GoRoute(
-        path: '/signup-success',
-        name: 'signup-success',
-        builder: (context, state) => const SignupSuccessScreen(),
-      ),
-      GoRoute(
-        path: '/forgot-password',
-        name: 'forgot-password',
-        builder: (context, state) => const ForgotPasswordScreen(),
-      ),
-      GoRoute(
-        path: '/change-password',
-        name: 'change-password',
-        builder: (context, state) {
-          final email = state.extra as String? ?? 'no-email-provided';
-          return ChangePasswordScreen(email: email);
-        },
-      ),
-      GoRoute(
-        path: '/change-password-success',
-        name: 'change-password-success',
-        builder: (context, state) => const ChangePasswordSuccessScreen(),
-      ),
-      GoRoute(
         path: '/onboarding',
-        name: 'onboarding',
         builder: (context, state) => const OnboardingScreen(),
       ),
       GoRoute(
-        path: '/payment/:id',
-        name: 'payment-callback',
-        builder: (context, state) {
-          final paymentId = state.pathParameters['id']!;
-          final queryParams =
-              Map<String, String>.from(state.uri.queryParameters);
-          return PaymentCompletionScreen(
-            paymentId: paymentId,
-            billplzParams: queryParams,
-          );
-        },
+        path: '/auth',
+        builder: (context, state) => const AuthScreen(),
       ),
       GoRoute(
-        path: '/create-task',
-        name: 'create-task',
-        builder: (context, state) => const CreateTaskScreen(),
+        path: '/auth/create-account',
+        builder: (context, state) => const CreateAccountScreen(),
       ),
       GoRoute(
-        path: '/report',
-        name: 'report',
+        path: '/auth/create-profile',
+        builder: (context, state) => const CreateProfileScreen(),
+      ),
+      GoRoute(
+        path: '/auth/signup-success',
+        builder: (context, state) => const SignupSuccessScreen(),
+      ),
+      GoRoute(
+        path: '/auth/forgot-password',
+        builder: (context, state) => const ForgotPasswordScreen(),
+      ),
+      GoRoute(
+        path: '/auth/otp-verification',
+        builder: (context, state) => const OTPVerificationScreen(),
+      ),
+      GoRoute(
+        path: '/auth/change-password',
+        builder: (context, state) => const ChangePasswordScreen(),
+      ),
+      GoRoute(
+        path: '/auth/change-password-success',
+        builder: (context, state) => const ChangePasswordSuccessScreen(),
+      ),
+      GoRoute(
+        path: '/review',
         builder: (context, state) {
-          final extra = state.extra as Map<String, dynamic>? ?? {};
-          return ReportScreen(
-            userId: extra['userId'] as String? ?? '',
-            userName: extra['userName'] as String? ?? 'Unknown User',
-            userAvatarUrl: extra['userAvatarUrl'] as String?,
+          final Map<String, dynamic> params = state.extra as Map<String, dynamic>;
+          return ReviewTaskerScreen(
+            taskerId: params['taskerId'],
+            taskId: params['taskId'],
+            taskerName: params['taskerName'],
+            taskerAvatarUrl: params['taskerAvatarUrl'],
+            totalPaid: params['totalPaid'],
           );
         },
       ),
@@ -251,83 +97,122 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         routes: [
           GoRoute(
             path: '/home',
-            name: 'home',
-            redirect: (context, state) => '/home/browse',
-          ),
-          GoRoute(
-            path: '/home/browse',
-            name: 'browse',
-            builder: (context, state) => const BrowseTasksScreen(),
-            routes: [
-              GoRoute(
-                path: ':id',
-                name: 'browse-task-details',
-                builder: (context, state) => BrowseTaskDetailsScreen(
-                  taskId: state.pathParameters['id']!,
-                ),
-                routes: [
-                  GoRoute(
-                    path: 'apply',
-                    name: 'browse-apply-task',
-                    builder: (context, state) => ApplyTaskScreen(
-                      taskId: state.pathParameters['id']!,
-                      isBrowseContext: true,
-                      extra: state.extra as Map<String, dynamic>?,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          GoRoute(
-            path: '/home/tasks',
-            name: 'tasks',
             builder: (context, state) => const MyTaskScreen(),
             routes: [
               GoRoute(
-                path: ':id',
-                name: 'task-details-from-tasks',
-                builder: (context, state) => TaskDetailsScreen(
-                  taskId: state.pathParameters['id']!,
-                ),
+                path: 'post',
+                builder: (context, state) => const PostTaskScreen(),
+              ),
+              GoRoute(
+                path: 'create',
+                builder: (context, state) => const CreateTaskScreen(),
+              ),
+              GoRoute(
+                path: 'browse',
+                builder: (context, state) => const BrowseTasksScreen(),
+              ),
+              GoRoute(
+                path: 'tasks/:taskId',
+                builder: (context, state) {
+                  final taskId = state.pathParameters['taskId']!;
+                  return TaskDetailsScreen(taskId: taskId);
+                },
                 routes: [
                   GoRoute(
                     path: 'apply',
-                    name: 'apply-task-from-tasks',
-                    builder: (context, state) => ApplyTaskScreen(
-                      taskId: state.pathParameters['id']!,
-                    ),
+                    builder: (context, state) {
+                      final taskId = state.pathParameters['taskId']!;
+                      final Map<String, dynamic>? params = state.extra as Map<String, dynamic>?;
+                      return ApplyTaskScreen(
+                        taskId: taskId,
+                        offerPrice: params?['offerPrice'],
+                      );
+                    },
                   ),
                 ],
               ),
-            ],
-          ),
-          GoRoute(
-            path: '/home/post',
-            name: 'post-task',
-            builder: (context, state) => const PostTaskScreen(),
-          ),
-          GoRoute(
-            path: '/home/chat',
-            name: 'chat',
-            builder: (context, state) => const ChatListScreen(),
-            routes: [
               GoRoute(
-                path: ':id',
-                name: 'chat-room',
-                builder: (context, state) => ChatScreen(
-                  channel: state.extra as Channel,
-                ),
+                path: 'chat',
+                builder: (context, state) => const ChatListScreen(),
+              ),
+              GoRoute(
+                path: 'chat/:channelId',
+                builder: (context, state) {
+                  final channelId = state.pathParameters['channelId']!;
+                  return ChatScreen(channelId: channelId);
+                },
+              ),
+              GoRoute(
+                path: 'profile',
+                builder: (context, state) => const ProfileScreen(),
               ),
             ],
           ),
-          GoRoute(
-            path: '/home/profile',
-            name: 'profile',
-            builder: (context, state) => const ProfileScreen(),
-          ),
         ],
       ),
+      GoRoute(
+        path: '/report',
+        builder: (context, state) {
+          final Map<String, dynamic> params = state.extra as Map<String, dynamic>;
+          return ReportScreen(
+            userId: params['userId'],
+            userName: params['userName'],
+            userAvatarUrl: params['userAvatarUrl'],
+          );
+        },
+      ),
+      GoRoute(
+        path: '/payment/completion',
+        builder: (context, state) {
+          final Map<String, dynamic> params = state.extra as Map<String, dynamic>;
+          return PaymentCompletionScreen(
+            billplzId: params['billplz_id'],
+            transactionId: params['transaction_id'],
+            paid: params['paid'] ?? false,
+          );
+        },
+      ),
     ],
+    redirect: (context, state) async {
+      final isLoggedIn = await authController.isLoggedIn();
+      final isOnboardingCompleted = await authController.isOnboardingCompleted();
+
+      // Get the current location
+      final location = state.matchedLocation;
+
+      // Paths that don't require authentication
+      final publicPaths = [
+        '/',
+        '/onboarding',
+        '/auth',
+        '/auth/create-account',
+        '/auth/forgot-password',
+        '/auth/otp-verification',
+        '/auth/change-password',
+        '/auth/change-password-success',
+      ];
+
+      // If not logged in and trying to access protected route
+      if (!isLoggedIn && !publicPaths.contains(location)) {
+        return '/auth';
+      }
+
+      // If logged in but trying to access auth routes
+      if (isLoggedIn && (location.startsWith('/auth') || location == '/')) {
+        return '/home';
+      }
+
+      // If logged in but hasn't completed onboarding
+      if (isLoggedIn && !isOnboardingCompleted && location != '/onboarding') {
+        return '/onboarding';
+      }
+
+      // If logged in and completed onboarding but still on onboarding screen
+      if (isLoggedIn && isOnboardingCompleted && location == '/onboarding') {
+        return '/home';
+      }
+
+      return null;
+    },
   );
 });

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:taskaway/core/constants/style_constants.dart';
 import 'package:taskaway/features/tasks/controllers/task_controller.dart';
+import 'package:taskaway/features/tasks/controllers/application_controller.dart';
 import 'package:taskaway/features/auth/controllers/auth_controller.dart';
 
 final offerAmountProvider = StateProvider.autoDispose<double?>((ref) => null);
@@ -42,7 +43,7 @@ class _ApplyTaskScreenState extends ConsumerState<ApplyTaskScreen> {
     super.dispose();
   }
 
-  Future<void> _submitOffer() async {
+  Future<void> _submitApplication() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() {
@@ -51,47 +52,27 @@ class _ApplyTaskScreenState extends ConsumerState<ApplyTaskScreen> {
     });
 
     try {
-      final taskController = ref.read(taskControllerProvider);
-      final currentUser = ref.read(currentUserProvider);
-      final offerId = DateTime.now().millisecondsSinceEpoch.toString();
+      final applicationController = ref.read(applicationControllerProvider);
       final amount = double.parse(_amountController.text);
       final message = _messageController.text;
 
-      // Get the task to check if the user is the poster
-      final task = await taskController.getTaskById(widget.taskId);
-      
-      // Prevent users from applying to their own tasks
-      if (task.posterId == currentUser?.id) {
-        setState(() {
-          _errorMessage = 'You cannot apply to your own task.';
-          _isLoading = false;
-        });
-        return;
-      }
-
-      // Create the offer object
-      final offer = {
-        'id': offerId,
-        'tasker_id': currentUser?.id,
-        'amount': amount,
-        'message': message,
-        'status': 'pending',
-        'created_at': DateTime.now().toIso8601String(),
-      };
-
-      // Add the offer to the task
-      await taskController.addOffer(widget.taskId, offer);
+      // Submit the application
+      await applicationController.submitApplication(
+        taskId: widget.taskId,
+        offerPrice: amount,
+        message: message,
+      );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Offer submitted successfully!')),
+          const SnackBar(content: Text('Application submitted successfully!')),
         );
         // Navigate back to the previous screen
         context.pop();
       }
     } catch (e) {
       setState(() {
-        _errorMessage = 'Failed to submit offer: ${e.toString()}';        
+        _errorMessage = 'Failed to submit application: ${e.toString()}';        
       });
     } finally {
       if (mounted) {
@@ -134,66 +115,64 @@ class _ApplyTaskScreenState extends ConsumerState<ApplyTaskScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Task title and details
+                  // Task Title
                   Text(
                     taskData.title,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Budget: RM${taskData.price.toStringAsFixed(2)}',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
                   const SizedBox(height: 24),
-                  
-                  // Amount field
+
+                  // Offer Amount
                   Text(
-                    'Your Offer Amount (RM)',
-                    style: Theme.of(context).textTheme.titleMedium,
+                    'Your Offer',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
                   ),
                   const SizedBox(height: 8),
                   TextFormField(
                     controller: _amountController,
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
+                      prefixText: '\$ ',
                       hintText: 'Enter your offer amount',
-                      prefixText: 'RM ',
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.0),
+                        borderRadius: BorderRadius.circular(8),
                       ),
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Please enter an amount';
                       }
-                      try {
-                        final amount = double.parse(value);
-                        if (amount <= 0) {
-                          return 'Amount must be greater than 0';
-                        }
-                      } catch (e) {
-                        return 'Please enter a valid amount';
+                      final amount = double.tryParse(value);
+                      if (amount == null) {
+                        return 'Please enter a valid number';
+                      }
+                      if (amount <= 0) {
+                        return 'Amount must be greater than 0';
                       }
                       return null;
                     },
                   ),
                   const SizedBox(height: 24),
-                  
-                  // Message field
+
+                  // Message
                   Text(
-                    'Message to Poster',
-                    style: Theme.of(context).textTheme.titleMedium,
+                    'Message to Task Poster',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
                   ),
                   const SizedBox(height: 8),
                   TextFormField(
                     controller: _messageController,
                     maxLines: 5,
                     decoration: InputDecoration(
-                      hintText: 'Describe why you\'re a good fit for this task',
+                      hintText: 'Explain why you\'re the best person for this task...',
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.0),
+                        borderRadius: BorderRadius.circular(8),
                       ),
                     ),
                     validator: (value) {
@@ -201,44 +180,29 @@ class _ApplyTaskScreenState extends ConsumerState<ApplyTaskScreen> {
                         return 'Please enter a message';
                       }
                       if (value.length < 10) {
-                        return 'Message too short. Please provide more details.';
+                        return 'Message must be at least 10 characters';
                       }
                       return null;
                     },
                   ),
-                  
-                  // Error message
-                  if (_errorMessage != null) ...[  
-                    const SizedBox(height: 16),
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.red.shade50,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(Icons.error_outline, color: Colors.red.shade700),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              _errorMessage!,
-                              style: TextStyle(color: Colors.red.shade700),
-                            ),
-                          ),
-                        ],
+                  const SizedBox(height: 16),
+
+                  // Error Message
+                  if (_errorMessage != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 16.0),
+                      child: Text(
+                        _errorMessage!,
+                        style: const TextStyle(color: Colors.red),
                       ),
                     ),
-                  ],
-                  
-                  const SizedBox(height: 32),
-                  
-                  // Submit button
+
+                  // Submit Button
                   SizedBox(
                     width: double.infinity,
                     height: 50,
                     child: ElevatedButton(
-                      onPressed: _isLoading ? null : _submitOffer,
+                      onPressed: _isLoading ? null : _submitApplication,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: primaryColor,
                         foregroundColor: Colors.white,
@@ -248,7 +212,7 @@ class _ApplyTaskScreenState extends ConsumerState<ApplyTaskScreen> {
                       ),
                       child: _isLoading
                           ? const CircularProgressIndicator(color: Colors.white)
-                          : const Text('Submit Offer'),
+                          : const Text('Submit Application'),
                     ),
                   ),
                 ],

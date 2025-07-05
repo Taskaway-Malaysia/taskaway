@@ -35,11 +35,8 @@ class TaskCard extends StatelessWidget {
 
     return GestureDetector(
       onTap: () {
-        if (isBrowseContext) {
-          GoRouter.of(context).go('/home/browse/${task.id}');
-        } else {
-          GoRouter.of(context).go('/home/tasks/${task.id}');
-        }
+        // Always navigate to the unified task details screen
+        GoRouter.of(context).go('/home/tasks/${task.id}');
       },
       child: Card(
         elevation: 0,
@@ -90,15 +87,6 @@ class TaskCard extends StatelessWidget {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text(
-                            task.status.toUpperCase(),
-                            style: TextStyle(
-                              color: primaryColor,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
                           Container(
                             height: 2,
                             width: 30,
@@ -106,7 +94,7 @@ class TaskCard extends StatelessWidget {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            '${task.offers?.length ?? 0} Offer${(task.offers?.length ?? 0) != 1 ? 's' : ''}',
+                            task.status.toUpperCase(),
                             style: TextStyle(
                               color: Colors.grey[600],
                               fontSize: 12,

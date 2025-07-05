@@ -4,6 +4,7 @@ import 'package:taskaway/features/auth/controllers/auth_controller.dart';
 import 'package:taskaway/features/tasks/components/task_card.dart';
 import 'package:taskaway/features/tasks/controllers/task_controller.dart';
 import 'package:taskaway/features/tasks/models/task.dart';
+import 'package:taskaway/core/constants/style_constants.dart';
 
 // Providers for managing the filter state
 final roleProvider = StateProvider<String>((ref) => 'As Poster');
@@ -112,38 +113,68 @@ class MyTaskScreen extends ConsumerWidget {
         color: Colors.grey[200],
         borderRadius: BorderRadius.circular(10),
       ),
-      child: Row(
-        children: roles.map((role) {
-          final isSelected = currentRole == role;
-          return Expanded(
-            child: GestureDetector(
-              onTap: () => ref.read(roleProvider.notifier).state = role,
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                decoration: BoxDecoration(
-                  color: isSelected ? const Color(0xFF7B61FF) : Colors.transparent,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Center(
-                  child: Text(
-                    role,
-                    style: TextStyle(
-                      color: isSelected ? Colors.white : Colors.black,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+      child: Stack(
+        children: [
+          // Animated selection indicator
+          AnimatedPositioned(
+            duration: StyleConstants.defaultAnimationDuration,
+            curve: Curves.easeInOut,
+            left: currentRole == 'As Poster' ? 0 : MediaQuery.of(context).size.width / 2 - 20,
+            child: Container(
+              width: MediaQuery.of(context).size.width / 2 - 20,
+              height: 40,
+              decoration: BoxDecoration(
+                color: currentRole == 'As Tasker'
+                    ? StyleConstants.taskerColorPrimary
+                    : StyleConstants.posterColorPrimary,
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          ),
+          // Role buttons
+          Row(
+            children: roles.map((role) {
+              final isSelected = currentRole == role;
+              return Expanded(
+                child: GestureDetector(
+                  onTap: () => ref.read(roleProvider.notifier).state = role,
+                  child: AnimatedContainer(
+                    duration: StyleConstants.defaultAnimationDuration,
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Center(
+                      child: AnimatedDefaultTextStyle(
+                        duration: StyleConstants.defaultAnimationDuration,
+                        style: TextStyle(
+                          color: isSelected ? Colors.white : Colors.black,
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        ),
+                        child: Text(role),
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ),
-          );
-        }).toList(),
+              );
+            }).toList(),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildStatusFilter(BuildContext context, WidgetRef ref) {
     final currentStatus = ref.watch(statusProvider);
+    final currentRole = ref.watch(roleProvider);
     final statuses = ['Awaiting offers', 'Upcoming tasks', 'Completed'];
+    final selectedColor = currentRole == 'As Tasker'
+        ? StyleConstants.taskerColorPrimary
+        : StyleConstants.posterColorPrimary;
+
+    // Calculate the position for the selection indicator
+    int selectedIndex = statuses.indexOf(currentStatus);
+    double indicatorPosition = selectedIndex * (MediaQuery.of(context).size.width - 32) / 3;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -152,32 +183,52 @@ class MyTaskScreen extends ConsumerWidget {
         color: Colors.grey[200],
         borderRadius: BorderRadius.circular(10),
       ),
-      child: Row(
-        children: statuses.map((status) {
-          final isSelected = currentStatus == status;
-          return Expanded(
-            child: GestureDetector(
-              onTap: () => ref.read(statusProvider.notifier).state = status,
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                decoration: BoxDecoration(
-                  color: isSelected ? const Color(0xFF7B61FF) : Colors.transparent,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Center(
-                  child: Text(
-                    status,
-                    style: TextStyle(
-                      color: isSelected ? Colors.white : Colors.grey[600],
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                      fontSize: 12,
+      child: Stack(
+        children: [
+          // Animated selection indicator
+          AnimatedPositioned(
+            duration: StyleConstants.defaultAnimationDuration,
+            curve: Curves.easeInOut,
+            left: indicatorPosition,
+            child: Container(
+              width: (MediaQuery.of(context).size.width - 32) / 3 - 8,
+              height: 36,
+              decoration: BoxDecoration(
+                color: selectedColor,
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          ),
+          // Status buttons
+          Row(
+            children: statuses.map((status) {
+              final isSelected = currentStatus == status;
+              return Expanded(
+                child: GestureDetector(
+                  onTap: () => ref.read(statusProvider.notifier).state = status,
+                  child: AnimatedContainer(
+                    duration: StyleConstants.defaultAnimationDuration,
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Center(
+                      child: AnimatedDefaultTextStyle(
+                        duration: StyleConstants.defaultAnimationDuration,
+                        style: TextStyle(
+                          color: isSelected ? Colors.white : Colors.grey[600],
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          fontSize: 12,
+                        ),
+                        child: Text(status),
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ),
-          );
-        }).toList(),
+              );
+            }).toList(),
+          ),
+        ],
       ),
     );
   }

@@ -5,9 +5,14 @@ import 'package:taskaway/core/constants/style_constants.dart';
 import 'package:taskaway/core/constants/route_constants.dart';
 import 'package:taskaway/features/auth/controllers/auth_controller.dart';
 import 'package:taskaway/features/tasks/controllers/task_controller.dart';
+import 'package:taskaway/features/tasks/controllers/application_controller.dart';
 import 'package:taskaway/features/tasks/models/task.dart';
 import 'package:taskaway/features/messages/controllers/message_controller.dart';
 import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:taskaway/core/constants/api_constants.dart';
+import 'package:taskaway/core/widgets/offer_price_modal.dart';
 
 class TaskDetailsScreen extends ConsumerStatefulWidget {
   final String taskId;
@@ -21,22 +26,21 @@ class TaskDetailsScreen extends ConsumerStatefulWidget {
 class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
   bool _isLoading = false;
   String? _errorMessage;
-  String? _revisionNotes;
 
-  // Accept offer method
-  Future<void> _acceptOffer(String offerId, String taskerId) async {
+  // Accept application method
+  Future<void> _acceptApplication(String applicationId) async {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
 
     try {
-      final taskController = ref.read(taskControllerProvider);
-      await taskController.acceptOffer(widget.taskId, offerId, taskerId);
+      final applicationController = ref.read(applicationControllerProvider);
+      await applicationController.acceptApplication(applicationId);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Offer accepted successfully!')),
+          const SnackBar(content: Text('Application accepted successfully!')),
         );
         
         // Get the chat channel for this task
@@ -62,61 +66,397 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
     }
   }
 
+  void _shareTask(Task task) {
+    final taskUrl = kIsWeb 
+      ? '${Uri.base.origin}/home/tasks/${task.id}'
+      : 'taskaway://home/tasks/${task.id}';
+      
+    final shareText = '''
+Check out this task on ${StyleConstants.appName}!
+
+${task.title}
+Price: RM ${task.price.toStringAsFixed(0)}
+Location: ${task.location}
+
+$taskUrl
+''';
+
+    Share.share(shareText);
+  }
+
   @override
   Widget build(BuildContext context) {
     final currentUser = ref.watch(currentUserProvider);
     final task = ref.watch(taskProvider(widget.taskId));
 
     return Scaffold(
+      backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: const Text('Task Details'),
-        elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        title: const Text(
+          'Task Details',
+          style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600),
+        ),
+        backgroundColor: task.when(
+          data: (taskData) => taskData.posterId == currentUser?.id 
+            ? StyleConstants.posterColorPrimary  // Purple for poster
+            : StyleConstants.taskerColorPrimary, // Orange for tasker
+          loading: () => StyleConstants.taskerColorPrimary,
+          error: (_, __) => StyleConstants.taskerColorPrimary,
+        ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => context.pop(),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.share_outlined, color: Colors.black),
+            onPressed: () {
+              if (task.value != null) {
+                _shareTask(task.value!);
+              }
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.flag_outlined, color: Colors.black),
+            onPressed: () {
+              // TODO: Implement report functionality
+            },
+          ),
+        ],
       ),
       body: task.when(
         data: (taskData) {
-          // Check if current user is the poster
-          final isPoster = currentUser?.id == taskData.posterId;
-          final isTasker = currentUser?.id == taskData.taskerId;
-          final hasOffers = taskData.offers?.isNotEmpty ?? false;
-          
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Task header
-                _buildTaskHeader(taskData),
-                const SizedBox(height: 24),
-                
-                // Task details
-                _buildTaskDetails(taskData),
-                const SizedBox(height: 24),
-                
-                // Task schedule
-                _buildTaskSchedule(taskData),
-                const SizedBox(height: 24),
-                
-                // Apply button (for non-posters when task is open)
-                if (!isPoster && taskData.status == 'open')
-                  _buildApplyButton(context),
-                  
-                // Error message
-                if (_errorMessage != null)
-                  _buildErrorMessage(),
-                  
-                const SizedBox(height: 24),
-                
-                // Offers section (only for poster)
-                if (isPoster && hasOffers)
-                  _buildOffersSection(taskData, currentUser?.id ?? ''),
-                  
-                // Status section (for assigned tasks)
-                if (taskData.status != 'open')
-                  _buildStatusSection(taskData, isPoster, isTasker),
-              ],
-            ),
+          final isPoster = taskData.posterId == currentUser?.id;
+          final themeColor = isPoster 
+            ? StyleConstants.posterColorPrimary  // Purple for poster
+            : StyleConstants.taskerColorPrimary; // Orange for tasker
+
+          return Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Posted by section
+                      Container(
+                        color: Colors.white,
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 25,
+                              backgroundColor: Colors.grey[200],
+                              child: const Icon(Icons.image, color: Colors.grey),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      const Text(
+                                        'Posted by',
+                                        style: TextStyle(
+                                          color: Colors.grey,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                      Text(
+                                        '1 day ago',
+                                        style: TextStyle(
+                                          color: Colors.grey[600],
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      Text(
+                                        'Mike J.',
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      const Icon(Icons.chevron_right),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      ...List.generate(5, (index) {
+                                        return Icon(
+                                          Icons.star_border,
+                                          size: 16,
+                                          color: Colors.grey[400],
+                                        );
+                                      }),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        '(No reviews yet)',
+                                        style: TextStyle(
+                                          color: Colors.grey[500],
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 8),
+                      
+                      // Task details
+                      Container(
+                        color: Colors.white,
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    'I am currently in need of maid services',
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: themeColor.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Text(
+                                    'Open',
+                                    style: TextStyle(
+                                      color: themeColor,
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 24),
+                            
+                            // Location
+                            Row(
+                              children: [
+                                Icon(Icons.location_on_outlined, size: 20, color: Colors.grey[600]),
+                                const SizedBox(width: 8),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Location',
+                                      style: TextStyle(
+                                        color: Colors.grey[600],
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                    const Text(
+                                      'USJ 4, Subang Jaya, Selangor',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            
+                            // Date
+                            Row(
+                              children: [
+                                Icon(Icons.calendar_today_outlined, size: 20, color: Colors.grey[600]),
+                                const SizedBox(width: 8),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'To be done before',
+                                      style: TextStyle(
+                                        color: Colors.grey[600],
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                    const Text(
+                                      'Tuesday, 6 February',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            
+                            // Time
+                            Row(
+                              children: [
+                                Icon(Icons.access_time_outlined, size: 20, color: Colors.grey[600]),
+                                const SizedBox(width: 8),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'At what time',
+                                      style: TextStyle(
+                                        color: Colors.grey[600],
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                    const Text(
+                                      '9AM to 2PM',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 8),
+                      
+                      // Details section
+                      Container(
+                        color: Colors.white,
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Details',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            const Text(
+                              'Seeking maid service for household cleaning duties. Reliable and detail-oriented candidates preferred.',
+                              style: TextStyle(
+                                fontSize: 14,
+                                height: 1.5,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              '* Materials are provided',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[600],
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              // Bottom section with budget and offer button
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  border: Border(
+                    top: BorderSide(color: Color(0xFFEEEEEE)),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'Task Budget',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'RM 100',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          if (isPoster) {
+                            // Show review screen for poster
+                            context.push('/review', extra: {
+                              'taskerId': taskData.taskerId!,
+                              'taskId': taskData.id,
+                              'taskerName': taskData.taskerProfile?['full_name'] ?? 'Unknown',
+                              'taskerAvatarUrl': taskData.taskerProfile?['avatar_url'],
+                              'totalPaid': taskData.price,
+                            });
+                          } else {
+                            // Show offer price modal for tasker
+                            showDialog(
+                              context: context,
+                              builder: (context) => OfferPriceModal(
+                                initialPrice: taskData.price,
+                                onPriceSubmitted: (price) {
+                                  // Navigate to apply screen with the price
+                                  context.go('/home/tasks/${taskData.id}/apply', extra: {'offerPrice': price});
+                                },
+                              ),
+                            );
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: themeColor,
+                          foregroundColor: Colors.black,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: Text(
+                          isPoster ? 'Release Payment' : 'Offer',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -125,514 +465,5 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
         ),
       ),
     );
-  }
-  
-  Widget _buildTaskHeader(Task task) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Title
-        Text(
-          task.title,
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-        ),
-        const SizedBox(height: 8),
-        
-        // Status chip
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: _getStatusColor(task.status),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Text(
-            _getReadableStatus(task.status),
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
-          ),
-        ),
-        
-        const SizedBox(height: 12),
-        
-        // Price
-        Text(
-          'RM${task.price.toStringAsFixed(2)}',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: StyleConstants.primaryColor,
-              ),
-        ),
-      ],
-    );
-  }
-  
-  Widget _buildTaskDetails(Task task) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Description',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-        ),
-        const SizedBox(height: 8),
-        Text(task.description),
-        const SizedBox(height: 16),
-        
-        // Category
-        _buildDetailItem(Icons.category_outlined, task.category),
-        
-        // Location
-        _buildDetailItem(Icons.location_on_outlined, task.location),
-      ],
-    );
-  }
-  
-  Widget _buildDetailItem(IconData icon, String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0),
-      child: Row(
-        children: [
-          Icon(icon, size: 18, color: Colors.grey[700]),
-          const SizedBox(width: 8),
-          Expanded(child: Text(text)),
-        ],
-      ),
-    );
-  }
-  
-  Widget _buildTaskSchedule(Task task) {
-    final dateFormat = DateFormat('dd MMM yyyy');
-    final timeFormat = DateFormat('hh:mm a');
-    
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Schedule',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-        ),
-        const SizedBox(height: 8),
-        _buildDetailItem(
-          Icons.calendar_today_outlined,
-          dateFormat.format(task.scheduledTime),
-        ),
-        _buildDetailItem(
-          Icons.access_time_outlined,
-          timeFormat.format(task.scheduledTime),
-        ),
-      ],
-    );
-  }
-  
-  Widget _buildApplyButton(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: 50,
-      child: ElevatedButton(
-        onPressed: () => context.push('${RouteConstants.applyTask}/${widget.taskId}'),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: StyleConstants.primaryColor,
-          foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-        ),
-        child: const Text('Apply for this Task'),
-      ),
-    );
-  }
-  
-  Widget _buildErrorMessage() {
-    return Container(
-      padding: const EdgeInsets.all(8),
-      margin: const EdgeInsets.only(top: 16),
-      decoration: BoxDecoration(
-        color: Colors.red.shade50,
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.error_outline, color: Colors.red.shade700),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              _errorMessage!,
-              style: TextStyle(color: Colors.red.shade700),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-  
-  // Method to update task status based on the action
-  Future<void> _updateTaskStatus(String action) async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
-    try {
-      final taskController = ref.read(taskControllerProvider);
-      
-      switch (action) {
-        case 'start':
-          await taskController.startTask(widget.taskId);
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Task started! You can now begin work.')),
-            );
-          }
-          break;
-          
-        case 'complete':
-          await taskController.completeTask(widget.taskId);
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Task marked as complete! Waiting for poster approval.')),
-            );
-          }
-          break;
-          
-        case 'approve':
-          await taskController.approveTask(widget.taskId);
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Task approved! Payment will be processed.')),
-            );
-          }
-          break;
-          
-        case 'revise':
-          if (_revisionNotes != null) {
-            await taskController.requestRevisions(widget.taskId, _revisionNotes);
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Revision requested. The tasker has been notified.')),
-              );
-            }
-          }
-          break;
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _errorMessage = e.toString();
-        });
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
-  
-  // Show dialog to enter revision notes
-  void _showRevisionDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Request Revisions'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Please provide details about what needs to be revised:'),
-            const SizedBox(height: 16),
-            TextField(
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                hintText: 'Revision details',
-              ),
-              maxLines: 3,
-              onChanged: (value) {
-                _revisionNotes = value;
-              },
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _updateTaskStatus('revise');
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: StyleConstants.primaryColor,
-            ),
-            child: const Text('Submit'),
-          ),
-        ],
-      ),
-    );
-  }
-  
-  Widget _buildOffersSection(Task task, String currentUserId) {
-    final offers = task.offers ?? [];
-    
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Offers (${offers.length})',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-        ),
-        const SizedBox(height: 12),
-        if (offers.isEmpty)
-          const Text('No offers yet.')
-        else
-          ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: offers.length,
-            itemBuilder: (context, index) {
-              final offer = offers[index];
-              final offerId = offer['id'];
-              final taskerId = offer['tasker_id'];
-              final amount = (offer['amount'] is num) ? (offer['amount'] as num).toDouble() : 0.0;
-              final message = offer['message'];
-              final status = offer['status'] ?? 'pending';
-              final taskerProfile = task.offers?[index]['tasker_profile'] as Map<String, dynamic>?;
-              final taskerName = taskerProfile?['full_name'] as String? ?? 'Unknown Tasker';
-              
-              return Card(
-                margin: const EdgeInsets.only(bottom: 12),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Tasker name and offer amount
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            taskerName,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          Text(
-                            'RM${amount.toStringAsFixed(2)}',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: StyleConstants.primaryColor,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      
-                      // Message
-                      Text(message),
-                      const SizedBox(height: 16),
-                      
-                      // Accept button
-                      if (status == 'pending')
-                        SizedBox(
-                          width: double.infinity,
-                          height: 40,
-                          child: ElevatedButton(
-                            onPressed: _isLoading ? null : () => _acceptOffer(offerId, taskerId),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green.shade500,
-                              foregroundColor: Colors.white,
-                            ),
-                            child: _isLoading
-                                ? const SizedBox(
-                                    height: 20,
-                                    width: 20,
-                                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                                  )
-                                : const Text('Accept Offer'),
-                          ),
-                        )
-                      else
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: status == 'accepted' ? Colors.green.shade100 : Colors.grey.shade100,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            status == 'accepted' ? 'Accepted' : 'Rejected',
-                            style: TextStyle(
-                              color: status == 'accepted' ? Colors.green.shade800 : Colors.grey.shade700,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-      ],
-    );
-  }
-  
-  Widget _buildStatusSection(Task task, bool isPoster, bool isTasker) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Task Status',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-        ),
-        const SizedBox(height: 12),
-        
-        // Status info
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.grey.shade50,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.grey.shade200),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                _getStatusDescription(task.status),
-                style: const TextStyle(fontWeight: FontWeight.w500),
-              ),
-              
-              if (isTasker && (task.status == 'assigned' || task.status == 'in_progress')) ...[
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    if (task.status == 'assigned')
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () async {
-                            await _updateTaskStatus('start');
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blue,
-                            foregroundColor: Colors.white,
-                          ),
-                          child: const Text('Start Work'),
-                        ),
-                      ),
-                    if (task.status == 'in_progress')
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () async {
-                            await _updateTaskStatus('complete');
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: StyleConstants.primaryColor,
-                            foregroundColor: Colors.white,
-                          ),
-                          child: const Text('Mark as Completed'),
-                        ),
-                      ),
-                  ],
-                ),
-              ],
-              
-              if (isPoster && task.status == 'pending_approval') ...[
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () async {
-                          await _updateTaskStatus('approve');
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
-                          foregroundColor: Colors.white,
-                        ),
-                        child: const Text('Approve'),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: TextButton(
-                        onPressed: () {
-                          _showRevisionDialog();
-                        },
-                        style: TextButton.styleFrom(
-                          foregroundColor: Colors.red,
-                        ),
-                        child: const Text('Request Revisions'),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-  
-  String _getReadableStatus(String status) {
-    switch (status) {
-      case 'open':
-        return 'Open';
-      case 'assigned':
-        return 'Assigned';
-      case 'in_progress':
-        return 'In Progress';
-      case 'pending_approval':
-        return 'Pending Approval';
-      case 'completed':
-        return 'Completed';
-      case 'cancelled':
-        return 'Cancelled';
-      default:
-        return 'Unknown';
-    }
-  }
-  
-  String _getStatusDescription(String status) {
-    switch (status) {
-      case 'assigned':
-        return 'This task has been assigned. The tasker should start work soon.';
-      case 'in_progress':
-        return 'The tasker is currently working on this task.';
-      case 'pending_approval':
-        return 'The tasker has marked this task as complete. Please review and approve or request revisions.';
-      case 'completed':
-        return 'This task has been completed successfully.';
-      case 'cancelled':
-        return 'This task has been cancelled.';
-      default:
-        return 'This task is open for applications.';
-    }
-  }
-  
-  Color _getStatusColor(String status) {
-    switch (status) {
-      case 'open':
-        return StyleConstants.primaryColor;
-      case 'assigned':
-        return Colors.blue;
-      case 'in_progress':
-        return Colors.orange;
-      case 'pending_approval':
-        return Colors.purple;
-      case 'completed':
-        return Colors.green;
-      case 'cancelled':
-        return Colors.red;
-      default:
-        return Colors.grey;
-    }
   }
 }

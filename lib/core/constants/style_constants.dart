@@ -26,5 +26,5 @@ class StyleConstants {
   static const double defaultRadius = 8.0;
   
   // Animation Durations
-  static const Duration defaultAnimationDuration = Duration(milliseconds: 300);
+  static const Duration defaultAnimationDuration = Duration(milliseconds: 200);
 }

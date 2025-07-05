@@ -23,7 +23,6 @@ class Task {
   final String? timeOfDay;
   final String? locationType;
   final bool? providesMaterials;
-  final List<Map<String, dynamic>>? offers;
 
   String? get posterName => posterProfile?['full_name'] as String?;
   String? get taskerName => taskerProfile?['full_name'] as String?;
@@ -39,7 +38,6 @@ class Task {
     this.taskerId,
     this.posterProfile,
     this.taskerProfile,
-    this.offers,
     required this.category,
     required this.location,
     required this.scheduledTime,
@@ -67,9 +65,6 @@ class Task {
       taskerId: json['tasker_id'] as String?,
       posterProfile: json['poster_profile'] as Map<String, dynamic>?,
       taskerProfile: json['tasker_profile'] as Map<String, dynamic>?,
-      offers: json['offers'] != null
-          ? List<Map<String, dynamic>>.from(json['offers'] as List)
-          : null,
       category: json['category'] as String,
       location: json['location'] as String,
       scheduledTime: DateTime.parse(json['scheduled_time'] as String),
