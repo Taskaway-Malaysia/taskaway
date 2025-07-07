@@ -1,22 +1,20 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../../core/constants/style_constants.dart';
-import '../../../core/widgets/numpad_overlay.dart';
-import '../controllers/auth_controller.dart';
-import 'dart:developer' as dev;
+import 'package:taskaway/core/constants/style_constants.dart';
+import 'package:taskaway/core/widgets/numpad_overlay.dart';
+import 'package:taskaway/features/auth/controllers/auth_controller.dart';
 
 class OtpVerificationScreen extends ConsumerStatefulWidget {
-  final String email;
-  final OtpType type;
-
   const OtpVerificationScreen({
     super.key,
     required this.email,
-    this.type = OtpType.signup, // Default to signup for backward compatibility
+    required this.type,
   });
+
+  final String email;
+  final OtpType type;
 
   @override
   ConsumerState<OtpVerificationScreen> createState() => _OtpVerificationScreenState();
@@ -24,12 +22,10 @@ class OtpVerificationScreen extends ConsumerStatefulWidget {
 
 class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
   final List<TextEditingController> _controllers = List.generate(6, (_) => TextEditingController());
-  final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
   int _currentOtpIndex = 0;
 
   int _resendSeconds = 60;
   Timer? _timer;
-  bool _isVerifying = false;
   bool _isResending = false;
   String? _errorMessage;
 
@@ -37,10 +33,6 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
   void initState() {
     super.initState();
     _startResendTimer();
-    // Request focus for the first OTP box initially to highlight it
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _focusNodes[0].requestFocus();
-    });
   }
 
   void _startResendTimer() {
@@ -64,9 +56,6 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
     for (var controller in _controllers) {
       controller.dispose();
     }
-    for (var node in _focusNodes) {
-      node.dispose();
-    }
     _timer?.cancel();
     super.dispose();
   }
@@ -85,25 +74,21 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
                 _controllers[_currentOtpIndex].text = digit;
                 if (_currentOtpIndex < 5) {
                   _currentOtpIndex++;
-                  _focusNodes[_currentOtpIndex].requestFocus();
-                } else {
-                  // All fields filled, optionally auto-submit or enable verify
-                  // For now, just keep focus on the last field
-                  _focusNodes[_currentOtpIndex].requestFocus(); 
                 }
               });
             }
           },
           onBackspacePressed: () {
-            setState(() {
-              if (_controllers[_currentOtpIndex].text.isNotEmpty) {
-                _controllers[_currentOtpIndex].text = '';
-              } else if (_currentOtpIndex > 0) {
-                _currentOtpIndex--;
-                _controllers[_currentOtpIndex].text = '';
-              }
-              _focusNodes[_currentOtpIndex].requestFocus();
-            });
+            if (_currentOtpIndex >= 0) {
+              setState(() {
+                if (_controllers[_currentOtpIndex].text.isNotEmpty) {
+                  _controllers[_currentOtpIndex].clear();
+                } else if (_currentOtpIndex > 0) {
+                  _currentOtpIndex--;
+                  _controllers[_currentOtpIndex].clear();
+                }
+              });
+            }
           },
           onConfirmPressed: () {
             Navigator.pop(context); // Close the numpad
@@ -111,108 +96,34 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
           },
         );
       },
-    ).whenComplete(() {
-        // Ensure focus is correctly managed when bottom sheet closes
-        if (mounted && _currentOtpIndex < _focusNodes.length) {
-           _focusNodes[_currentOtpIndex].requestFocus();
-        }
-    });
+    );
   }
 
-  Future<void> _handleResendOtp() async {
-    if (_resendSeconds == 0 && !_isResending) {
-      setState(() {
-        _isResending = true;
-        _errorMessage = null;
-      });
-      
-      try {
-        final authController = ref.read(authControllerProvider.notifier);
-        
-        await authController.resendOtp(
-          email: widget.email,
-          type: widget.type,
-        );
-        
-        if (mounted) {
-          setState(() {
-            _resendSeconds = 60;
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Verification code resent successfully'),
-                backgroundColor: Colors.green,
-              ),
-            );
-          });
-          _startResendTimer();
-        }
-      } catch (e) {
-        dev.log('Error resending OTP: $e');
-        if (mounted) {
-          setState(() {
-            _errorMessage = e is AuthException 
-                ? e.message 
-                : 'Failed to resend verification code. Please try again.';
-          });
-        }
-      } finally {
-        if (mounted) {
-          setState(() {
-            _isResending = false;
-          });
-        }
-      }
-    }
-  }
-  
   Future<void> _verifyOtp() async {
-    // Gather OTP from all text fields
-    final otp = _controllers.map((controller) => controller.text).join('');
-    
-    // Validate OTP format
-    if (otp.length != 6 || !RegExp(r'^\d{6}$').hasMatch(otp)) {
+    final authNotifier = ref.read(authControllerProvider.notifier);
+    final otp = _controllers.map((c) => c.text).join();
+    if (otp.length != 6) {
       setState(() {
-        _errorMessage = 'Please enter a valid 6-digit code';
+        _errorMessage = 'Please enter the complete 6-digit code.';
       });
       return;
     }
-    
+
     setState(() {
-      _isVerifying = true;
       _errorMessage = null;
     });
-    
+
     try {
-      final authController = ref.read(authControllerProvider.notifier);
-      
-      final response = await authController.verifyOtp(
+      await authNotifier.verifyOtp(
         email: widget.email,
         token: otp,
         type: widget.type,
       );
-      
-      dev.log('OTP verification successful: ${response.session != null}');
-      
-      if (mounted) {
-        if (widget.type == OtpType.recovery) {
-          dev.log('Navigating to /change-password after recovery OTP verification.');
-          context.pushReplacement('/change-password', extra: widget.email);
-        } else {
-          dev.log('Navigating to / after signup OTP verification to handle routing.');
-          context.go('/');
-        }
-      }
-    } catch (e) {
-      dev.log('Error verifying OTP: $e');
+      // On success, GoRouter's redirect will handle navigation
+    } on AuthException catch (e) {
       if (mounted) {
         setState(() {
-          _errorMessage = 'Invalid verification code. Please try again.';
-        });
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isVerifying = false;
+          _errorMessage = e.message;
         });
       }
     }
@@ -220,14 +131,13 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isLoading = ref.watch(authControllerProvider);
+
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => context.pop(),
-        ),
-        backgroundColor: Colors.transparent,
+        title: const Text('Verification Code'),
         elevation: 0,
+        backgroundColor: Colors.transparent,
       ),
       body: SafeArea(
         child: LayoutBuilder(
@@ -239,56 +149,50 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
                 ),
                 child: IntrinsicHeight(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(24.0, 16.0, 24.0, 24.0),
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
                     child: Column(
-                      mainAxisSize: MainAxisSize.max,
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const SizedBox(height: 24),
-                        Text(
-                          'Verification Code',
-                          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black87,
-                              ),
+                        const Text(
+                          'Enter Verification Code',
+                          style: TextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          'Enter the verification code we just sent to\n${widget.email}',
-                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                color: Colors.black54,
-                                height: 1.5,
-                              ),
+                          'Enter the verification code we just sent to \n${widget.email}',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey,
+                          ),
+                          textAlign: TextAlign.center,
                         ),
-                        const SizedBox(height: 32),
+                        const SizedBox(height: 40),
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: List.generate(6, (index) {
                             return GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  _currentOtpIndex = index;
-                                });
-                                _focusNodes[index].requestFocus();
-                                _showNumpad(context);
-                              },
+                              onTap: () => _showNumpad(context),
                               child: Container(
-                                width: 46,
+                                width: 50,
                                 height: 50,
+                                alignment: Alignment.center,
                                 decoration: BoxDecoration(
                                   color: Colors.grey.shade100,
                                   borderRadius: BorderRadius.circular(8),
                                   border: Border.all(
-                                    color: _focusNodes[index].hasFocus
-                                        ? StyleConstants.posterColorPrimary
+                                    color: _currentOtpIndex == index
+                                        ? StyleConstants.taskerColorPrimary
                                         : Colors.grey.shade300,
-                                    width: _focusNodes[index].hasFocus ? 1.5 : 1.0,
+                                    width: _currentOtpIndex == index ? 2 : 1.0,
                                   ),
                                 ),
                                 child: AbsorbPointer(
                                   child: TextFormField(
                                     controller: _controllers[index],
-                                    focusNode: _focusNodes[index],
                                     readOnly: true,
                                     textAlign: TextAlign.center,
                                     style: const TextStyle(
@@ -318,7 +222,27 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
                           ),
                         Center(
                           child: TextButton(
-                            onPressed: (_resendSeconds == 0 && !_isResending) ? _handleResendOtp : null,
+                            onPressed: (_resendSeconds == 0 && !isLoading && !_isResending) ? () async {
+                              setState(() {
+                                _isResending = true;
+                                _errorMessage = null;
+                              });
+                              try {
+                                await ref.read(authControllerProvider.notifier).resendOtp(email: widget.email, type: widget.type);
+                                setState(() {
+                                  _resendSeconds = 60;
+                                  _startResendTimer();
+                                });
+                              } on AuthException catch (e) {
+                                setState(() {
+                                  _errorMessage = e.message;
+                                });
+                              } finally {
+                                setState(() {
+                                  _isResending = false;
+                                });
+                              }
+                            } : null,
                             style: TextButton.styleFrom(
                               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                             ),
@@ -344,10 +268,10 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
                                   ),
                           ),
                         ),
-                        const SizedBox(height: 250), 
+                        const Spacer(),
                         ElevatedButton(
-                          onPressed: !_isVerifying ? _verifyOtp : null,
-                          child: _isVerifying
+                          onPressed: isLoading ? null : _verifyOtp,
+                          child: isLoading
                               ? const SizedBox(
                                   height: 20,
                                   width: 20,
@@ -358,7 +282,7 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
                                 )
                               : const Text('Verify'),
                         ),
-                        const Spacer(), 
+                        const SizedBox(height: 16), // Padding at the bottom
                       ],
                     ),
                   ),

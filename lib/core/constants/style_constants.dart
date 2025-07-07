@@ -24,6 +24,9 @@ class StyleConstants {
   // Spacing
   static const double defaultPadding = 16.0;
   static const double defaultRadius = 8.0;
+
+  // Web layout
+  static const double webMaxWidth = 600.0;
   
   // Animation Durations
   static const Duration defaultAnimationDuration = Duration(milliseconds: 300);
