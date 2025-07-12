@@ -102,15 +102,11 @@ class TaskRepository {
   }
 
   // Update an existing task
-  Future<Task> updateTask(String id, Map<String, dynamic> data) async {
-    final response = await supabase
+  Future<void> updateTask(String id, Map<String, dynamic> data) async {
+    await supabase
         .from(_tableName)
         .update(data)
-        .eq('id', id)
-        .select()
-        .single();
-    
-    return Task.fromJson(response);
+        .eq('id', id);
   }
 
   // Delete a task
