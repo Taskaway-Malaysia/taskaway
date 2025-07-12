@@ -51,11 +51,12 @@ class TaskRepository {
   Stream<Task> watchTask(String id) {
     try {
       // First attempt to use Realtime subscription
+      // When the stream emits a change, re-fetch the full task data with offers.
       return supabase
           .from(_tableName)
           .stream(primaryKey: ['id'])
           .eq('id', id)
-          .map((data) => Task.fromJson(data.first))
+          .asyncMap((_) => getTaskById(id))
           .handleError((error) {
             // Log the Realtime error
             dev.log('Realtime task subscription error: $error');
@@ -82,7 +83,7 @@ class TaskRepository {
   Future<Task> getTaskById(String id) async {
     final response = await supabase
         .from(_tableName)
-        .select()
+        .select('*, offers:taskaway_applications(*, tasker_profile:taskaway_profiles(*))')
         .eq('id', id)
         .single();
     
