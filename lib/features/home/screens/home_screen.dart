@@ -17,9 +17,24 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final currentIndex = ref.watch(currentIndexProvider);
     final currentLocation = GoRouterState.of(context).uri.toString();
     final profileAsync = ref.watch(currentProfileProvider);
+    
+    // Determine the current index based on location
+    int actualIndex;
+    if (currentLocation == '/home/browse') {
+      actualIndex = 0;
+    } else if (currentLocation == '/home/tasks') {
+      actualIndex = 1;
+    } else if (currentLocation == '/home/post-task') {
+      actualIndex = 2;
+    } else if (currentLocation.startsWith('/home/chat')) {
+      actualIndex = 3;
+    } else if (currentLocation == '/home/profile') {
+      actualIndex = 4;
+    } else {
+      actualIndex = ref.watch(currentIndexProvider);
+    }
 
     // Determine which routes should show the bottom navigation bar
     final bool showBottomNav = !currentLocation.startsWith('/home/chat/');
@@ -28,30 +43,21 @@ class HomeScreen extends ConsumerWidget {
     // or the role-specific home screen for the main home route.
     Widget body;
     if (currentLocation == '/home/browse') {
+      // Always show TaskerHomeScreen (browse screen) for all users
       body = profileAsync.when(
-        data: (profile) {
-          if (profile?.role == 'tasker') {
-            return TaskerHomeScreen(profile: profile);
-          } else {
-            return PosterHomeScreen(profile: profile);
-          }
-        },
+        data: (profile) => TaskerHomeScreen(profile: profile),
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stack) => Center(
-          child: SelectableText.rich(
-            TextSpan(
-              children: [
-                const TextSpan(
-                  text: 'Error loading profile: ',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                TextSpan(
-                  text: '$error',
-                  style: const TextStyle(color: Colors.red),
-                ),
-              ],
-            ),
-          ),
+          child: Text('Error loading profile: $error'),
+        ),
+      );
+    } else if (currentLocation == '/home/post-task') {
+      // Always show PosterHomeScreen when accessing post-task route
+      body = profileAsync.when(
+        data: (profile) => PosterHomeScreen(profile: profile),
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stack) => Center(
+          child: Text('Error loading profile: $error'),
         ),
       );
     } else {
@@ -62,10 +68,10 @@ class HomeScreen extends ConsumerWidget {
       body: body,
       bottomNavigationBar: showBottomNav
           ? NavigationBar(
-              selectedIndex: currentIndex,
+              selectedIndex: actualIndex,
               onDestinationSelected: (index) {
                 // Prevent navigating to the same page
-                if (currentIndex == index) return;
+                if (actualIndex == index) return;
 
                 ref.read(currentIndexProvider.notifier).state = index;
                 switch (index) {
@@ -76,7 +82,9 @@ class HomeScreen extends ConsumerWidget {
                     context.go('/home/tasks');
                     break;
                   case 2:
-                    context.go('/create-task');
+                    // Navigate to post-task route to show poster home screen
+                    // Both poster and tasker roles can create tasks
+                    context.go('/home/post-task');
                     break;
                   case 3:
                     context.go('/home/chat');
@@ -88,7 +96,7 @@ class HomeScreen extends ConsumerWidget {
               },
               destinations: const [
                 NavigationDestination(
-                    icon: Icon(Icons.home_outlined), label: 'Home'),
+                    icon: Icon(Icons.search), label: 'Browse'),
                 NavigationDestination(
                     icon: Icon(Icons.assignment_outlined), label: 'My Tasks'),
                 NavigationDestination(
