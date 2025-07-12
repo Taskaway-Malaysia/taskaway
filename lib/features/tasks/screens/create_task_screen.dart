@@ -435,7 +435,6 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
   Widget _buildCategoryAndTitleStep(ThemeData theme) {
     final taskData = ref.watch(createTaskDataProvider);
     final selectedCategory = taskData['category'];
-    final categoriesAsync = ref.watch(categoriesProvider);
 
     return Form(
       key: _formKeys[0],
@@ -451,7 +450,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFF6C5CE7).withOpacity(0.1),
+              color: const Color(0xFF6C5CE7).withValues(alpha: 0.1),
               border: Border.all(
                 color: const Color(0xFF6C5CE7),
                 width: 2,

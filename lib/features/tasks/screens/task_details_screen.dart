@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:taskaway/core/constants/style_constants.dart';
-import 'package:taskaway/core/constants/route_constants.dart';
+
 import 'package:taskaway/core/widgets/numpad_overlay.dart';
 import 'package:taskaway/features/auth/controllers/auth_controller.dart';
 import 'package:taskaway/features/applications/controllers/application_controller.dart';
@@ -27,6 +27,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
   String? _revisionNotes;
   final TextEditingController _offerPriceController = TextEditingController();
   bool _showNumpad = false;
+  bool _isRevisingBudget = false;
 
   // Accept offer method
   Future<void> _acceptOffer(String offerId, String taskerId) async {
@@ -110,41 +111,69 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildPosterInfo(taskData, ref),
-                    const SizedBox(height: 16),
-                    _buildTaskHeader(taskData),
-                    const SizedBox(height: 16),
-                    _buildTaskDetails(taskData),
-                    const SizedBox(height: 16),
-                    _buildBudgetSection(taskData, isPoster, isTasker, userApplication),
+                    _buildSectionContainer(
+                      child: _buildPosterInfo(taskData, ref),
+                    ),
+                    _buildSectionContainer(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildTaskHeader(taskData),
+                          const SizedBox(height: 24),
+                          _buildTaskDetails(taskData),
+                          const SizedBox(height: 24),
+                          _buildTaskSchedule(taskData),
+                        ],
+                      ),
+                    ),
+                    _buildSectionContainer(
+                      child: _buildBudgetSection(taskData, isPoster, isTasker, userApplication),
+                    ),
+                    _buildSectionContainer(
+                      child: _buildDetailsSection(taskData),
+                    ),
                     const SizedBox(height: 24),
-                    Text('Details', style: Theme.of(context).textTheme.titleLarge),
-                    const SizedBox(height: 8),
-                    Text(taskData.description),
-                    if (taskData.images != null && taskData.images!.isNotEmpty)
-                      _buildTaskImages(taskData),
-                    const SizedBox(height: 24),
-                    // Task schedule
-                    _buildTaskSchedule(taskData),
-                    const SizedBox(height: 24),
-                    
-                    // Apply button (for non-posters when task is open)
-                    if (!isPoster && taskData.status == 'open')
-                      _buildApplyButton(context),
-                      
-                    // Error message
-                    if (_errorMessage != null)
-                      _buildErrorMessage(),
-                      
-                    const SizedBox(height: 24),
-                    
-                    // Offers section (only for poster)
-                    if (isPoster && hasOffers)
-                      _buildOffersSection(taskData, currentUser?.id ?? ''),
-                      
-                    // Status section (for assigned tasks)
-                    if (taskData.status != 'open')
-                      _buildStatusSection(taskData, isPoster, isTasker),
+
+
+                    // Show offers if any
+                    if (isPoster && hasOffers) _buildOffersSection(taskData, currentUser!.id),
+
+
+
+                    if (_errorMessage != null) _buildErrorMessage(),
+
+                    // Action buttons for poster when task is pending approval
+                    if (isPoster && taskData.status == 'pending_approval') ...[
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: () async {
+                                await _updateTaskStatus('approve');
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.green,
+                                foregroundColor: Colors.white,
+                              ),
+                              child: const Text('Approve'),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: TextButton(
+                              onPressed: () {
+                                _showRevisionDialog();
+                              },
+                              style: TextButton.styleFrom(
+                                foregroundColor: Colors.red,
+                              ),
+                              child: const Text('Request Revisions'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -212,22 +241,33 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
                       }
 
                       try {
-                        // Submit offer through application controller
-                        final applicationController = ref.read(applicationControllerProvider.notifier);
-                        await applicationController.submitOffer(
-                          taskId: widget.taskId,
-                          taskerId: currentUser.id,
-                          offerPrice: offerPrice,
-                        );
-
-                        if (localContext.mounted) {
-                          ScaffoldMessenger.of(localContext).showSnackBar(
-                            SnackBar(
-                              content: Text(isUpdate
-                                  ? 'Your offer has been updated'
-                                  : 'Your offer has been submitted'),
-                            ),
+                        if (_isRevisingBudget) {
+                          // Handle budget revision
+                          final taskController = ref.read(taskControllerProvider);
+                          await taskController.updateTask(widget.taskId, {'price': offerPrice});
+                          if (localContext.mounted) {
+                            ScaffoldMessenger.of(localContext).showSnackBar(
+                              const SnackBar(content: Text('Budget updated successfully')),
+                            );
+                          }
+                        } else {
+                          // Submit offer through application controller
+                          final applicationController = ref.read(applicationControllerProvider.notifier);
+                          await applicationController.submitOffer(
+                            taskId: widget.taskId,
+                            taskerId: currentUser.id,
+                            offerPrice: offerPrice,
                           );
+
+                          if (localContext.mounted) {
+                            ScaffoldMessenger.of(localContext).showSnackBar(
+                              SnackBar(
+                                content: Text(isUpdate
+                                    ? 'Your offer has been updated'
+                                    : 'Your offer has been submitted'),
+                              ),
+                            );
+                          }
                         }
                       } catch (e) {
                         if (mounted) {
@@ -265,41 +305,21 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
   }
   
   Widget _buildTaskHeader(Task task) {
-    return Column(
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Title
-        Text(
-          task.title,
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-        ),
-        const SizedBox(height: 8),
-        
-        // Status chip
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: _getStatusColor(task.status),
-            borderRadius: BorderRadius.circular(20),
-          ),
+        Expanded(
           child: Text(
-            _getReadableStatus(task.status),
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+            task.title,
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
-        
-        const SizedBox(height: 12),
-        
-        // Price
-        Text(
-          'RM${task.price.toStringAsFixed(2)}',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: StyleConstants.primaryColor,
-              ),
-        ),
+        const SizedBox(width: 16),
+        _buildStatusBadge(task.status),
       ],
     );
   }
@@ -367,217 +387,173 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
   }
   
   Widget _buildPosterInfo(Task task, WidgetRef ref) {
-    final posterProfileAsyncValue = ref.watch(profileProvider(task.posterId));
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16.0),
-      child: Row(
-        children: [
-          posterProfileAsyncValue.when(
-            data: (profile) => CircleAvatar(
+    final posterProfileAsyncValue =
+        ref.watch(profileProvider(task.posterId));
+    return posterProfileAsyncValue.when(
+      data: (posterProfile) {
+        return Row(
+          children: [
+            CircleAvatar(
               radius: 24,
-              backgroundImage: (profile?.avatarUrl != null && profile!.avatarUrl!.isNotEmpty)
-                  ? NetworkImage(profile.avatarUrl!)
-                  : null,
-              child: (profile?.avatarUrl == null || profile!.avatarUrl!.isEmpty)
-                  ? const Icon(Icons.person, color: Colors.grey)
+              backgroundImage: posterProfile?.avatarUrl != null
+                ? NetworkImage(posterProfile!.avatarUrl!)
+                : null,
+              child: posterProfile?.avatarUrl == null
+                  ? const Icon(Icons.person, size: 24)
                   : null,
             ),
-            loading: () => const CircleAvatar(radius: 24, child: CircularProgressIndicator()),
-            error: (err, stack) => const CircleAvatar(radius: 24, child: Icon(Icons.error)),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Posted by', style: TextStyle(color: Colors.grey)),
-                posterProfileAsyncValue.when(
-                  data: (profile) => Text(
-                    profile?.fullName ?? 'Unknown Poster',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    posterProfile?.fullName ?? 'Unknown Poster',
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
-                  loading: () => const Text('Loading...'),
-                  error: (err, stack) => const Text('Error'),
-                ),
-              ],
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(Icons.star, color: Colors.grey, size: 16),
+                      const Icon(Icons.star, color: Colors.grey, size: 16),
+                      const Icon(Icons.star, color: Colors.grey, size: 16),
+                      const Icon(Icons.star, color: Colors.grey, size: 16),
+                      const Icon(Icons.star, color: Colors.grey, size: 16),
+                      const SizedBox(width: 4),
+                      const Text('(No reviews yet)', style: TextStyle(color: Colors.grey)),
+                    ],
+                  )
+                ],
+              ),
             ),
-          ),
-        ],
-      ),
+            Text(
+              '1 day ago', // This should be calculated
+              style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+            ),
+            const Icon(Icons.chevron_right, color: Colors.grey),
+          ],
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (err, stack) => const Text('Error loading poster info'),
     );
   }
-  Widget _buildTaskImages(Task task) {
-    final images = task.images ?? [];
-    
+  
+  Widget _buildDetailsSection(Task task) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 16),
-        Text(
-          'Images',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-        ),
+        Text('Details', style: Theme.of(context).textTheme.titleLarge),
         const SizedBox(height: 8),
-        SizedBox(
-          height: 100,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: images.length,
-            itemBuilder: (context, index) {
-              final imageUrl = images[index];
-              return Padding(
-                padding: const EdgeInsets.only(right: 8.0),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.network(
-                    imageUrl,
-                    height: 100,
-                    width: 100,
-                    fit: BoxFit.cover,
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return Container(
-                        height: 100,
-                        width: 100,
-                        color: Colors.grey.shade200,
-                        child: Center(
-                          child: CircularProgressIndicator(
-                            value: loadingProgress.expectedTotalBytes != null
-                                ? loadingProgress.cumulativeBytesLoaded /
-                                    loadingProgress.expectedTotalBytes!
-                                : null,
-                          ),
-                        ),
-                      );
-                    },
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        height: 100,
-                        width: 100,
-                        color: Colors.grey.shade200,
-                        child: const Center(
-                          child: Icon(Icons.error_outline, color: Colors.red),
-                        ),
-                      );
-                    },
+        Text(task.description),
+        if (task.images != null && task.images!.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          Text('Images', style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 8),
+          SizedBox(
+            height: 100,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: task.images!.length,
+              itemBuilder: (context, index) {
+                final imageUrl = task.images![index];
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.network(
+                      imageUrl,
+                      width: 100,
+                      height: 100,
+                      fit: BoxFit.cover,
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return const Center(child: CircularProgressIndicator());
+                      },
+                      errorBuilder: (context, error, stackTrace) {
+                        return const Icon(Icons.error, size: 40);
+                      },
+                    ),
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
-        ),
+        ],
+        const SizedBox(height: 16),
+        if (task.providesMaterials == true) ...[
+          const Text(
+            '* Materials are provided by the poster.',
+            style: TextStyle(fontStyle: FontStyle.italic, color: Colors.black54),
+          ),
+        ] else ...[
+          const Text(
+            '* You are expected to provide your own materials.',
+            style: TextStyle(fontStyle: FontStyle.italic, color: Colors.black54),
+          ),
+        ],
       ],
     );
   }
   
-  Widget _buildBudgetSection(Task task, bool isPoster, bool isTasker, Application? userApplication) {
-    final backgroundColor = isTasker ? StyleConstants.taskerColorPrimary : StyleConstants.primaryColor;
-    
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Task Budget',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    'RM${task.price.toStringAsFixed(2)}',
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                if (isTasker && task.status == 'open' && !isPoster)
-                  Expanded(
-                    child: ElevatedButton(
-                    onPressed: () {
-                      // Initialize price controller with current offer if exists
-                      if (userApplication != null) {
-                        _offerPriceController.text = userApplication.offerPrice.toStringAsFixed(2);
-                      } else {
-                        _offerPriceController.text = task.price.toStringAsFixed(2);
-                      }
-                      
-                      // Show numpad overlay
-                      setState(() {
-                        _showNumpad = true;
-                      });
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: backgroundColor,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                    ),
-                    child: Text(userApplication != null ? 'Re-offer' : 'Offer'),
-                  ),
-                  ),
-              ],
-            ),
-            
-            // Show user's offer if they've made one
-            if (isTasker && userApplication != null) ...[  // Use spread operator instead
-              // Add SizedBox for spacing and to fix constraints
-              SizedBox(
-                width: double.infinity,
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 12),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('Your Offer', style: TextStyle(color: Colors.grey)),
-                      Text(
-                        'RM${userApplication.offerPrice.toStringAsFixed(2)}',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.green,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+  Widget _buildBudgetSection(
+      Task task, bool isPoster, bool isTasker, Application? userApplication) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center, // Center content horizontally
+      children: [
+        const Text(
+          'Task Budget',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'RM${task.price.toStringAsFixed(2)}',
+          style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: StyleConstants.primaryColor),
+        ),
+        const SizedBox(height: 16),
+        if (isPoster && task.status == 'open')
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  _isRevisingBudget = true;
+                  _offerPriceController.text = task.price.toStringAsFixed(2);
+                  _showNumpad = true;
+                });
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: StyleConstants.primaryColor, // Poster color
+                foregroundColor: Colors.white,
               ),
-            ]
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildApplyButton(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: 50,
-      child: ElevatedButton(
-        onPressed: () => context.push('${RouteConstants.applyTask}/${widget.taskId}'),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: StyleConstants.primaryColor,
-          foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
+              child: const Text('Revise'),
+            ),
           ),
-        ),
-        child: const Text('Apply for this Task'),
-      ),
+        if (isTasker && userApplication != null)
+          _buildOfferStatus(userApplication),
+        if (!isPoster && task.status == 'open' && userApplication == null)
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  _isRevisingBudget = false;
+                  _offerPriceController.clear();
+                  _showNumpad = true;
+                });
+              },
+              child: const Text('Make an Offer'),
+            ),
+          ),
+      ],
     );
+  } 
+  
+
+
+  Widget _buildOfferStatus(Application application) {
+    // Placeholder for offer status
+    return Text('Your offer: RM${application.offerPrice.toStringAsFixed(2)} - ${application.status}');
   }
   
   Widget _buildErrorMessage() {
@@ -603,7 +579,6 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
     );
   }
   
-  // Method to update task status based on the action
   Future<void> _updateTaskStatus(String action) async {
     setState(() {
       _isLoading = true;
@@ -612,7 +587,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
 
     try {
       final taskController = ref.read(taskControllerProvider);
-      
+
       switch (action) {
         case 'start':
           await taskController.startTask(widget.taskId);
@@ -622,7 +597,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
             );
           }
           break;
-          
+
         case 'complete':
           await taskController.completeTask(widget.taskId);
           if (mounted) {
@@ -631,7 +606,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
             );
           }
           break;
-          
+
         case 'approve':
           await taskController.approveTask(widget.taskId);
           if (mounted) {
@@ -640,7 +615,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
             );
           }
           break;
-          
+
         case 'revise':
           if (_revisionNotes != null) {
             await taskController.requestRevisions(widget.taskId, _revisionNotes);
@@ -666,8 +641,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
       }
     }
   }
-  
-  // Show dialog to enter revision notes
+
   void _showRevisionDialog() {
     showDialog(
       context: context,
@@ -814,103 +788,17 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
     );
   }
   
-  Widget _buildStatusSection(Task task, bool isPoster, bool isTasker) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Task Status',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-        ),
-        const SizedBox(height: 12),
-        
-        // Status info
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.grey.shade50,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.grey.shade200),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                _getStatusDescription(task.status),
-                style: const TextStyle(fontWeight: FontWeight.w500),
-              ),
-              
-              if (isTasker && (task.status == 'assigned' || task.status == 'in_progress')) ...[
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    if (task.status == 'assigned')
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () async {
-                            await _updateTaskStatus('start');
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blue,
-                            foregroundColor: Colors.white,
-                          ),
-                          child: const Text('Start Work'),
-                        ),
-                      ),
-                    if (task.status == 'in_progress')
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () async {
-                            await _updateTaskStatus('complete');
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: StyleConstants.primaryColor,
-                            foregroundColor: Colors.white,
-                          ),
-                          child: const Text('Mark as Completed'),
-                        ),
-                      ),
-                  ],
-                ),
-              ],
-              
-              if (isPoster && task.status == 'pending_approval') ...[
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () async {
-                          await _updateTaskStatus('approve');
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
-                          foregroundColor: Colors.white,
-                        ),
-                        child: const Text('Approve'),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: TextButton(
-                        onPressed: () {
-                          _showRevisionDialog();
-                        },
-                        style: TextButton.styleFrom(
-                          foregroundColor: Colors.red,
-                        ),
-                        child: const Text('Request Revisions'),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ],
-          ),
-        ),
-      ],
+  Widget _buildStatusBadge(String status) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: _getStatusColor(status),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        _getReadableStatus(status),
+        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+      ),
     );
   }
   
@@ -933,22 +821,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
     }
   }
   
-  String _getStatusDescription(String status) {
-    switch (status) {
-      case 'assigned':
-        return 'This task has been assigned. The tasker should start work soon.';
-      case 'in_progress':
-        return 'The tasker is currently working on this task.';
-      case 'pending_approval':
-        return 'The tasker has marked this task as complete. Please review and approve or request revisions.';
-      case 'completed':
-        return 'This task has been completed successfully.';
-      case 'cancelled':
-        return 'This task has been cancelled.';
-      default:
-        return 'This task is open for applications.';
-    }
-  }
+
   
   Color _getStatusColor(String status) {
     switch (status) {
@@ -967,5 +840,17 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
       default:
         return Colors.grey;
     }
+  }
+
+  Widget _buildSectionContainer({required Widget child}) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: child,
+    );
   }
 }
