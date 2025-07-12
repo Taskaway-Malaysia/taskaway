@@ -86,8 +86,9 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
     final userApplication = userApplicationAsyncValue.asData?.value;
     
     // Determine if user is poster or tasker
-    bool isPoster = false;
-    bool isTasker = false;
+    final task = taskAsyncValue.asData?.value;
+    final isPoster = currentUser != null && task?.posterId == currentUser.id;
+    final isTasker = currentProfile?.role == 'tasker';
 
     return Scaffold(
       appBar: AppBar(
@@ -98,10 +99,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
       ),
       body: taskAsyncValue.when(
         data: (taskData) {
-          // Set role flags based on data
-          isPoster = currentUser?.id == taskData.posterId;
-          isTasker = currentProfile?.role == 'tasker';
-          
+
           return Stack(
             children: [
               SingleChildScrollView(
@@ -133,7 +131,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
                     const SizedBox(height: 24),
                     // Show offers if any
                     if (isPoster && (taskData.offers?.isNotEmpty ?? false)) 
-                      _buildOffersSection(taskData, currentUser!.id),
+                      _buildOffersSection(taskData, currentUser.id),
 
                     if (_errorMessage != null) _buildErrorMessage(),
 
