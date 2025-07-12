@@ -86,20 +86,24 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
     final userApplication = userApplicationAsyncValue.asData?.value;
     
     // Determine if user is poster or tasker
-    final task = taskAsyncValue.asData?.value;
-    final isPoster = currentUser != null && task?.posterId == currentUser.id;
-    final isTasker = currentProfile?.role == 'tasker';
+    bool isPoster = false;
+    bool isTasker = false;
+    bool hasOffers = false;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Task Details'),
         elevation: 0,
-        backgroundColor: isTasker ? StyleConstants.taskerColorPrimary : Colors.white,
-        foregroundColor: isTasker ? Colors.white : Colors.black,
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
       ),
       body: taskAsyncValue.when(
         data: (taskData) {
-
+          // Set role flags based on data
+          isPoster = currentUser?.id == taskData.posterId;
+          isTasker = currentProfile?.role == 'tasker';
+          hasOffers = taskData.offers != null && taskData.offers!.isNotEmpty;
+          
           return Stack(
             children: [
               SingleChildScrollView(
@@ -129,9 +133,12 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
                       child: _buildDetailsSection(taskData),
                     ),
                     const SizedBox(height: 24),
+
+
                     // Show offers if any
-                    if (isPoster && (taskData.offers?.isNotEmpty ?? false)) 
-                      _buildOffersSection(taskData, currentUser.id),
+                    if (isPoster && hasOffers) _buildOffersSection(taskData, currentUser!.id),
+
+
 
                     if (_errorMessage != null) _buildErrorMessage(),
 
@@ -522,30 +529,27 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
               child: const Text('Revise'),
             ),
           ),
-        if (isTasker && userApplication != null) ...[
+        if (isTasker && userApplication != null)
           _buildOfferStatus(userApplication),
-        ] else if (isTasker && task.status == 'open') ...[
-          _buildApplyButton(context),
-        ],
+        if (!isPoster && task.status == 'open' && userApplication == null)
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  _isRevisingBudget = false;
+                  _offerPriceController.clear();
+                  _showNumpad = true;
+                });
+              },
+              child: const Text('Make an Offer'),
+            ),
+          ),
       ],
     );
-  }
+  } 
+  
 
-  Widget _buildApplyButton(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        onPressed: () {
-          setState(() {
-            _isRevisingBudget = false;
-            _offerPriceController.clear();
-            _showNumpad = true;
-          });
-        },
-        child: const Text('Make an Offer'),
-      ),
-    );
-  }
 
   Widget _buildOfferStatus(Application application) {
     // Placeholder for offer status
