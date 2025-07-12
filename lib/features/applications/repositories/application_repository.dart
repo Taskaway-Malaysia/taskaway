@@ -1,3 +1,5 @@
+import 'dart:developer' as dev;
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:taskaway/core/services/supabase_service.dart';
@@ -26,7 +28,7 @@ class ApplicationRepository {
       return response.data as Map<String, dynamic>;
     } catch (e) {
       // Log the error but rethrow for the caller to handle
-      print('Edge function error: $e');
+      dev.log('Edge function error: $e');
       rethrow;
     }
   }

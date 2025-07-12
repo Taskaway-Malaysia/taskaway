@@ -8,6 +8,7 @@ import 'package:taskaway/core/widgets/numpad_overlay.dart';
 import 'package:taskaway/features/auth/controllers/auth_controller.dart';
 import 'package:taskaway/features/applications/controllers/application_controller.dart';
 import 'package:taskaway/features/applications/models/application.dart';
+import 'package:taskaway/features/messages/controllers/message_controller.dart';
 import 'package:taskaway/features/tasks/controllers/task_controller.dart';
 import 'package:taskaway/features/tasks/models/task.dart';
 import 'package:intl/intl.dart';
