@@ -6,19 +6,19 @@ import '../models/message.dart';
 import '../controllers/message_controller.dart';
 import '../../auth/controllers/auth_controller.dart';
 
-class ChatScreen extends ConsumerStatefulWidget {
+class MessageScreen extends ConsumerStatefulWidget {
   final Channel channel;
 
-  const ChatScreen({
+  const MessageScreen({
     super.key,
     required this.channel,
   });
 
   @override
-  ConsumerState<ChatScreen> createState() => _ChatScreenState();
+  ConsumerState<MessageScreen> createState() => _MessageScreenState();
 }
 
-class _ChatScreenState extends ConsumerState<ChatScreen> {
+class _MessageScreenState extends ConsumerState<MessageScreen> {
   final _messageController = TextEditingController();
   final _scrollController = ScrollController();
   bool _isLoading = false;
@@ -47,7 +47,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   void _scrollToBottom() {
     if (_scrollController.hasClients) {
       _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent,
+        0,
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeOut,
       );
@@ -166,6 +166,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                       controller: _scrollController,
                       padding: const EdgeInsets.all(16),
                       itemCount: messages.length,
+                      reverse: true,
                       itemBuilder: (context, index) {
                         final message = messages[index];
                         final isCurrentUser = message.senderId == currentUserId;

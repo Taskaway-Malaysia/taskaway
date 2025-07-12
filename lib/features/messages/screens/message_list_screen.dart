@@ -6,8 +6,8 @@ import '../controllers/message_controller.dart';
 import '../models/channel.dart';
 import '../../auth/controllers/auth_controller.dart';
 
-class ChatListScreen extends ConsumerWidget {
-  const ChatListScreen({super.key});
+class MessageListScreen extends ConsumerWidget {
+  const MessageListScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -98,7 +98,7 @@ class ChatListScreen extends ConsumerWidget {
                       children: [
                         // Avatar
                         CircleAvatar(
-                          radius: 24,
+                          radius: 36,
                           backgroundColor: Colors.grey.shade300,
                           child: Text(
                             otherPersonName.isNotEmpty
@@ -124,8 +124,8 @@ class ChatListScreen extends ConsumerWidget {
                                   Text(
                                     otherPersonName,
                                     style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
+                                      fontWeight: FontWeight.normal,
+                                      fontSize: 14,
                                     ),
                                   ),
                                   // Time
@@ -143,8 +143,8 @@ class ChatListScreen extends ConsumerWidget {
                               Text(
                                 channel.taskTitle,
                                 style: const TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
