@@ -70,6 +70,38 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
     }
   }
 
+  // Navigate to chat method
+  Future<void> _navigateToChat() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final messageController = ref.read(messageControllerProvider);
+      final channel = await messageController.getChannelByTaskId(widget.taskId);
+      
+      if (channel != null && mounted) {
+        // Navigate to chat screen
+        await context.push('/home/chat/${channel.id}');
+      } else {
+        setState(() {
+          _errorMessage = 'No conversation found for this task';
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Failed to open chat: ${e.toString()}';
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
   @override
   void dispose() {
     _offerPriceController.dispose();

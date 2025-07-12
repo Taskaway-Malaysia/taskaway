@@ -265,13 +265,13 @@ class TaskController {
       final posterProfile = await _fetchProfile(task.posterId);
       final taskerProfile = await _fetchProfile(taskerId);
 
-      // Create a new chat channel using MessageController
+      // Create a new chat channel with a welcome message
       final messageController = _ref.read(messageControllerProvider);
-      await messageController.createChannel(
+      await messageController.initiateTaskConversation(
         taskId: taskId,
         taskTitle: task.title,
         posterId: task.posterId,
-        posterName: posterProfile?.fullName ?? 'Poster',
+        posterName: posterProfile?.fullName ?? 'Task Poster',
         taskerId: taskerId,
         taskerName: taskerProfile?.fullName ?? 'Tasker',
       );

@@ -24,8 +24,8 @@ import '../features/tasks/screens/task_details_screen.dart';
 import '../features/tasks/screens/apply_task_screen.dart';
 import '../features/tasks/screens/offer_accepted_success_screen.dart';
 import '../features/payments/screens/payment_completion_screen.dart';
-import '../features/messages/screens/chat_list_screen.dart';
-import '../features/messages/screens/chat_screen.dart';
+import '../features/messages/screens/message_list_screen.dart';
+import '../features/messages/screens/message_screen.dart';
 import '../features/messages/models/channel.dart';
 import '../core/services/analytics_service.dart';
 import '../core/widgets/responsive_layout.dart';
@@ -313,12 +313,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/home/chat',
                 name: 'chat',
-                builder: (context, state) => const ChatListScreen(),
+                builder: (context, state) => const MessageListScreen(),
                 routes: [
                   GoRoute(
                     path: ':id',
                     name: 'chat-room',
-                    builder: (context, state) => ChatScreen(
+                    builder: (context, state) => MessageScreen(
                       channel: state.extra as Channel,
                     ),
                   ),
