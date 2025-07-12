@@ -3,7 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:taskaway/core/constants/style_constants.dart';
 import 'package:taskaway/core/constants/route_constants.dart';
+import 'package:taskaway/core/widgets/numpad_overlay.dart';
 import 'package:taskaway/features/auth/controllers/auth_controller.dart';
+import 'package:taskaway/features/applications/controllers/application_controller.dart';
+import 'package:taskaway/features/applications/models/application.dart';
 import 'package:taskaway/features/tasks/controllers/task_controller.dart';
 import 'package:taskaway/features/tasks/models/task.dart';
 import 'package:taskaway/features/messages/controllers/message_controller.dart';
@@ -22,6 +25,8 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
   bool _isLoading = false;
   String? _errorMessage;
   String? _revisionNotes;
+  final TextEditingController _offerPriceController = TextEditingController();
+  bool _showNumpad = false;
 
   // Accept offer method
   Future<void> _acceptOffer(String offerId, String taskerId) async {
@@ -46,7 +51,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
         // If a channel was created, navigate to it
         if (channel != null && mounted) {
           // Navigate to chat room
-          context.push('/home/chat/${channel.id}');
+          await context.push('/home/chat/${channel.id}');
         }
       }
     } catch (e) {
@@ -63,9 +68,26 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
   }
 
   @override
+  void dispose() {
+    _offerPriceController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final currentUser = ref.watch(currentUserProvider);
-    final task = ref.watch(taskProvider(widget.taskId));
+    final taskAsyncValue = ref.watch(taskProvider(widget.taskId));
+    final currentUser = ref.watch(currentUserProvider); // Directly a User object
+    final currentProfileAsyncValue = ref.watch(currentProfileProvider);
+    final currentProfile = currentProfileAsyncValue.asData?.value;
+    
+    // Watch for user's application for this task
+    final userApplicationAsyncValue = ref.watch(userApplicationForTaskProvider(widget.taskId));
+    final userApplication = userApplicationAsyncValue.asData?.value;
+    
+    // Determine if user is poster or tasker
+    bool isPoster = false;
+    bool isTasker = false;
+    bool hasOffers = false;
 
     return Scaffold(
       appBar: AppBar(
@@ -74,49 +96,164 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
       ),
-      body: task.when(
+      body: taskAsyncValue.when(
         data: (taskData) {
-          // Check if current user is the poster
-          final isPoster = currentUser?.id == taskData.posterId;
-          final isTasker = currentUser?.id == taskData.taskerId;
-          final hasOffers = taskData.offers?.isNotEmpty ?? false;
+          // Set role flags based on data
+          isPoster = currentUser?.id == taskData.posterId;
+          isTasker = currentProfile?.role == 'tasker';
+          hasOffers = taskData.offers != null && taskData.offers!.isNotEmpty;
           
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Task header
-                _buildTaskHeader(taskData),
-                const SizedBox(height: 24),
-                
-                // Task details
-                _buildTaskDetails(taskData),
-                const SizedBox(height: 24),
-                
-                // Task schedule
-                _buildTaskSchedule(taskData),
-                const SizedBox(height: 24),
-                
-                // Apply button (for non-posters when task is open)
-                if (!isPoster && taskData.status == 'open')
-                  _buildApplyButton(context),
-                  
-                // Error message
-                if (_errorMessage != null)
-                  _buildErrorMessage(),
-                  
-                const SizedBox(height: 24),
-                
-                // Offers section (only for poster)
-                if (isPoster && hasOffers)
-                  _buildOffersSection(taskData, currentUser?.id ?? ''),
-                  
-                // Status section (for assigned tasks)
-                if (taskData.status != 'open')
-                  _buildStatusSection(taskData, isPoster, isTasker),
-              ],
-            ),
+          return Stack(
+            children: [
+              SingleChildScrollView(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildPosterInfo(taskData, ref),
+                    const SizedBox(height: 16),
+                    _buildTaskHeader(taskData),
+                    const SizedBox(height: 16),
+                    _buildTaskDetails(taskData),
+                    const SizedBox(height: 16),
+                    _buildBudgetSection(taskData, isPoster, isTasker, userApplication),
+                    const SizedBox(height: 24),
+                    Text('Details', style: Theme.of(context).textTheme.titleLarge),
+                    const SizedBox(height: 8),
+                    Text(taskData.description),
+                    if (taskData.images != null && taskData.images!.isNotEmpty)
+                      _buildTaskImages(taskData),
+                    const SizedBox(height: 24),
+                    // Task schedule
+                    _buildTaskSchedule(taskData),
+                    const SizedBox(height: 24),
+                    
+                    // Apply button (for non-posters when task is open)
+                    if (!isPoster && taskData.status == 'open')
+                      _buildApplyButton(context),
+                      
+                    // Error message
+                    if (_errorMessage != null)
+                      _buildErrorMessage(),
+                      
+                    const SizedBox(height: 24),
+                    
+                    // Offers section (only for poster)
+                    if (isPoster && hasOffers)
+                      _buildOffersSection(taskData, currentUser?.id ?? ''),
+                      
+                    // Status section (for assigned tasks)
+                    if (taskData.status != 'open')
+                      _buildStatusSection(taskData, isPoster, isTasker),
+                  ],
+                ),
+              ),
+              if (_showNumpad)
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: NumpadOverlay(
+                    onDigitPressed: (digit) {
+                      setState(() {
+                        final currentText = _offerPriceController.text;
+                        // Only allow one decimal point
+                        if (digit == '.' && currentText.contains('.')) {
+                          return;
+                        }
+                        // Max 2 decimal places
+                        if (currentText.contains('.') && 
+                            currentText.split('.')[1].length >= 2) {
+                          return;
+                        }
+                        // Max 6 digits before decimal
+                        if (!currentText.contains('.') && 
+                            currentText.length >= 6) {
+                          return;
+                        }
+                        
+                        _offerPriceController.text += digit;
+                      });
+                    },
+                    onBackspacePressed: () {
+                      setState(() {
+                        final currentText = _offerPriceController.text;
+                        if (currentText.isNotEmpty) {
+                          _offerPriceController.text = 
+                              currentText.substring(0, currentText.length - 1);
+                        }
+                      });
+                    },
+                    onConfirmPressed: () async {
+                      if (currentUser == null) return;
+
+                      // --- Capture context and state before any async gaps ---
+                      final localContext = context;
+                      final isUpdate = userApplication != null;
+                      final price = _offerPriceController.text;
+                      // --- End capture ---
+
+                      final offerPrice = double.tryParse(price);
+                      if (offerPrice == null || offerPrice <= 0) {
+                        if (mounted) {
+                          setState(() {
+                            _errorMessage = 'Please enter a valid offer price.';
+                          });
+                        }
+                        return;
+                      }
+
+                      if (mounted) {
+                        setState(() {
+                          _isLoading = true;
+                          _errorMessage = null;
+                          _showNumpad = false;
+                        });
+                      }
+
+                      try {
+                        // Submit offer through application controller
+                        final applicationController = ref.read(applicationControllerProvider.notifier);
+                        await applicationController.submitOffer(
+                          taskId: widget.taskId,
+                          taskerId: currentUser.id,
+                          offerPrice: offerPrice,
+                        );
+
+                        if (localContext.mounted) {
+                          ScaffoldMessenger.of(localContext).showSnackBar(
+                            SnackBar(
+                              content: Text(isUpdate
+                                  ? 'Your offer has been updated'
+                                  : 'Your offer has been submitted'),
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        if (mounted) {
+                          final errorMsg = e.toString();
+                          setState(() {
+                            _errorMessage = errorMsg;
+                          });
+                          if (localContext.mounted) {
+                            ScaffoldMessenger.of(localContext).showSnackBar(
+                              SnackBar(content: Text('Error: $errorMsg')),
+                            );
+                          }
+                        }
+                      } finally {
+                        if (mounted) {
+                          setState(() {
+                            _isLoading = false;
+                          });
+                        }
+                      }
+                    },
+                    confirmButtonText: 'Done',
+                    previewController: _offerPriceController,
+                  ),
+                ),
+            ],
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -229,6 +366,202 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
     );
   }
   
+  Widget _buildPosterInfo(Task task, WidgetRef ref) {
+    final posterProfileAsyncValue = ref.watch(profileProvider(task.posterId));
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16.0),
+      child: Row(
+        children: [
+          posterProfileAsyncValue.when(
+            data: (profile) => CircleAvatar(
+              radius: 24,
+              backgroundImage: (profile?.avatarUrl != null && profile!.avatarUrl!.isNotEmpty)
+                  ? NetworkImage(profile.avatarUrl!)
+                  : null,
+              child: (profile?.avatarUrl == null || profile!.avatarUrl!.isEmpty)
+                  ? const Icon(Icons.person, color: Colors.grey)
+                  : null,
+            ),
+            loading: () => const CircleAvatar(radius: 24, child: CircularProgressIndicator()),
+            error: (err, stack) => const CircleAvatar(radius: 24, child: Icon(Icons.error)),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Posted by', style: TextStyle(color: Colors.grey)),
+                posterProfileAsyncValue.when(
+                  data: (profile) => Text(
+                    profile?.fullName ?? 'Unknown Poster',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  loading: () => const Text('Loading...'),
+                  error: (err, stack) => const Text('Error'),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  Widget _buildTaskImages(Task task) {
+    final images = task.images ?? [];
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 16),
+        Text(
+          'Images',
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 100,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: images.length,
+            itemBuilder: (context, index) {
+              final imageUrl = images[index];
+              return Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.network(
+                    imageUrl,
+                    height: 100,
+                    width: 100,
+                    fit: BoxFit.cover,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return Container(
+                        height: 100,
+                        width: 100,
+                        color: Colors.grey.shade200,
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            value: loadingProgress.expectedTotalBytes != null
+                                ? loadingProgress.cumulativeBytesLoaded /
+                                    loadingProgress.expectedTotalBytes!
+                                : null,
+                          ),
+                        ),
+                      );
+                    },
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        height: 100,
+                        width: 100,
+                        color: Colors.grey.shade200,
+                        child: const Center(
+                          child: Icon(Icons.error_outline, color: Colors.red),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+  
+  Widget _buildBudgetSection(Task task, bool isPoster, bool isTasker, Application? userApplication) {
+    final backgroundColor = isTasker ? StyleConstants.taskerColorPrimary : StyleConstants.primaryColor;
+    
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Task Budget',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    'RM${task.price.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                if (isTasker && task.status == 'open' && !isPoster)
+                  Expanded(
+                    child: ElevatedButton(
+                    onPressed: () {
+                      // Initialize price controller with current offer if exists
+                      if (userApplication != null) {
+                        _offerPriceController.text = userApplication.offerPrice.toStringAsFixed(2);
+                      } else {
+                        _offerPriceController.text = task.price.toStringAsFixed(2);
+                      }
+                      
+                      // Show numpad overlay
+                      setState(() {
+                        _showNumpad = true;
+                      });
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: backgroundColor,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    ),
+                    child: Text(userApplication != null ? 'Re-offer' : 'Offer'),
+                  ),
+                  ),
+              ],
+            ),
+            
+            // Show user's offer if they've made one
+            if (isTasker && userApplication != null) ...[  // Use spread operator instead
+              // Add SizedBox for spacing and to fix constraints
+              SizedBox(
+                width: double.infinity,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Your Offer', style: TextStyle(color: Colors.grey)),
+                      Text(
+                        'RM${userApplication.offerPrice.toStringAsFixed(2)}',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ]
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildApplyButton(BuildContext context) {
     return SizedBox(
       width: double.infinity,

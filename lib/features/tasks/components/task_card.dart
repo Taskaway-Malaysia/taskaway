@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:taskaway/features/tasks/models/task.dart';
 
 class TaskCard extends StatelessWidget {
@@ -112,14 +114,33 @@ class TaskCard extends StatelessWidget {
                         children: [
                           Row(
                             children: [
-                              Container(
+                              SizedBox(
                                 width: 40,
                                 height: 40,
-                                decoration: BoxDecoration(
-                                  color: Colors.grey[200],
+                                child: ClipRRect(
                                   borderRadius: BorderRadius.circular(8),
+                                  child: (task.images != null && task.images!.isNotEmpty)
+                                      ? CachedNetworkImage(
+                                          imageUrl: task.images!.first,
+                                          fit: BoxFit.cover,
+                                          placeholder: (context, url) => Shimmer.fromColors(
+                                            baseColor: Colors.grey[300]!,
+                                            highlightColor: Colors.grey[100]!,
+                                            child: Container(
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                          errorWidget: (context, url, error) =>
+                                              const Icon(Icons.error_outline, color: Colors.red),
+                                        )
+                                      : Container(
+                                          decoration: BoxDecoration(
+                                            color: Colors.grey[200],
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: Icon(Icons.image_outlined, color: Colors.grey[400]),
+                                        ),
                                 ),
-                                child: Icon(Icons.image_outlined, color: Colors.grey[400]),
                               ),
                               const SizedBox(width: 8),
                               Column(

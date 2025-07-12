@@ -60,8 +60,7 @@ final filteredTasksProvider = Provider<AsyncValue<List<Task>>>((ref) {
 
 // Provider for current user ID
 final currentUserIdProvider = Provider<String>((ref) {
-  // TODO: Replace with actual auth user ID
-  return 'current_user_id';
+  return Supabase.instance.client.auth.currentUser?.id ?? '';
 });
 
 // User role provider (poster/tasker)
@@ -409,12 +408,16 @@ class TaskController {
       if (task.images?.isNotEmpty == true) {
         // Extract file paths from URLs
         final filePaths = task.images!.map((url) {
-          // Extract the path portion after the bucket name
           final uri = Uri.parse(url);
           final pathSegments = uri.pathSegments;
-          // Skip the first segment (usually 'storage') and the bucket name
-          return pathSegments.sublist(2).join('/');
-        }).toList();
+          // Find the index of the bucket name in the path
+          final bucketIndex = pathSegments.indexOf(ApiConstants.taskImagesBucket);
+          if (bucketIndex != -1 && bucketIndex + 1 < pathSegments.length) {
+            // The actual file path is everything after the bucket name
+            return pathSegments.sublist(bucketIndex + 1).join('/');
+          }
+          return ''; // Return an empty string if the path is invalid
+        }).where((path) => path.isNotEmpty).toList();
         
         await _supabaseService.deleteFiles(
           bucket: ApiConstants.taskImagesBucket,
@@ -432,5 +435,10 @@ class TaskController {
   // Get all available categories from the database
   Future<List<Category>> getCategories() async {
     return await _categoryRepository.getCategories();
+  }
+  
+  // Watch available tasks for taskers to browse
+  Stream<List<Task>> watchAvailableTasks() {
+    return _repository.watchAvailableTasks();
   }
 }
