@@ -242,11 +242,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               );
             },
           ),
-          GoRoute(
-            path: '/create-task',
-            name: 'create-task',
-            builder: (context, state) => const CreateTaskScreen(),
-          ),
           ShellRoute(
             builder: (context, state, child) => HomeScreen(child: child),
             routes: [
@@ -302,10 +297,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 ],
               ),
               GoRoute(
-                path: '/home/post',
-                name: 'post-task',
+                path: '/create-task',
+                name: 'create-task',
                 builder: (context, state) => const CreateTaskScreen(),
-                redirect: (context, state) => '/create-task',
               ),
               GoRoute(
                 path: '/home/chat',
