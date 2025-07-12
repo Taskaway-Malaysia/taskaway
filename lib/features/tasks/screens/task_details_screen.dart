@@ -88,21 +88,19 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
     // Determine if user is poster or tasker
     bool isPoster = false;
     bool isTasker = false;
-    bool hasOffers = false;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Task Details'),
         elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: isTasker ? StyleConstants.taskerColorPrimary : Colors.white,
+        foregroundColor: isTasker ? Colors.white : Colors.black,
       ),
       body: taskAsyncValue.when(
         data: (taskData) {
           // Set role flags based on data
           isPoster = currentUser?.id == taskData.posterId;
           isTasker = currentProfile?.role == 'tasker';
-          hasOffers = taskData.offers != null && taskData.offers!.isNotEmpty;
           
           return Stack(
             children: [
@@ -133,16 +131,9 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
                       child: _buildDetailsSection(taskData),
                     ),
                     const SizedBox(height: 24),
-                    // Apply button (for non-posters when task is open)
-                    if (!isPoster && taskData.status == 'open') ...[
-                      _buildApplyButton(context),
-                      const SizedBox(height: 16),
-                    ],
-
                     // Show offers if any
-                    if (isPoster && hasOffers) _buildOffersSection(taskData, currentUser!.id),
-
-
+                    if (isPoster && (taskData.offers?.isNotEmpty ?? false)) 
+                      _buildOffersSection(taskData, currentUser!.id),
 
                     if (_errorMessage != null) _buildErrorMessage(),
 
@@ -533,12 +524,15 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
               child: const Text('Revise'),
             ),
           ),
-        if (isTasker && userApplication != null)
+        if (isTasker && userApplication != null) ...[
           _buildOfferStatus(userApplication),
+        ] else if (isTasker && task.status == 'open') ...[
+          _buildApplyButton(context),
+        ],
       ],
     );
-  } 
-  
+  }
+
   Widget _buildApplyButton(BuildContext context) {
     return SizedBox(
       width: double.infinity,
