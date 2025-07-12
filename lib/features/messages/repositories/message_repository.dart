@@ -240,7 +240,7 @@ class MessageRepository {
   /// Get a page of messages for a channel
   Future<List<Message>> getChannelMessages(String channelId, {
     int page = 0,
-    int limit = 10,
+    int limit = 5,  // Increased from 10 to 50
   }) async {
     final offset = page * limit;
     
@@ -291,7 +291,7 @@ class MessageRepository {
         .stream(primaryKey: ['id'])
         .eq('channel_id', channelId)
         .order('created_at', ascending: false)
-        .limit(10)
+        .limit(50)  // Increased from 10 to 50
         .asyncMap((response) async {
           final messages = response.map((json) => Message.fromJson(json)).toList();
           
@@ -344,7 +344,7 @@ class MessageRepository {
   Future<List<Message>> getOlderMessages({
     required String channelId,
     required DateTime beforeTimestamp,
-    int limit = 10,
+    int limit = 50,  // Increased from 10 to 50
   }) async {
     try {
       final response = await supabase
