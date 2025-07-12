@@ -320,6 +320,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 name: 'profile',
                 builder: (context, state) => const ProfileScreen(),
               ),
+              GoRoute(
+                path: '/home/post-task',
+                name: 'post-task',
+                builder: (context, state) => const SizedBox(), // Placeholder, will be handled by HomeScreen
+              ),
             ],
           ),
         ],
