@@ -218,6 +218,25 @@ class AuthController extends StateNotifier<bool> {
       state = false;
     }
   }
+
+  Future<UserResponse> updateUserMetadata(Map<String, dynamic> metadata) async {
+    state = true;
+    try {
+      dev.log('Updating user metadata: $metadata');
+      final response = await supabase.auth.updateUser(
+        UserAttributes(
+          data: metadata,
+        ),
+      );
+      dev.log('User metadata updated successfully: ${response.user?.userMetadata}');
+      return response;
+    } catch (e) {
+      dev.log('Error updating user metadata: $e');
+      rethrow;
+    } finally {
+      state = false;
+    }
+  }
 }
 
 // Notifier for GoRouter to listen to auth changes

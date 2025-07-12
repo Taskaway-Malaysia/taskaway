@@ -11,6 +11,10 @@ class Profile {
   final DateTime? updatedAt;
   final DateTime? dateOfBirth;
   final int? postcode;
+  final String? bio;
+  final String? about;
+  final List<String>? skills;
+  final List<String>? myWorks;
 
   Profile({
     required this.id,
@@ -25,6 +29,10 @@ class Profile {
     this.updatedAt,
     this.dateOfBirth,
     this.postcode,
+    this.bio,
+    this.about,
+    this.skills,
+    this.myWorks,
   });
 
   factory Profile.fromJson(Map<String, dynamic> json) {
@@ -41,6 +49,10 @@ class Profile {
       updatedAt: json['updated_at'] != null ? DateTime.parse(json['updated_at'] as String) : null,
       dateOfBirth: json['date_of_birth'] != null ? DateTime.parse(json['date_of_birth'] as String) : null,
       postcode: json['postcode'] as int?,
+      bio: json['bio'] as String?,
+      about: json['about'] as String?,
+      skills: json['skills'] != null ? List<String>.from(json['skills']) : null,
+      myWorks: json['my_works'] != null ? List<String>.from(json['my_works']) : null,
     );
   }
 
@@ -57,6 +69,10 @@ class Profile {
     if (updatedAt != null) 'updated_at': updatedAt!.toIso8601String(),
     if (dateOfBirth != null) 'date_of_birth': dateOfBirth!.toIso8601String(),
     if (postcode != null) 'postcode': postcode,
+    if (bio != null) 'bio': bio,
+    if (about != null) 'about': about,
+    if (skills != null) 'skills': skills,
+    if (myWorks != null) 'my_works': myWorks,
   };
 
   Profile copyWith({
@@ -72,6 +88,10 @@ class Profile {
     DateTime? updatedAt,
     DateTime? dateOfBirth,
     int? postcode,
+    String? bio,
+    String? about,
+    List<String>? skills,
+    List<String>? myWorks,
   }) {
     return Profile(
       id: id ?? this.id,
@@ -86,6 +106,10 @@ class Profile {
       updatedAt: updatedAt ?? this.updatedAt,
       dateOfBirth: dateOfBirth ?? this.dateOfBirth,
       postcode: postcode ?? this.postcode,
+      bio: bio ?? this.bio,
+      about: about ?? this.about,
+      skills: skills ?? this.skills,
+      myWorks: myWorks ?? this.myWorks,
     );
   }
   
@@ -104,7 +128,11 @@ class Profile {
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt &&
         other.dateOfBirth == dateOfBirth &&
-        other.postcode == postcode;
+        other.postcode == postcode &&
+        other.bio == bio &&
+        other.about == about &&
+        other.skills == skills &&
+        other.myWorks == myWorks;
   }
 
   @override
@@ -122,6 +150,10 @@ class Profile {
       updatedAt,
       dateOfBirth,
       postcode,
+      bio,
+      about,
+      skills,
+      myWorks,
     );
   }
 }
