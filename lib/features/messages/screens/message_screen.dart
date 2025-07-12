@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:go_router/go_router.dart';
 import '../models/channel.dart';
 import '../models/message.dart';
 import '../controllers/message_controller.dart';
@@ -22,7 +23,9 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
   final _messageController = TextEditingController();
   final _scrollController = ScrollController();
   bool _isLoading = false;
+  bool _isLoadingMore = false;
   late Channel _channel;
+  DateTime? _oldestMessageTimestamp;
 
   @override
   void initState() {
@@ -30,6 +33,9 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
 
     // Set channel from widget
     _channel = widget.channel;
+
+    // Add scroll listener for infinite scroll
+    _scrollController.addListener(_onScroll);
 
     // Schedule scroll to bottom after build
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -42,6 +48,47 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent * 0.8 &&
+        !_isLoadingMore &&
+        _oldestMessageTimestamp != null) {
+      _loadOlderMessages();
+    }
+  }
+
+  Future<void> _loadOlderMessages() async {
+    if (_isLoadingMore) return;
+
+    setState(() {
+      _isLoadingMore = true;
+    });
+
+    try {
+      final messageController = ref.read(messageControllerProvider);
+      final olderMessages = await messageController.getOlderMessages(
+        channelId: _channel.id,
+        beforeTimestamp: _oldestMessageTimestamp!,
+      );
+
+      if (olderMessages.isNotEmpty) {
+        // Update the oldest message timestamp
+        _oldestMessageTimestamp = olderMessages.last.createdAt;
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load older messages: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingMore = false;
+        });
+      }
+    }
   }
 
   void _scrollToBottom() {
@@ -165,10 +212,24 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                   : ListView.builder(
                       controller: _scrollController,
                       padding: const EdgeInsets.all(16),
-                      itemCount: messages.length,
+                      itemCount: messages.length + (_isLoadingMore ? 1 : 0),
                       reverse: true,
                       itemBuilder: (context, index) {
+                        if (index == messages.length) {
+                          return const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(8.0),
+                              child: CircularProgressIndicator(),
+                            ),
+                          );
+                        }
+
                         final message = messages[index];
+                        // Update oldest message timestamp for infinite scroll
+                        if (index == messages.length - 1) {
+                          _oldestMessageTimestamp = message.createdAt;
+                        }
+
                         final isCurrentUser = message.senderId == currentUserId;
                         
                         // Show date separator for first message or when date changes
@@ -455,7 +516,7 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                 child: OutlinedButton.icon(
                   onPressed: () {
                     // Navigate to task details
-                    // context.push('/tasks/${_channel.taskId}');
+                    context.push('/home/tasks/${_channel.taskId}');
                   },
                   icon: const Icon(Icons.visibility_outlined, size: 16),
                   label: const Text('View Task'),
