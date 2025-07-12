@@ -102,7 +102,7 @@ class HomeScreen extends ConsumerWidget {
                 NavigationDestination(
                     icon: Icon(Icons.add_circle_outline), label: 'Post Task'),
                 NavigationDestination(
-                    icon: Icon(Icons.chat_bubble_outline), label: 'Inbox'),
+                    icon: Icon(Icons.mail_outline), label: 'Messages'),
                 NavigationDestination(
                     icon: Icon(Icons.person_outline), label: 'Profile'),
               ],

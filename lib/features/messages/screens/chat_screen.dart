@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import '../models/channel.dart';
 import '../models/message.dart';
+import '../controllers/message_controller.dart';
+import '../../auth/controllers/auth_controller.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   final Channel channel;
@@ -20,7 +23,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   final _scrollController = ScrollController();
   bool _isLoading = false;
   late Channel _channel;
-  late List<Message> _messages;
 
   @override
   void initState() {
@@ -29,63 +31,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     // Set channel from widget
     _channel = widget.channel;
 
-    // Initialize with hardcoded messages
-    _initializeHardcodedMessages();
-
     // Schedule scroll to bottom after build
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _scrollToBottom();
     });
-  }
-
-  void _initializeHardcodedMessages() {
-    final now = DateTime.now();
-    final yesterday = now.subtract(const Duration(days: 1));
-
-    _messages = [
-      Message(
-        id: '1',
-        channelId: _channel.id,
-        senderId: _channel.posterId,
-        content:
-            'Hi, thank you for accepting my task! I\'m really glad to have your help.',
-        createdAt: yesterday.add(const Duration(hours: 10)),
-        senderName: _channel.posterName,
-      ),
-      Message(
-        id: '2',
-        channelId: _channel.id,
-        senderId: _channel.taskerId,
-        content: 'you\'re welcome! So, do you still have all the parts?',
-        createdAt: yesterday.add(const Duration(hours: 10)),
-        senderName: _channel.taskerName,
-      ),
-      Message(
-        id: '3',
-        channelId: _channel.id,
-        senderId: _channel.posterId,
-        content:
-            'Yes, I still have all the parts? Do you think you\'ll be available to start tomorrow?',
-        createdAt: now.add(const Duration(hours: 10)),
-        senderName: _channel.posterName,
-      ),
-      Message(
-        id: '4',
-        channelId: _channel.id,
-        senderId: _channel.taskerId,
-        content: 'Absolutely, I can definitely start tomorrow.',
-        createdAt: now.add(const Duration(hours: 10)),
-        senderName: _channel.taskerName,
-      ),
-      Message(
-        id: '5',
-        channelId: _channel.id,
-        senderId: _channel.posterId,
-        content: 'I\'ll be available to assist if needed.',
-        createdAt: now.add(const Duration(hours: 10, minutes: 1)),
-        senderName: _channel.posterName,
-      ),
-    ];
   }
 
   @override
@@ -96,7 +45,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 
   void _scrollToBottom() {
-    if (_scrollController.hasClients && _messages.isNotEmpty) {
+    if (_scrollController.hasClients) {
       _scrollController.animateTo(
         _scrollController.position.maxScrollExtent,
         duration: const Duration(milliseconds: 300),
@@ -105,7 +54,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     }
   }
 
-  void _sendMessage() {
+  void _sendMessage() async {
     final text = _messageController.text.trim();
     if (text.isEmpty || _isLoading) return;
 
@@ -113,32 +62,39 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       _isLoading = true;
     });
 
-    // Create a new message and add it to the list
-    final newMessage = Message(
-      id: 'msg-${DateTime.now().millisecondsSinceEpoch}',
-      channelId: _channel.id,
-      senderId: _channel.taskerId, // Assuming current user is the tasker
-      content: text,
-      createdAt: DateTime.now(),
-      senderName: _channel.taskerName,
-    );
+    try {
+      final messageController = ref.read(messageControllerProvider);
+      await messageController.sendMessage(
+        channelId: _channel.id,
+        content: text,
+      );
 
-    setState(() {
-      _messages = [..._messages, newMessage];
-      _isLoading = false;
       _messageController.clear();
-    });
-
-    // Schedule scroll to bottom after the message is added
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _scrollToBottom();
-    });
+      
+      // Schedule scroll to bottom after the message is added
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scrollToBottom();
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to send message: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Assuming current user is the tasker for this example
-    final currentUserId = _channel.taskerId;
+    final currentUser = ref.watch(currentUserProvider);
+    final currentUserId = currentUser?.id ?? '';
+    final messagesAsync = ref.watch(channelMessagesProvider(_channel.id));
 
     return Scaffold(
       appBar: AppBar(
@@ -190,31 +146,62 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       ),
       body: Column(
         children: [
-          // Date separators and messages
+          // Task context card
+          _buildTaskContextCard(),
+          // Messages
           Expanded(
-            child: ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.all(16),
-              itemCount: _messages.length + 2, // +2 for date separators
-              itemBuilder: (context, index) {
-                // Add date separators
-                if (index == 0) {
-                  return _buildDateSeparator('Yesterday');
-                } else if (index == 3) {
-                  return _buildDateSeparator('Today');
-                }
-
-                // Adjust index for actual messages
-                final messageIndex = index < 3 ? index - 1 : index - 2;
-                if (messageIndex < 0 || messageIndex >= _messages.length) {
-                  return const SizedBox.shrink();
-                }
-
-                final message = _messages[messageIndex];
-                final isCurrentUser = message.senderId == currentUserId;
-
-                return _buildMessageBubble(message, isCurrentUser);
-              },
+            child: messagesAsync.when(
+              data: (messages) => messages.isEmpty
+                  ? const Center(
+                      child: Text(
+                        'No messages yet\nSay hello!',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.grey,
+                          fontSize: 16,
+                        ),
+                      ),
+                    )
+                  : ListView.builder(
+                      controller: _scrollController,
+                      padding: const EdgeInsets.all(16),
+                      itemCount: messages.length,
+                      itemBuilder: (context, index) {
+                        final message = messages[index];
+                        final isCurrentUser = message.senderId == currentUserId;
+                        
+                        // Show date separator for first message or when date changes
+                        bool showDateSeparator = false;
+                        if (index == 0) {
+                          showDateSeparator = true;
+                        } else {
+                          final previousMessage = messages[index - 1];
+                          final currentDate = DateTime(
+                            message.createdAt.year,
+                            message.createdAt.month,
+                            message.createdAt.day,
+                          );
+                          final previousDate = DateTime(
+                            previousMessage.createdAt.year,
+                            previousMessage.createdAt.month,
+                            previousMessage.createdAt.day,
+                          );
+                          showDateSeparator = !currentDate.isAtSameDay(previousDate);
+                        }
+                        
+                        return Column(
+                          children: [
+                            if (showDateSeparator)
+                              _buildDateSeparator(_formatDate(message.createdAt)),
+                            _buildMessageBubble(message, isCurrentUser),
+                          ],
+                        );
+                      },
+                    ),
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (error, stack) => Center(
+                child: Text('Error loading messages: $error'),
+              ),
             ),
           ),
           // Message input
@@ -351,7 +338,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        '10:00 AM',
+                        DateFormat('h:mm a').format(message.createdAt),
                         style: TextStyle(
                             fontSize: 10, color: Colors.grey.shade600),
                       ),
@@ -359,7 +346,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                         Padding(
                           padding: const EdgeInsets.only(left: 4),
                           child: Icon(Icons.done_all,
-                              size: 14, color: Colors.orange.shade300),
+                              size: 14, color: Colors.blue.shade300),
                         ),
                     ],
                   ),
@@ -370,5 +357,156 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         ],
       ),
     );
+  }
+
+  Widget _buildTaskContextCard() {
+    return Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF6C5CE7).withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: const Color(0xFF6C5CE7).withValues(alpha: 0.3),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF6C5CE7),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Text(
+                  'TASK',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              const Spacer(),
+              Icon(
+                Icons.push_pin,
+                size: 16,
+                color: const Color(0xFF6C5CE7).withValues(alpha: 0.7),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _channel.taskTitle,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Icon(
+                Icons.person_outline,
+                size: 14,
+                color: Colors.grey.shade600,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                'Posted by ${_channel.posterName}',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.green.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: Colors.green.withValues(alpha: 0.3),
+                  ),
+                ),
+                child: const Text(
+                  'ASSIGNED',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    // Navigate to task details
+                    // context.push('/tasks/${_channel.taskId}');
+                  },
+                  icon: const Icon(Icons.visibility_outlined, size: 16),
+                  label: const Text('View Task'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF6C5CE7),
+                    side: const BorderSide(color: Color(0xFF6C5CE7)),
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    // Quick actions - maybe payment or completion
+                  },
+                  icon: const Icon(Icons.check_circle_outline, size: 16),
+                  label: const Text('Complete'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF6C5CE7),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatDate(DateTime dateTime) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final messageDate = DateTime(dateTime.year, dateTime.month, dateTime.day);
+
+    if (messageDate == today) {
+      return 'Today';
+    } else if (messageDate == yesterday) {
+      return 'Yesterday';
+    } else if (now.difference(messageDate).inDays < 7) {
+      return DateFormat('EEEE').format(dateTime);
+    } else {
+      return DateFormat('MMM d, yyyy').format(dateTime);
+    }
+  }
+}
+
+extension DateTimeComparison on DateTime {
+  bool isAtSameDay(DateTime other) {
+    return year == other.year && month == other.month && day == other.day;
   }
 }

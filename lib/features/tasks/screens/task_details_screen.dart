@@ -67,6 +67,38 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
     }
   }
 
+  // Navigate to chat method
+  Future<void> _navigateToChat() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final messageController = ref.read(messageControllerProvider);
+      final channel = await messageController.getChannelByTaskId(widget.taskId);
+      
+      if (channel != null && mounted) {
+        // Navigate to chat screen
+        await context.push('/home/chat/${channel.id}');
+      } else {
+        setState(() {
+          _errorMessage = 'No conversation found for this task';
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Failed to open chat: ${e.toString()}';
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
   @override
   void dispose() {
     _offerPriceController.dispose();
@@ -842,8 +874,28 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
                 style: const TextStyle(fontWeight: FontWeight.w500),
               ),
               
-              if (isTasker && (task.status == 'assigned' || task.status == 'in_progress')) ...[
+              // Message button (for both poster and tasker when assigned/in_progress)
+              if ((isPoster || isTasker) && (task.status == 'assigned' || task.status == 'in_progress')) ...[
                 const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () async {
+                      await _navigateToChat();
+                    },
+                    icon: const Icon(Icons.chat_bubble_outline),
+                    label: Text(isPoster ? 'Message Tasker' : 'Message Poster'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: StyleConstants.primaryColor,
+                      side: BorderSide(color: StyleConstants.primaryColor),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
+                ),
+              ],
+              
+              if (isTasker && (task.status == 'assigned' || task.status == 'in_progress')) ...[
+                const SizedBox(height: 12),
                 Row(
                   children: [
                     if (task.status == 'assigned')
