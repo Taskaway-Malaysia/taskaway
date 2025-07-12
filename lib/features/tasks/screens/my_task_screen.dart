@@ -47,6 +47,7 @@ String _mapTaskStatusToUiStatus(String dbStatus) {
   switch (dbStatus.toLowerCase()) {
     case 'open':
       return 'Awaiting offers';
+    case 'pending':
     case 'assigned':
     case 'in_progress':
     case 'pending_approval':

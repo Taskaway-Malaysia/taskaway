@@ -25,6 +25,7 @@ import '../features/tasks/screens/my_task_screen.dart';
 import '../features/tasks/screens/create_task_screen.dart';
 import '../features/tasks/screens/task_details_screen.dart';
 import '../features/tasks/screens/apply_task_screen.dart';
+import '../features/tasks/screens/offer_accepted_success_screen.dart';
 import '../features/payments/screens/payment_completion_screen.dart';
 import '../features/messages/screens/message_list_screen.dart';
 import '../features/messages/screens/message_screen.dart';
@@ -303,6 +304,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                         builder: (context, state) => ApplyTaskScreen(
                           taskId: state.pathParameters['id']!,
                         ),
+                      ),
+
+                      GoRoute(
+                        path: 'offer-accepted-success/:price',
+                        builder: (context, state) {
+                          final price = double.tryParse(state.pathParameters['price'] ?? '0.0') ?? 0.0;
+                          return OfferAcceptedSuccessScreen(price: price);
+                        },
                       ),
                     ],
                   ),
