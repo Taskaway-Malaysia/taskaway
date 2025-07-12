@@ -63,6 +63,51 @@ class MessageRepository {
     }
   }
 
+  /// Creates or gets existing channel and sends welcome message for task confirmation
+  Future<Channel> initiateTaskConversation({
+    required String taskId,
+    required String taskTitle,
+    required String posterId,
+    required String posterName,
+    required String taskerId,
+    required String taskerName,
+    String? welcomeMessage,
+  }) async {
+    try {
+      // Check if channel already exists
+      Channel? existingChannel = await getChannelByTaskId(taskId);
+      
+      if (existingChannel != null) {
+        return existingChannel;
+      }
+
+      // Create new channel
+      final channel = await createChannel(
+        taskId: taskId,
+        taskTitle: taskTitle,
+        posterId: posterId,
+        posterName: posterName,
+        taskerId: taskerId,
+        taskerName: taskerName,
+      );
+
+      // Send welcome message from poster
+      final message = welcomeMessage ?? 
+          "Hi $taskerName! I've confirmed you for the task '$taskTitle'. Looking forward to working with you! 🎉";
+      
+      await sendMessage(
+        channelId: channel.id,
+        senderId: posterId,
+        content: message,
+      );
+
+      return channel;
+    } catch (e) {
+      dev.log('Error initiating task conversation: $e');
+      throw Exception('Failed to initiate conversation');
+    }
+  }
+
   Stream<List<Channel>> watchUserChannels(String userId) {
     return supabase
         .from(_channelsTable)

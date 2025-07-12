@@ -51,6 +51,26 @@ class MessageController {
     return repository.getChannelByTaskId(taskId);
   }
 
+  Future<Channel> initiateTaskConversation({
+    required String taskId,
+    required String taskTitle,
+    required String posterId,
+    required String posterName,
+    required String taskerId,
+    required String taskerName,
+    String? welcomeMessage,
+  }) {
+    return repository.initiateTaskConversation(
+      taskId: taskId,
+      taskTitle: taskTitle,
+      posterId: posterId,
+      posterName: posterName,
+      taskerId: taskerId,
+      taskerName: taskerName,
+      welcomeMessage: welcomeMessage,
+    );
+  }
+
   Stream<List<Channel>> watchUserChannels(String userId) {
     return repository.watchUserChannels(userId);
   }
