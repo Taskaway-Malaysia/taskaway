@@ -2,15 +2,28 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
-import '../providers/mock_data_provider.dart'; // Import mock data provider
+import '../controllers/message_controller.dart';
+import '../models/channel.dart';
+import '../../auth/controllers/auth_controller.dart';
 
-class ChatListScreen extends ConsumerWidget {
-  const ChatListScreen({super.key});
+class MessageListScreen extends ConsumerWidget {
+  const MessageListScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final channelsList = ref.watch(mockChannelsProvider);
+    final channelsAsync = ref.watch(userChannelsProvider);
+    
+    return channelsAsync.when(
+      data: (channels) => _buildChatList(context, theme, channels, ref),
+      loading: () => _buildLoadingScaffold(theme),
+      error: (error, stackTrace) => _buildErrorScaffold(theme, error),
+    );
+  }
+
+  Widget _buildChatList(BuildContext context, ThemeData theme, List<Channel> channelsList, WidgetRef ref) {
+    final currentUser = ref.watch(currentUserProvider);
+    final currentUserId = currentUser?.id ?? '';
 
     return Scaffold(
       appBar: AppBar(
@@ -39,9 +52,16 @@ class ChatListScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'No messages yet',
+                    'No conversations yet',
                     style: theme.textTheme.bodyLarge?.copyWith(
                       color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Start by accepting a task offer',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
                     ),
                   ),
                 ],
@@ -78,7 +98,7 @@ class ChatListScreen extends ConsumerWidget {
                       children: [
                         // Avatar
                         CircleAvatar(
-                          radius: 24,
+                          radius: 36,
                           backgroundColor: Colors.grey.shade300,
                           child: Text(
                             otherPersonName.isNotEmpty
@@ -104,8 +124,8 @@ class ChatListScreen extends ConsumerWidget {
                                   Text(
                                     otherPersonName,
                                     style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
+                                      fontWeight: FontWeight.normal,
+                                      fontSize: 14,
                                     ),
                                   ),
                                   // Time
@@ -123,8 +143,8 @@ class ChatListScreen extends ConsumerWidget {
                               Text(
                                 channel.taskTitle,
                                 style: const TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -216,5 +236,59 @@ class ChatListScreen extends ConsumerWidget {
 
     // Date format (more than 7 days)
     return DateFormat('d MMM').format(dateTime);
+  }
+
+  Widget _buildLoadingScaffold(ThemeData theme) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Messages'),
+        backgroundColor: const Color(0xFF6C5CE7),
+        foregroundColor: Colors.white,
+        centerTitle: true,
+      ),
+      body: const Center(
+        child: CircularProgressIndicator(
+          color: Color(0xFF6C5CE7),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorScaffold(ThemeData theme, Object error) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Messages'),
+        backgroundColor: const Color(0xFF6C5CE7),
+        foregroundColor: Colors.white,
+        centerTitle: true,
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.error_outline,
+              size: 64,
+              color: theme.colorScheme.error.withValues(alpha: 0.6),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Failed to load messages',
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              error.toString(),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

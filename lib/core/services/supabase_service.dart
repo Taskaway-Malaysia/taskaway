@@ -242,7 +242,8 @@ class SupabaseService {
         }
       }
 
-      return client.storage.from(storageBucket).getPublicUrl(filePath);
+      final response = client.storage.from(storageBucket).getPublicUrl(filePath);
+      return response;
     } catch (e) {
       dev.log('Error uploading file: $e');
       return null;

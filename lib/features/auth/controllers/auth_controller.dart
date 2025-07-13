@@ -26,34 +26,44 @@ final currentUserProvider = Provider<User?>((ref) {
 });
 
 /// Provider to fetch the current user's profile including role information
-final currentProfileProvider = FutureProvider<Profile?>((ref) async {
-  // React to changes in auth state
+final currentProfileProvider = StreamProvider.autoDispose<Profile?>((ref) {
   final authState = ref.watch(authStateProvider);
 
-  return authState.when(
-    data: (state) async {
-      final user = state.session?.user;
-      if (user == null) {
-        return null;
-      }
-      try {
-        final data = await Supabase.instance.client
-            .from('taskaway_profiles')
-            .select()
-            .eq('id', user.id)
-            .single();
-        return Profile.fromJson(data);
-      } catch (e) {
-        dev.log('Error fetching profile', error: e);
-        return null;
-      }
-    },
-    loading: () => null, // Or a specific loading state representation
-    error: (error, stackTrace) {
-      dev.log('Error in auth state', error: error, stackTrace: stackTrace);
-      return null;
-    },
-  );
+  final user = authState.value?.session?.user;
+
+  if (user == null) {
+    return Stream.value(null);
+  }
+
+  try {
+    return Supabase.instance.client
+        .from('taskaway_profiles')
+        .stream(primaryKey: ['id'])
+        .eq('id', user.id)
+        .limit(1)
+        .map((data) => data.isEmpty ? null : Profile.fromJson(data.first));
+  } catch (e) {
+    dev.log('Error creating profile stream', error: e);
+    return Stream.value(null);
+  }
+});
+
+/// Provider to fetch any user's profile by their ID
+final profileProvider = StreamProvider.family.autoDispose<Profile?, String>((ref, userId) {
+  if (userId.isEmpty) {
+    return Stream.value(null);
+  }
+  try {
+    return Supabase.instance.client
+        .from('taskaway_profiles')
+        .stream(primaryKey: ['id'])
+        .eq('id', userId)
+        .limit(1)
+        .map((data) => data.isEmpty ? null : Profile.fromJson(data.first));
+  } catch (e) {
+    dev.log('Error creating profile stream for userId: $userId', error: e);
+    return Stream.value(null);
+  }
 });
 
 class AuthController extends StateNotifier<bool> {
@@ -208,11 +218,34 @@ class AuthController extends StateNotifier<bool> {
       state = false;
     }
   }
+
+  Future<UserResponse> updateUserMetadata(Map<String, dynamic> metadata) async {
+    state = true;
+    try {
+      dev.log('Updating user metadata: $metadata');
+      final response = await supabase.auth.updateUser(
+        UserAttributes(
+          data: metadata,
+        ),
+      );
+      dev.log('User metadata updated successfully: ${response.user?.userMetadata}');
+      return response;
+    } catch (e) {
+      dev.log('Error updating user metadata: $e');
+      rethrow;
+    } finally {
+      state = false;
+    }
+  }
 }
 
 // Notifier for GoRouter to listen to auth changes
 class AuthNotifier extends ChangeNotifier {
   AuthNotifier(Ref ref) {
+    // Keep the profile provider alive as long as the user is authenticated
+    final sub = ref.listen(currentProfileProvider, (_, __) {});
+    ref.onDispose(() => sub.close());
+
     ref.listen(authStateProvider, (_, __) {
       notifyListeners();
     });

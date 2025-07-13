@@ -435,7 +435,6 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
   Widget _buildCategoryAndTitleStep(ThemeData theme) {
     final taskData = ref.watch(createTaskDataProvider);
     final selectedCategory = taskData['category'];
-    final categoriesAsync = ref.watch(categoriesProvider);
 
     return Form(
       key: _formKeys[0],
@@ -447,27 +446,57 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
             style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
-          // Category selection
-          categoriesAsync.when(
-            data: (categories) {
-              return Column(
-                children: categories.map((category) {
-                  return _buildCategoryOption(
-                      category.id, category.name, selectedCategory, theme);
-                }).toList(),
-              );
-            },
-            loading: () => const Center(
-              child: Padding(
-                padding: EdgeInsets.symmetric(vertical: 20),
-                child: CircularProgressIndicator(),
+          // Display selected category only
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFF6C5CE7).withValues(alpha: 0.1),
+              border: Border.all(
+                color: const Color(0xFF6C5CE7),
+                width: 2,
               ),
+              borderRadius: BorderRadius.circular(12),
             ),
-            error: (error, stack) => Center(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 20),
-                child: Text('Error loading categories: $error'),
-              ),
+            child: Row(
+              children: [
+                Icon(
+                  _getCategoryIcon(selectedCategory ?? 'others'),
+                  color: const Color(0xFF6C5CE7),
+                  size: 28,
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _capitalizeCategoryName(selectedCategory ?? 'others'),
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF6C5CE7),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Selected category',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.edit_outlined),
+                  color: const Color(0xFF6C5CE7),
+                  onPressed: () {
+                    // Navigate back to poster home screen to change category
+                    context.go('/home/post-task');
+                  },
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 24),
@@ -532,65 +561,6 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
     );
   }
 
-  // Category option widget
-  Widget _buildCategoryOption(
-      String value, String label, String selectedValue, ThemeData theme) {
-    final isSelected = value == selectedValue;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12.0),
-      child: InkWell(
-        onTap: () {
-          final taskData =
-              Map<String, dynamic>.from(ref.read(createTaskDataProvider));
-          taskData['category'] = value;
-          ref.read(createTaskDataProvider.notifier).state = taskData;
-        },
-        borderRadius: BorderRadius.circular(8),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            border: Border.all(
-              color:
-                  isSelected ? const Color(0xFF6C5CE7) : Colors.grey.shade300,
-              width: isSelected ? 2 : 1,
-            ),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 24,
-                height: 24,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color:
-                      isSelected ? const Color(0xFF6C5CE7) : Colors.transparent,
-                  border: Border.all(
-                    color: isSelected
-                        ? const Color(0xFF6C5CE7)
-                        : Colors.grey.shade400,
-                    width: 2,
-                  ),
-                ),
-                child: isSelected
-                    ? const Icon(Icons.check, size: 16, color: Colors.white)
-                    : null,
-              ),
-              const SizedBox(width: 12),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 
   // Step 4: Confirmation step
   Widget _buildConfirmationStep(ThemeData theme) {
