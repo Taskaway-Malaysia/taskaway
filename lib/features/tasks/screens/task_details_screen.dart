@@ -174,11 +174,15 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
 
 
                     // Show offers if any
-                    if (isPoster && hasOffers) _buildOffersSection(taskData, currentUser!.id),
+                    if (isPoster) _buildOffersSection(taskData, currentUser!.id),
+                    const SizedBox(height: 16),
+                    _buildActionButtons(taskData, isPoster, currentUser?.id),
 
 
 
                     if (_errorMessage != null) _buildErrorMessage(),
+
+                    _buildActionButtons(taskData, isPoster, currentUser?.id),
 
                     // Action buttons for poster when task is pending approval
                     if (isPoster && taskData.status == 'pending_approval') ...[
@@ -885,6 +889,8 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
         return 'Open';
       case 'assigned':
         return 'Assigned';
+      case 'pending':
+        return 'Pending';
       case 'in_progress':
         return 'In Progress';
       case 'pending_approval':
@@ -906,6 +912,8 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
         return StyleConstants.primaryColor;
       case 'assigned':
         return Colors.blue;
+      case 'pending':
+        return Colors.orange;
       case 'in_progress':
         return Colors.orange;
       case 'pending_approval':
@@ -918,6 +926,97 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
         return Colors.grey;
     }
   }
+
+  Widget _buildActionButtons(Task task, bool isPoster, String? currentUserId) {
+    if (isPoster) {
+      if (task.status == 'pending_approval') {
+        return Column(
+          children: [
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _approveTask,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('Approve Completion'),
+              ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: () => _showRevisionDialog(),
+                child: const Text('Request Revisions'),
+              ),
+            ),
+          ],
+        );
+      }
+    } else {
+      if (task.status == 'in_progress' && currentUserId == task.taskerId) {
+        return SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: _completeTask,
+            child: const Text('Submit for Review'),
+          ),
+        );
+      }
+    }
+    return const SizedBox.shrink();
+  }
+
+  Future<void> _approveTask() async {
+    if (_isLoading) return;
+    setState(() => _isLoading = true);
+    try {
+      await ref.read(taskControllerProvider).approveTask(widget.taskId);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Task approved!')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _completeTask() async {
+    if (_isLoading) return;
+    setState(() => _isLoading = true);
+    try {
+      await ref.read(taskControllerProvider).completeTask(widget.taskId);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Task submitted for review!')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+
 
   Widget _buildSectionContainer({required Widget child}) {
     return Container(
