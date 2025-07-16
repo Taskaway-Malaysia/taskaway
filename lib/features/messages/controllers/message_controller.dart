@@ -16,6 +16,15 @@ final userChannelsProvider = StreamProvider.autoDispose<List<Channel>>((ref) {
   return ref.watch(messageControllerProvider).watchUserChannels(user.id);
 });
 
+final totalUnreadCountProvider = StreamProvider.autoDispose<int>((ref) {
+  final user = ref.watch(currentUserProvider);
+  if (user == null) return Stream.value(0);
+  
+  return ref.watch(messageControllerProvider).watchUserChannels(user.id).map((channels) {
+    return channels.fold<int>(0, (sum, channel) => sum + channel.unreadCount);
+  });
+});
+
 final channelMessagesProvider = StreamProvider.autoDispose.family<List<Message>, String>((ref, channelId) async* {
   final controller = ref.watch(messageControllerProvider);
   final messagesStream = controller.watchChannelMessages(channelId);

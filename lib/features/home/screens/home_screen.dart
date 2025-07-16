@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:taskaway/features/auth/controllers/auth_controller.dart';
 import 'package:taskaway/features/home/screens/poster_home_screen.dart';
 import 'package:taskaway/features/home/screens/tasker_home_screen.dart';
+import 'package:taskaway/features/messages/controllers/message_controller.dart';
 
 final currentIndexProvider = StateProvider<int>((ref) => 0);
 
@@ -19,6 +20,7 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final currentLocation = GoRouterState.of(context).uri.toString();
     final profileAsync = ref.watch(currentProfileProvider);
+    final unreadCountAsync = ref.watch(totalUnreadCountProvider);
     
     // Determine the current index based on location
     int actualIndex;
@@ -94,16 +96,27 @@ class HomeScreen extends ConsumerWidget {
                     break;
                 }
               },
-              destinations: const [
-                NavigationDestination(
+              destinations: [
+                const NavigationDestination(
                     icon: Icon(Icons.search), label: 'Browse'),
-                NavigationDestination(
+                const NavigationDestination(
                     icon: Icon(Icons.assignment_outlined), label: 'My Tasks'),
-                NavigationDestination(
+                const NavigationDestination(
                     icon: Icon(Icons.add_circle_outline), label: 'Post Task'),
                 NavigationDestination(
-                    icon: Icon(Icons.chat_bubble_outline), label: 'Messages'),
-                NavigationDestination(
+                  icon: unreadCountAsync.when(
+                    data: (unreadCount) => unreadCount > 0
+                        ? Badge(
+                            label: Text('$unreadCount'),
+                            child: const Icon(Icons.chat_bubble_outline),
+                          )
+                        : const Icon(Icons.chat_bubble_outline),
+                    loading: () => const Icon(Icons.chat_bubble_outline),
+                    error: (_, __) => const Icon(Icons.chat_bubble_outline),
+                  ),
+                  label: 'Messages',
+                ),
+                const NavigationDestination(
                     icon: Icon(Icons.person_outline), label: 'Profile'),
               ],
             )
