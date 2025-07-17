@@ -17,27 +17,22 @@ import '../features/auth/screens/otp_verification_screen.dart';
 import '../features/auth/screens/create_profile_screen.dart';
 import '../features/auth/screens/signup_success_screen.dart';
 import '../features/home/screens/home_screen.dart';
-import '../features/profile/screens/profile_screen.dart';
-import '../features/profile/screens/edit_profile_screen.dart';
-import '../features/profile/screens/edit_skills_screen.dart';
-import '../features/profile/screens/edit_works_screen.dart';
 import '../features/tasks/screens/my_task_screen.dart';
 import '../features/tasks/screens/create_task_screen.dart';
 import '../features/tasks/screens/task_details_screen.dart';
 import '../features/tasks/screens/apply_task_screen.dart';
 import '../features/tasks/screens/offer_accepted_success_screen.dart';
 import '../features/payments/screens/payment_completion_screen.dart';
-import '../features/messages/screens/message_list_screen.dart';
-import '../features/messages/screens/message_screen.dart';
-import '../features/messages/models/channel.dart';
 import '../core/services/analytics_service.dart';
 import '../core/widgets/responsive_layout.dart';
+import 'profile_router.dart';
+import 'chat_router.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final analytics = ref.read(analyticsServiceProvider);
-  
+
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
     observers: [analytics.observer],
@@ -69,12 +64,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         '/change-password-success',
         '/onboarding'
       ];
-      
+
       // Profile editing routes for authenticated users
       final profileEditingRoutes = [
         '/edit-profile',
         '/edit-skills',
-        '/edit-works'
+        '/edit-works',
+        '/settings',
+        '/my-reviews',
+        '/payment-options',
+        '/payment-history',
+        '/payment-methods'
       ];
       // Define routes that are part of the profile creation flow
       final profileCreationRoutes = ['/create-profile', '/signup-success'];
@@ -166,7 +166,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               'GoRouter Redirect: Not logged in (and not guest), trying to access $location. Redirecting to /login.');
           return '/login';
         }
-        
+
         // If not logged in but trying to access profile editing routes, redirect to login
         if (profileEditingRoutes.contains(location)) {
           dev.log(
@@ -251,21 +251,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const OnboardingScreen(),
           ),
           GoRoute(
-            path: '/edit-profile',
-            name: 'edit-profile',
-            builder: (context, state) => const EditProfileScreen(),
-          ),
-          GoRoute(
-            path: '/edit-skills',
-            name: 'edit-skills',
-            builder: (context, state) => const EditSkillsScreen(),
-          ),
-          GoRoute(
-            path: '/edit-works',
-            name: 'edit-works',
-            builder: (context, state) => const EditWorksScreen(),
-          ),
-          GoRoute(
             path: '/payment/:id',
             name: 'payment-callback',
             builder: (context, state) {
@@ -305,11 +290,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                           taskId: state.pathParameters['id']!,
                         ),
                       ),
-
                       GoRoute(
                         path: 'offer-accepted-success/:price',
                         builder: (context, state) {
-                          final price = double.tryParse(state.pathParameters['price'] ?? '0.0') ?? 0.0;
+                          final price = double.tryParse(
+                                  state.pathParameters['price'] ?? '0.0') ??
+                              0.0;
                           return OfferAcceptedSuccessScreen(price: price);
                         },
                       ),
@@ -345,29 +331,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 name: 'create-task',
                 builder: (context, state) => const CreateTaskScreen(),
               ),
-              GoRoute(
-                path: '/home/chat',
-                name: 'chat',
-                builder: (context, state) => const MessageListScreen(),
-                routes: [
-                  GoRoute(
-                    path: ':id',
-                    name: 'chat-room',
-                    builder: (context, state) => MessageScreen(
-                      channel: state.extra as Channel,
-                    ),
-                  ),
-                ],
-              ),
-              GoRoute(
-                path: '/home/profile',
-                name: 'profile',
-                builder: (context, state) => const ProfileScreen(),
-              ),
+              ...ProfileRouter.routes,
+              ...ChatRouter.routes,
               GoRoute(
                 path: '/home/post-task',
                 name: 'post-task',
-                builder: (context, state) => const SizedBox(), // Placeholder, will be handled by HomeScreen
+                builder: (context, state) =>
+                    const SizedBox(), // Placeholder, will be handled by HomeScreen
               ),
             ],
           ),

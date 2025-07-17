@@ -3,8 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../auth/controllers/auth_controller.dart';
 import 'edit_profile_screen.dart';
-import 'edit_skills_screen.dart';
-import 'edit_works_screen.dart';
+import 'settings_screen.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -33,49 +32,16 @@ class ProfileScreen extends ConsumerWidget {
               ),
             ),
             const Spacer(),
-            PopupMenuButton<String>(
-              icon: const Icon(Icons.more_vert, color: Colors.white),
-              onSelected: (value) async {
-                if (value == 'logout') {
-                  // Show confirmation dialog
-                  final shouldLogout = await showDialog<bool>(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: const Text('Logout'),
-                      content: const Text('Are you sure you want to logout?'),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context, false),
-                          child: const Text('Cancel'),
-                        ),
-                        TextButton(
-                          onPressed: () => Navigator.pop(context, true),
-                          child: const Text('Logout'),
-                        ),
-                      ],
-                    ),
-                  );
-                  
-                  if (shouldLogout == true) {
-                    await ref.read(authControllerProvider.notifier).signOut();
-                    if (context.mounted) {
-                      context.go('/login');
-                    }
-                  }
-                }
-              },
-              itemBuilder: (context) => [
-                const PopupMenuItem(
-                  value: 'logout',
-                  child: Row(
-                    children: [
-                      Icon(Icons.logout, color: Colors.red),
-                      SizedBox(width: 12),
-                      Text('Logout', style: TextStyle(color: Colors.red)),
-                    ],
+            IconButton(
+              icon: const Icon(Icons.settings, color: Colors.white),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const SettingsScreen(),
                   ),
-                ),
-              ],
+                );
+              },
             ),
           ]),
         ),
@@ -332,7 +298,7 @@ class ProfileScreen extends ConsumerWidget {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => const EditSkillsScreen(),
+                                    builder: (context) => const EditProfileScreen(),
                                   ),
                                 );
                               },
@@ -423,7 +389,7 @@ class ProfileScreen extends ConsumerWidget {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => const EditWorksScreen(),
+                                    builder: (context) => const EditProfileScreen(),
                                   ),
                                 );
                               },
