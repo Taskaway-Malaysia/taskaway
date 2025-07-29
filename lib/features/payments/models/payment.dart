@@ -5,7 +5,10 @@ class Payment {
   final String payeeId;
   final double amount;
   final String status;
-  final String? billplzBillId;
+  final String? stripePaymentIntentId;
+  final String? clientSecret;
+  final double? platformFeeAmount;
+  final String? transferId;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -16,7 +19,10 @@ class Payment {
     required this.payeeId,
     required this.amount,
     String? status,
-    this.billplzBillId,
+    this.stripePaymentIntentId,
+    this.clientSecret,
+    this.platformFeeAmount,
+    this.transferId,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) : 
@@ -33,7 +39,12 @@ class Payment {
       payeeId: json['payee_id'] as String,
       amount: (json['amount'] as num).toDouble(),
       status: json['status'] as String,
-      billplzBillId: json['billplz_bill_id'] as String?,
+      stripePaymentIntentId: json['stripe_payment_intent_id'] as String?,
+      clientSecret: json['client_secret'] as String?,
+      platformFeeAmount: json['platform_fee_amount'] != null 
+          ? (json['platform_fee_amount'] as num).toDouble() 
+          : null,
+      transferId: json['transfer_id'] as String?,
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
     );
@@ -46,7 +57,10 @@ class Payment {
       'payee_id': payeeId,
       'amount': amount,
       'status': status,
-      'billplz_bill_id': billplzBillId,
+      'stripe_payment_intent_id': stripePaymentIntentId,
+      'client_secret': clientSecret,
+      'platform_fee_amount': platformFeeAmount,
+      'transfer_id': transferId,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
     };
@@ -59,7 +73,10 @@ class Payment {
     String? payeeId,
     double? amount,
     String? status,
-    String? billplzBillId,
+    String? stripePaymentIntentId,
+    String? clientSecret,
+    double? platformFeeAmount,
+    String? transferId,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -70,7 +87,10 @@ class Payment {
       payeeId: payeeId ?? this.payeeId,
       amount: amount ?? this.amount,
       status: status ?? this.status,
-      billplzBillId: billplzBillId ?? this.billplzBillId,
+      stripePaymentIntentId: stripePaymentIntentId ?? this.stripePaymentIntentId,
+      clientSecret: clientSecret ?? this.clientSecret,
+      platformFeeAmount: platformFeeAmount ?? this.platformFeeAmount,
+      transferId: transferId ?? this.transferId,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
