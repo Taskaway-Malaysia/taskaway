@@ -16,8 +16,30 @@ final userChannelsProvider = StreamProvider.autoDispose<List<Channel>>((ref) {
   return ref.watch(messageControllerProvider).watchUserChannels(user.id);
 });
 
-final channelMessagesProvider = StreamProvider.autoDispose.family<List<Message>, String>((ref, channelId) {
-  return ref.watch(messageControllerProvider).watchChannelMessages(channelId);
+final channelMessagesProvider = StreamProvider.autoDispose.family<List<Message>, String>((ref, channelId) async* {
+  final controller = ref.watch(messageControllerProvider);
+  final messagesStream = controller.watchChannelMessages(channelId);
+  
+  // Create a list to store all messages with a reasonable initial capacity
+  List<Message> allMessages = [];
+  
+  await for (final messages in messagesStream) {
+    // Add new messages to the list if they don't exist
+    bool hasNewMessages = false;
+    for (final message in messages) {
+      if (!allMessages.any((m) => m.id == message.id)) {
+        allMessages.add(message);
+        hasNewMessages = true;
+      }
+    }
+    
+    if (hasNewMessages) {
+      // Sort messages by timestamp only if we have new messages
+      allMessages.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    }
+    
+    yield allMessages;
+  }
 });
 
 class MessageController {
@@ -49,6 +71,26 @@ class MessageController {
 
   Future<Channel?> getChannelByTaskId(String taskId) {
     return repository.getChannelByTaskId(taskId);
+  }
+
+  Future<Channel> initiateTaskConversation({
+    required String taskId,
+    required String taskTitle,
+    required String posterId,
+    required String posterName,
+    required String taskerId,
+    required String taskerName,
+    String? welcomeMessage,
+  }) {
+    return repository.initiateTaskConversation(
+      taskId: taskId,
+      taskTitle: taskTitle,
+      posterId: posterId,
+      posterName: posterName,
+      taskerId: taskerId,
+      taskerName: taskerName,
+      welcomeMessage: welcomeMessage,
+    );
   }
 
   Stream<List<Channel>> watchUserChannels(String userId) {

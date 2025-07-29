@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:developer' as dev;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:taskaway/core/constants/style_constants.dart';
@@ -7,9 +8,9 @@ import 'package:taskaway/core/widgets/numpad_overlay.dart';
 import 'package:taskaway/features/auth/controllers/auth_controller.dart';
 import 'package:taskaway/features/applications/controllers/application_controller.dart';
 import 'package:taskaway/features/applications/models/application.dart';
+import 'package:taskaway/features/messages/controllers/message_controller.dart';
 import 'package:taskaway/features/tasks/controllers/task_controller.dart';
 import 'package:taskaway/features/tasks/models/task.dart';
-import 'package:taskaway/features/messages/controllers/message_controller.dart';
 import 'package:intl/intl.dart';
 
 class TaskDetailsScreen extends ConsumerStatefulWidget {
@@ -30,34 +31,68 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
   bool _isRevisingBudget = false;
 
   // Accept offer method
-  Future<void> _acceptOffer(String offerId, String taskerId) async {
+  Future<void> _acceptOffer(String offerId, String taskerId, double price) async {
+    dev.log('UI: _acceptOffer started.');
+    if (_isLoading) return;
+    setState(() => _isLoading = true);
+
+    try {
+      final applicationController = ref.read(applicationControllerProvider.notifier);
+      dev.log('UI: Calling controller.acceptOffer...');
+      final success = await applicationController.acceptOffer(
+        applicationId: offerId,
+        taskId: widget.taskId,
+        taskerId: taskerId,
+      );
+      dev.log('UI: controller.acceptOffer returned: $success');
+
+      if (success && mounted) {
+        dev.log('UI: Navigating to success screen...');
+        context.go('/home/browse/${widget.taskId}/offer-accepted-success/$price');
+      } else {
+        dev.log('UI: Navigation condition not met. Success: $success, Mounted: $mounted');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to accept offer. Please try again.')),
+          );
+        }
+      }
+    } catch (e, st) {
+      dev.log('UI: _acceptOffer caught an error: $e', error: e, stackTrace: st);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('An error occurred: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  // Navigate to chat method
+  Future<void> _navigateToChat() async {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
 
     try {
-      final taskController = ref.read(taskControllerProvider);
-      await taskController.acceptOffer(widget.taskId, offerId, taskerId);
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Offer accepted successfully!')),
-        );
-        
-        // Get the chat channel for this task
-        final messageController = ref.read(messageControllerProvider);
-        final channel = await messageController.getChannelByTaskId(widget.taskId);
-        
-        // If a channel was created, navigate to it
-        if (channel != null && mounted) {
-          // Navigate to chat room
-          await context.push('/home/chat/${channel.id}');
-        }
+      final messageController = ref.read(messageControllerProvider);
+      final channel = await messageController.getChannelByTaskId(widget.taskId);
+      
+      if (channel != null && mounted) {
+        // Navigate to chat screen
+        await context.push('/home/chat/${channel.id}');
+      } else {
+        setState(() {
+          _errorMessage = 'No conversation found for this task';
+        });
       }
     } catch (e) {
       setState(() {
-        _errorMessage = e.toString();
+        _errorMessage = 'Failed to open chat: ${e.toString()}';
       });
     } finally {
       if (mounted) {
@@ -103,6 +138,9 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
           isPoster = currentUser?.id == taskData.posterId;
           isTasker = currentProfile?.role == 'tasker';
           hasOffers = taskData.offers != null && taskData.offers!.isNotEmpty;
+
+          // Add debug log to inspect offers
+          dev.log('Task Details Build: Task ID: ${taskData.id}, Offers: ${taskData.offers}');
           
           return Stack(
             children: [
@@ -136,11 +174,15 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
 
 
                     // Show offers if any
-                    if (isPoster && hasOffers) _buildOffersSection(taskData, currentUser!.id),
+                    if (isPoster) _buildOffersSection(taskData, currentUser!.id),
+                    const SizedBox(height: 16),
+                    _buildActionButtons(taskData, isPoster, currentUser?.id),
 
 
 
                     if (_errorMessage != null) _buildErrorMessage(),
+
+                    _buildActionButtons(taskData, isPoster, currentUser?.id),
 
                     // Action buttons for poster when task is pending approval
                     if (isPoster && taskData.status == 'pending_approval') ...[
@@ -412,15 +454,15 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                   const SizedBox(height: 4),
-                  Row(
+                  const Row(
                     children: [
-                      const Icon(Icons.star, color: Colors.grey, size: 16),
-                      const Icon(Icons.star, color: Colors.grey, size: 16),
-                      const Icon(Icons.star, color: Colors.grey, size: 16),
-                      const Icon(Icons.star, color: Colors.grey, size: 16),
-                      const Icon(Icons.star, color: Colors.grey, size: 16),
-                      const SizedBox(width: 4),
-                      const Text('(No reviews yet)', style: TextStyle(color: Colors.grey)),
+                      Icon(Icons.star, color: Colors.grey, size: 16),
+                      Icon(Icons.star, color: Colors.grey, size: 16),
+                      Icon(Icons.star, color: Colors.grey, size: 16),
+                      Icon(Icons.star, color: Colors.grey, size: 16),
+                      Icon(Icons.star, color: Colors.grey, size: 16),
+                      SizedBox(width: 4),
+                      Text('(No reviews yet)', style: TextStyle(color: Colors.grey)),
                     ],
                   )
                 ],
@@ -705,55 +747,90 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
             physics: const NeverScrollableScrollPhysics(),
             itemCount: offers.length,
             itemBuilder: (context, index) {
+              // Safely extract all data from the offer map.
               final offer = offers[index];
-              final offerId = offer['id'];
-              final taskerId = offer['tasker_id'];
-              final amount = (offer['amount'] is num) ? (offer['amount'] as num).toDouble() : 0.0;
-              final message = offer['message'];
-              final status = offer['status'] ?? 'pending';
-              final taskerProfile = task.offers?[index]['tasker_profile'] as Map<String, dynamic>?;
-              final taskerName = taskerProfile?['full_name'] as String? ?? 'Unknown Tasker';
-              
+              final taskerProfile = offer['tasker_profile'] as Map<String, dynamic>?;
+
+              final offerId = offer['id'] as String;
+              final taskerId = offer['tasker_id'] as String;
+              final price = (offer['offer_price'] as num?)?.toDouble() ?? 0.0; // Changed from 'price' to 'offer_price'
+              final message = offer['message'] as String? ?? 'No message provided';
+              final status = offer['status'] as String? ?? 'pending';
+              final taskerName = taskerProfile?['full_name'] as String? ?? 'Anonymous Tasker';
+              final avatarUrl = taskerProfile?['avatar_url'] as String?;
+              const timeAgo = '1 day ago'; // Placeholder
+
+              // Build the UI for a single offer item.
               return Card(
                 margin: const EdgeInsets.only(bottom: 12),
+                elevation: 1,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Tasker name and offer amount
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            taskerName,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          // Avatar
+                          CircleAvatar(
+                            radius: 24,
+                            backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
+                            child: avatarUrl == null ? const Icon(Icons.person, size: 24) : null,
                           ),
-                          Text(
-                            'RM${amount.toStringAsFixed(2)}',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: StyleConstants.primaryColor,
+                          const SizedBox(width: 12),
+                          // Tasker Info
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('Offered by', style: TextStyle(color: Colors.grey)),
+                                Text(taskerName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                const Row(
+                                  children: [
+                                    Icon(Icons.star, color: Colors.grey, size: 16),
+                                    SizedBox(width: 4),
+                                    Text('(No reviews yet)', style: TextStyle(color: Colors.grey)),
+                                  ],
+                                ),
+                              ],
                             ),
+                          ),
+                          // Price and Time
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              const Text(timeAgo, style: TextStyle(color: Colors.grey, fontSize: 12)),
+                              const SizedBox(height: 4),
+                              Text(
+                                'RM${price.toStringAsFixed(2)}',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  color: StyleConstants.primaryColor,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
-                      
+                      const SizedBox(height: 16),
                       // Message
                       Text(message),
                       const SizedBox(height: 16),
-                      
-                      // Accept button
+                      // Accept Button
                       if (status == 'pending')
                         SizedBox(
                           width: double.infinity,
-                          height: 40,
                           child: ElevatedButton(
-                            onPressed: _isLoading ? null : () => _acceptOffer(offerId, taskerId),
+                            onPressed: _isLoading ? null : () => _acceptOffer(offerId, taskerId, price),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green.shade500,
+                              backgroundColor: StyleConstants.primaryColor,
                               foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
                             ),
                             child: _isLoading
                                 ? const SizedBox(
@@ -761,20 +838,24 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
                                     width: 20,
                                     child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                                   )
-                                : const Text('Accept Offer'),
+                                : const Text('Accept'),
                           ),
                         )
                       else
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: status == 'accepted' ? Colors.green.shade100 : Colors.grey.shade100,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            status == 'accepted' ? 'Accepted' : 'Rejected',
-                            style: TextStyle(
-                              color: status == 'accepted' ? Colors.green.shade800 : Colors.grey.shade700,
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: status == 'accepted' ? Colors.green.shade100 : Colors.grey.shade200,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              status == 'accepted' ? 'Accepted' : 'Rejected',
+                              style: TextStyle(
+                                color: status == 'accepted' ? Colors.green.shade800 : Colors.grey.shade800,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ),
@@ -808,6 +889,8 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
         return 'Open';
       case 'assigned':
         return 'Assigned';
+      case 'pending':
+        return 'Pending';
       case 'in_progress':
         return 'In Progress';
       case 'pending_approval':
@@ -829,6 +912,8 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
         return StyleConstants.primaryColor;
       case 'assigned':
         return Colors.blue;
+      case 'pending':
+        return Colors.orange;
       case 'in_progress':
         return Colors.orange;
       case 'pending_approval':
@@ -841,6 +926,97 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
         return Colors.grey;
     }
   }
+
+  Widget _buildActionButtons(Task task, bool isPoster, String? currentUserId) {
+    if (isPoster) {
+      if (task.status == 'pending_approval') {
+        return Column(
+          children: [
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _approveTask,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('Approve Completion'),
+              ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: () => _showRevisionDialog(),
+                child: const Text('Request Revisions'),
+              ),
+            ),
+          ],
+        );
+      }
+    } else {
+      if (task.status == 'in_progress' && currentUserId == task.taskerId) {
+        return SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: _completeTask,
+            child: const Text('Submit for Review'),
+          ),
+        );
+      }
+    }
+    return const SizedBox.shrink();
+  }
+
+  Future<void> _approveTask() async {
+    if (_isLoading) return;
+    setState(() => _isLoading = true);
+    try {
+      await ref.read(taskControllerProvider).approveTask(widget.taskId);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Task approved!')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _completeTask() async {
+    if (_isLoading) return;
+    setState(() => _isLoading = true);
+    try {
+      await ref.read(taskControllerProvider).completeTask(widget.taskId);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Task submitted for review!')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+
 
   Widget _buildSectionContainer({required Widget child}) {
     return Container(

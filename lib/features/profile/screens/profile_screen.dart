@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:go_router/go_router.dart';
 import '../../auth/controllers/auth_controller.dart';
+import 'edit_profile_screen.dart';
+import 'settings_screen.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -9,6 +12,7 @@ class ProfileScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
+    final profileAsync = ref.watch(currentProfileProvider);
 
     return Scaffold(
       body: Column(children: [
@@ -30,10 +34,14 @@ class ProfileScreen extends ConsumerWidget {
             ),
             const Spacer(),
             IconButton(
-              icon:
-                  const Icon(Icons.notifications_outlined, color: Colors.white),
+              icon: const Icon(Icons.settings, color: Colors.white),
               onPressed: () {
-                context.push('/notifications');
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const SettingsScreen(),
+                  ),
+                );
               },
             ),
           ]),
@@ -79,19 +87,58 @@ class ProfileScreen extends ConsumerWidget {
                         child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                user?.userMetadata?['name']?.toString() ??
-                                    'Ibrahim R.',
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
+                              profileAsync.when(
+                                data: (profile) => Text(
+                                  profile?.fullName ?? user?.userMetadata?['name']?.toString() ?? 'Name not set',
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                loading: () => Text(
+                                  user?.userMetadata?['name']?.toString() ?? 'Loading...',
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                error: (_, __) => Text(
+                                  user?.userMetadata?['name']?.toString() ?? 'Name not set',
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
-                              const Text(
-                                'My bio',
-                                style: TextStyle(
-                                  color: Colors.grey,
-                                  fontSize: 14,
+                              profileAsync.when(
+                                data: (profile) {
+                                  final bio = profile?.bio ?? '';
+                                  return Text(
+                                    bio.isNotEmpty ? bio : 'Add a short bio',
+                                    style: TextStyle(
+                                      color: Colors.grey,
+                                      fontSize: 14,
+                                      fontStyle: bio.isNotEmpty
+                                          ? FontStyle.normal
+                                          : FontStyle.italic,
+                                    ),
+                                  );
+                                },
+                                loading: () => const Text(
+                                  'Loading...',
+                                  style: TextStyle(
+                                    color: Colors.grey,
+                                    fontSize: 14,
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                ),
+                                error: (_, __) => const Text(
+                                  'Add a short bio',
+                                  style: TextStyle(
+                                    color: Colors.grey,
+                                    fontSize: 14,
+                                    fontStyle: FontStyle.italic,
+                                  ),
                                 ),
                               ),
                             ]),
@@ -102,8 +149,18 @@ class ProfileScreen extends ConsumerWidget {
                           Icons.edit_outlined,
                           color: Color(0xFF6C5CE7),
                         ),
-                        onPressed: () {
-                          // Handle edit profile
+                        onPressed: () async {
+                          final result = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const EditProfileScreen(),
+                            ),
+                          );
+                          // Force rebuild if profile was updated
+                          if (result == true && context.mounted) {
+                            // Invalidate profile provider to refresh data
+                            ref.invalidate(currentProfileProvider);
+                          }
                         },
                       ),
                     ]),
@@ -115,9 +172,19 @@ class ProfileScreen extends ConsumerWidget {
                       const SizedBox(width: 8),
                       const Text('From'),
                       const Spacer(),
-                      const Text(
-                        'Shah Alam',
-                        style: TextStyle(fontWeight: FontWeight.w500),
+                      Text(
+                        (user?.userMetadata?['location']?.toString() ?? '').isNotEmpty
+                            ? user!.userMetadata!['location'].toString()
+                            : 'Add location',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w500,
+                          fontStyle: (user?.userMetadata?['location']?.toString() ?? '').isNotEmpty
+                              ? FontStyle.normal
+                              : FontStyle.italic,
+                          color: (user?.userMetadata?['location']?.toString() ?? '').isNotEmpty
+                              ? Colors.black
+                              : Colors.grey.shade600,
+                        ),
                       ),
                     ]),
                     const SizedBox(height: 16),
@@ -147,22 +214,53 @@ class ProfileScreen extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(12),
                   side: BorderSide(color: Colors.grey.shade400, width: 1.0),
                 ),
-                child: const Padding(
-                  padding: EdgeInsets.all(16),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
                   child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
+                        const Text(
                           'About',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        SizedBox(height: 12),
-                        Text(
-                          'Hello! I am a young adult who recently entered the working world. I signed up as a means to expand my income while simultaneously work on balancing my hectic life.',
-                          style: TextStyle(height: 1.5),
+                        const SizedBox(height: 12),
+                        profileAsync.when(
+                          data: (profile) {
+                            final about = profile?.about ?? '';
+                            return Text(
+                              about.isNotEmpty 
+                                  ? about 
+                                  : 'Add information about yourself to let others know more about you.',
+                              style: TextStyle(
+                                height: 1.5,
+                                color: about.isNotEmpty
+                                    ? Colors.black
+                                    : Colors.grey.shade600,
+                                fontStyle: about.isNotEmpty
+                                    ? FontStyle.normal
+                                    : FontStyle.italic,
+                              ),
+                            );
+                          },
+                          loading: () => const Text(
+                            'Loading...',
+                            style: TextStyle(
+                              height: 1.5,
+                              color: Colors.grey,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                          error: (_, __) => const Text(
+                            'Add information about yourself to let others know more about you.',
+                            style: TextStyle(
+                              height: 1.5,
+                              color: Colors.grey,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
                         ),
                       ]),
                 ),
@@ -181,25 +279,78 @@ class ProfileScreen extends ConsumerWidget {
                   child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Skills',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Skills',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(
+                                Icons.edit_outlined,
+                                color: Color(0xFF6C5CE7),
+                                size: 20,
+                              ),
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const EditProfileScreen(),
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 12),
-                        SizedBox(
-                          width: double.infinity,
-                          child: Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: [
-                              _buildSkillChip('Painting'),
-                              _buildSkillChip('General Repairs'),
-                              _buildSkillChip('Flooring'),
-                              _buildSkillChip('Landscaping'),
-                            ],
+                        profileAsync.when(
+                          data: (profile) {
+                            final skills = profile?.skills ?? [];
+                            if (skills.isEmpty) {
+                              return Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.symmetric(vertical: 24),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.grey.shade300),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  'No skills added yet',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: Colors.grey.shade500,
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                ),
+                              );
+                            }
+                            return SizedBox(
+                              width: double.infinity,
+                              child: Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: skills.map((skill) => _buildSkillChip(skill)).toList(),
+                              ),
+                            );
+                          },
+                          loading: () => const Center(
+                            child: CircularProgressIndicator(),
+                          ),
+                          error: (_, __) => Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(vertical: 24),
+                            child: Text(
+                              'Error loading skills',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Colors.grey.shade500,
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
                           ),
                         ),
                       ]),
@@ -219,31 +370,131 @@ class ProfileScreen extends ConsumerWidget {
                   child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'My works',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'My works',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(
+                                Icons.edit_outlined,
+                                color: Color(0xFF6C5CE7),
+                                size: 20,
+                              ),
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const EditProfileScreen(),
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 12),
-                        GridView.count(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          crossAxisCount: 4,
-                          mainAxisSpacing: 8,
-                          crossAxisSpacing: 8,
-                          children: List.generate(
-                            4,
-                            (index) => Container(
-                              decoration: BoxDecoration(
-                                color: Colors.grey.shade300,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Center(
-                                child: Icon(
-                                  Icons.image_outlined,
-                                  color: Colors.grey.shade600,
+                        profileAsync.when(
+                          data: (profile) {
+                            final works = profile?.myWorks ?? [];
+                            if (works.isEmpty) {
+                              return Container(
+                                width: double.infinity,
+                                height: 120,
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.grey.shade300),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.image_outlined,
+                                      color: Colors.grey.shade400,
+                                      size: 32,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'No work images yet',
+                                      style: TextStyle(
+                                        color: Colors.grey.shade500,
+                                        fontStyle: FontStyle.italic,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }
+                            return GridView.count(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              crossAxisCount: 4,
+                              mainAxisSpacing: 8,
+                              crossAxisSpacing: 8,
+                              children: works.take(8).map((imageUrl) => Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(8),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: 0.1),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.network(
+                                    imageUrl,
+                                    fit: BoxFit.cover,
+                                    loadingBuilder: (context, child, loadingProgress) {
+                                      if (loadingProgress == null) return child;
+                                      return Container(
+                                        color: Colors.grey.shade200,
+                                        child: Center(
+                                          child: CircularProgressIndicator(
+                                            value: loadingProgress.expectedTotalBytes != null
+                                                ? loadingProgress.cumulativeBytesLoaded /
+                                                    loadingProgress.expectedTotalBytes!
+                                                : null,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Container(
+                                        color: Colors.grey.shade300,
+                                        child: Icon(
+                                          Icons.broken_image,
+                                          color: Colors.grey.shade600,
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              )).toList(),
+                            );
+                          },
+                          loading: () => const Center(
+                            child: CircularProgressIndicator(),
+                          ),
+                          error: (_, __) => Container(
+                            width: double.infinity,
+                            height: 120,
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.grey.shade300),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Center(
+                              child: Text(
+                                'Error loading works',
+                                style: TextStyle(
+                                  color: Colors.grey.shade500,
+                                  fontStyle: FontStyle.italic,
                                 ),
                               ),
                             ),

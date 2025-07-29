@@ -21,6 +21,11 @@ class RouteConstants {
   static const String homeChat = '/home/chat';
   static const String homeProfile = '/home/profile';
   
+  // Profile editing routes
+  static const String editProfile = '/edit-profile';
+  static const String editSkills = '/edit-skills';
+  static const String editWorks = '/edit-works';
+  
   // Task related routes
   static const String createTask = '/create-task';
   static const String taskDetails = '/home/tasks/:id';
@@ -52,5 +57,8 @@ class RouteConstants {
   static const String chatName = 'chat';
   static const String chatRoomName = 'chat-room';
   static const String profileName = 'profile';
+  static const String editProfileName = 'edit-profile';
+  static const String editSkillsName = 'edit-skills';
+  static const String editWorksName = 'edit-works';
   static const String paymentCallbackName = 'payment-callback';
 }

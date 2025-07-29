@@ -63,6 +63,51 @@ class MessageRepository {
     }
   }
 
+  /// Creates or gets existing channel and sends welcome message for task confirmation
+  Future<Channel> initiateTaskConversation({
+    required String taskId,
+    required String taskTitle,
+    required String posterId,
+    required String posterName,
+    required String taskerId,
+    required String taskerName,
+    String? welcomeMessage,
+  }) async {
+    try {
+      // Check if channel already exists
+      Channel? existingChannel = await getChannelByTaskId(taskId);
+      
+      if (existingChannel != null) {
+        return existingChannel;
+      }
+
+      // Create new channel
+      final channel = await createChannel(
+        taskId: taskId,
+        taskTitle: taskTitle,
+        posterId: posterId,
+        posterName: posterName,
+        taskerId: taskerId,
+        taskerName: taskerName,
+      );
+
+      // Send welcome message from poster
+      final message = welcomeMessage ?? 
+          "Hi $taskerName! I've confirmed you for the task '$taskTitle'. Looking forward to working with you! 🎉";
+      
+      await sendMessage(
+        channelId: channel.id,
+        senderId: posterId,
+        content: message,
+      );
+
+      return channel;
+    } catch (e) {
+      dev.log('Error initiating task conversation: $e');
+      throw Exception('Failed to initiate conversation');
+    }
+  }
+
   Stream<List<Channel>> watchUserChannels(String userId) {
     return supabase
         .from(_channelsTable)
@@ -195,7 +240,7 @@ class MessageRepository {
   /// Get a page of messages for a channel
   Future<List<Message>> getChannelMessages(String channelId, {
     int page = 0,
-    int limit = 10,
+    int limit = 5,  // Increased from 10 to 50
   }) async {
     final offset = page * limit;
     
@@ -246,7 +291,7 @@ class MessageRepository {
         .stream(primaryKey: ['id'])
         .eq('channel_id', channelId)
         .order('created_at', ascending: false)
-        .limit(10)
+        .limit(50)  // Increased from 10 to 50
         .asyncMap((response) async {
           final messages = response.map((json) => Message.fromJson(json)).toList();
           
@@ -299,7 +344,7 @@ class MessageRepository {
   Future<List<Message>> getOlderMessages({
     required String channelId,
     required DateTime beforeTimestamp,
-    int limit = 10,
+    int limit = 50,  // Increased from 10 to 50
   }) async {
     try {
       final response = await supabase

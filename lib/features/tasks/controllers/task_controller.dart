@@ -201,7 +201,7 @@ class TaskController {
     return finalTask;
   }
 
-  Future<Task> updateTask(String id, Map<String, dynamic> data) async {
+  Future<void> updateTask(String id, Map<String, dynamic> data) async {
     // Convert the data map to use snake_case for database compatibility
     final dbData = {
       if (data['title'] != null) 'title': data['title'],
@@ -215,11 +215,11 @@ class TaskController {
       'updated_at': DateTime.now().toIso8601String(),
     };
     
-    return _repository.updateTask(id, dbData);
+    await _repository.updateTask(id, dbData);
   }
 
   // Add an offer to a task
-  Future<Task> addOffer(String taskId, Map<String, dynamic> offer) async {
+  Future<void> addOffer(String taskId, Map<String, dynamic> offer) async {
     // Get the current task first
     final task = await _repository.getTaskById(taskId);
     
@@ -231,45 +231,50 @@ class TaskController {
     currentOffers.add(offer);
     
     // Update the task with the new offers list
-    return await _repository.updateTask(taskId, {
+    await _repository.updateTask(taskId, {
       'offers': currentOffers,
       'updated_at': DateTime.now().toIso8601String(),
     });
   }
 
   // Accept an offer for a task and create a chat channel
-  Future<Task> acceptOffer(String taskId, String offerId, String taskerId) async {
+  Future<void> acceptOffer(String taskId, String offerId, String taskerId) async {
     // Get the current task
     final task = await _repository.getTaskById(taskId);
+    final currentUserId = _supabase.auth.currentUser?.id;
     
     // Verify the current user is the poster
-    final currentUserId = _supabase.auth.currentUser?.id;
     if (currentUserId != task.posterId) {
       throw Exception('Only the task poster can accept offers');
     }
     
-    // Check if taskerId is the same as posterId (prevent self-acceptance)
-    if (taskerId == task.posterId) {
-      throw Exception('You cannot accept your own offer');
+    // Verify the task is in the correct state
+    if (task.status != 'open') {
+      throw Exception('Offers can only be accepted for open tasks');
     }
     
-    // Update the offers to mark the accepted one
-    final List<Map<String, dynamic>> updatedOffers = 
-        (task.offers ?? []).map((o) {
-          final Map<String, dynamic> offer = Map<String, dynamic>.from(o);
-          // Update the status of the offer
-          if (offer['id'] == offerId) {
-            offer['status'] = 'accepted';
-          } else {
-            offer['status'] = 'rejected';
-          }
-          return offer;
-        }).toList();
+    // Find the accepted offer
+    final acceptedOffer = task.offers?.firstWhere((o) => o['id'] == offerId, orElse: () => throw Exception('Offer not found'));
     
-    // Update the task
-    final updatedTask = await _repository.updateTask(taskId, {
+    if (acceptedOffer == null) {
+      throw Exception('Offer not found');
+    }
+    
+    // Update the offers list: set the accepted offer's status to 'accepted' and others to 'rejected'
+    final updatedOffers = task.offers?.map((offer) {
+      if (offer['id'] == offerId) {
+        return {...offer, 'status': 'accepted'};
+      } else {
+        return {...offer, 'status': 'rejected'};
+      }
+    }).toList();
+    
+    // Update the task with the new status, accepted offer, and tasker
+    await _repository.updateTask(taskId, {
       'status': 'assigned',
       'tasker_id': taskerId,
+      'accepted_offer_id': offerId,
+      'final_price': acceptedOffer['price'],
       'offers': updatedOffers,
       'updated_at': DateTime.now().toIso8601String(),
     });
@@ -283,7 +288,7 @@ class TaskController {
         taskerId: taskerId,
         taskId: taskId,
         applicationId: offerId, // Using offerId as applicationId for now
-        taskTitle: updatedTask.title,
+        taskTitle: task.title,
         posterName: posterName,
       );
     } catch (e) {
@@ -297,25 +302,20 @@ class TaskController {
       final posterProfile = await _fetchProfile(task.posterId);
       final taskerProfile = await _fetchProfile(taskerId);
 
-      final posterName = posterProfile?.fullName ?? 'Task Poster';
-      final taskerName = taskerProfile?.fullName ?? 'Tasker';
-
-      // Create a new chat channel using MessageController
+      // Create a new chat channel with a welcome message
       final messageController = _ref.read(messageControllerProvider);
-      await messageController.createChannel(
+      await messageController.initiateTaskConversation(
         taskId: taskId,
         taskTitle: task.title,
         posterId: task.posterId,
-        posterName: posterName,
+        posterName: posterProfile?.fullName ?? 'Task Poster',
         taskerId: taskerId,
-        taskerName: taskerName,
+        taskerName: taskerProfile?.fullName ?? 'Tasker',
       );
     } catch (e) {
       // Log the error but don't fail the entire operation
       dev.log('Error creating chat channel: $e');
     }
-    
-    return updatedTask;
   }
 
   // Helper method to fetch a user profile by ID
@@ -334,7 +334,7 @@ class TaskController {
   }
   
   // Start a task (update status to in_progress)
-  Future<Task> startTask(String taskId) async {
+  Future<void> startTask(String taskId) async {
     // Get the current task
     final task = await _repository.getTaskById(taskId);
     final currentUserId = _supabase.auth.currentUser?.id;
@@ -350,14 +350,14 @@ class TaskController {
     }
     
     // Update the task
-    return await _repository.updateTask(taskId, {
+    await _repository.updateTask(taskId, {
       'status': 'in_progress',
       'updated_at': DateTime.now().toIso8601String(),
     });
   }
   
   // Mark a task as completed (update status to pending_approval)
-  Future<Task> completeTask(String taskId) async {
+  Future<void> completeTask(String taskId) async {
     // Get the current task
     final task = await _repository.getTaskById(taskId);
     final currentUserId = _supabase.auth.currentUser?.id;
@@ -373,14 +373,14 @@ class TaskController {
     }
     
     // Update the task
-    return await _repository.updateTask(taskId, {
+    await _repository.updateTask(taskId, {
       'status': 'pending_approval',
       'updated_at': DateTime.now().toIso8601String(),
     });
   }
   
   // Approve a completed task (update status to completed)
-  Future<Task> approveTask(String taskId) async {
+  Future<void> approveTask(String taskId) async {
     // Get the current task
     final task = await _repository.getTaskById(taskId);
     final currentUserId = _supabase.auth.currentUser?.id;
@@ -396,14 +396,14 @@ class TaskController {
     }
     
     // Update the task
-    return await _repository.updateTask(taskId, {
+    await _repository.updateTask(taskId, {
       'status': 'completed',
       'updated_at': DateTime.now().toIso8601String(),
     });
   }
   
   // Request revisions to a task (update status back to in_progress)
-  Future<Task> requestRevisions(String taskId, String? revisionNotes) async {
+  Future<void> requestRevisions(String taskId, String? revisionNotes) async {
     // Get the current task
     final task = await _repository.getTaskById(taskId);
     final currentUserId = _supabase.auth.currentUser?.id;
@@ -429,7 +429,7 @@ class TaskController {
       updateData['revision_notes'] = revisionNotes;
     }
     
-    return await _repository.updateTask(taskId, updateData);
+    await _repository.updateTask(taskId, updateData);
   }
 
   Future<bool> deleteTask(String id) async {
