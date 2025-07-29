@@ -26,6 +26,7 @@ import '../features/payments/screens/payment_completion_screen.dart';
 import '../features/messages/screens/chat_list_screen.dart';
 import '../features/messages/screens/chat_screen.dart';
 import '../features/messages/models/channel.dart';
+import '../features/notifications/screens/notifications_screen.dart';
 import '../core/services/analytics_service.dart';
 import '../core/widgets/responsive_layout.dart';
 
@@ -319,6 +320,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 path: '/home/profile',
                 name: 'profile',
                 builder: (context, state) => const ProfileScreen(),
+              ),
+              GoRoute(
+                path: '/notifications',
+                name: 'notifications',
+                builder: (context, state) => const NotificationsScreen(),
               ),
               GoRoute(
                 path: '/home/post-task',

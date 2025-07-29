@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../auth/controllers/auth_controller.dart';
 
 class ProfileScreen extends ConsumerWidget {
@@ -32,7 +33,7 @@ class ProfileScreen extends ConsumerWidget {
               icon:
                   const Icon(Icons.notifications_outlined, color: Colors.white),
               onPressed: () {
-                // Handle notification tap
+                context.push('/notifications');
               },
             ),
           ]),

@@ -85,7 +85,7 @@ class PosterHomeScreen extends ConsumerWidget {
                       icon: const Icon(Icons.notifications_outlined,
                           color: Colors.white),
                       onPressed: () {
-                        // Handle notification tap
+                        context.push('/notifications');
                       },
                     ),
                   ],

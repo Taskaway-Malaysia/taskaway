@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:taskaway/features/auth/models/profile.dart';
 import 'package:taskaway/features/tasks/components/task_card.dart';
 import 'package:taskaway/features/tasks/controllers/task_controller.dart';
@@ -197,7 +198,9 @@ class _TaskerHomeScreenState extends ConsumerState<TaskerHomeScreen> {
                         if (!isSearching)
                           IconButton(
                             icon: const Icon(Icons.notifications_outlined, color: Colors.black, size: 28),
-                            onPressed: () {},
+                            onPressed: () {
+                              context.push('/notifications');
+                            },
                           ),
                       ],
                     ),

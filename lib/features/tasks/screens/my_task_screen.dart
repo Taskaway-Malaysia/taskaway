@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:taskaway/features/auth/controllers/auth_controller.dart';
 import 'package:taskaway/features/auth/models/profile.dart';
 import 'package:taskaway/features/profile/controllers/profile_controller.dart';
@@ -87,7 +88,9 @@ class MyTaskScreen extends ConsumerWidget {
             actions: [
               IconButton(
                 icon: Icon(Icons.notifications_outlined, color: primaryColor),
-                onPressed: () {},
+                onPressed: () {
+                  context.push('/notifications');
+                },
               ),
             ],
           ),

@@ -7,6 +7,8 @@ import '../repositories/category_repository.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../messages/controllers/message_controller.dart';
 import '../../auth/models/profile.dart';
+import '../../auth/controllers/auth_controller.dart';
+import '../../notifications/controllers/notification_controller.dart';
 import 'dart:developer' as dev;
 import '../../../core/constants/api_constants.dart';
 
@@ -165,6 +167,7 @@ class TaskController {
     final createdTask = await _repository.createTask(task);
     
     // If there are images, upload them and update the task with image URLs
+    Task finalTask = createdTask;
     if (images != null && images.isNotEmpty) {
       final imageUrls = await _uploadTaskImages(images, createdTask.id);
       
@@ -174,12 +177,28 @@ class TaskController {
           'images': imageUrls,
         });
         
-        // Return the updated task
-        return await _repository.getTaskById(createdTask.id);
+        // Get the updated task
+        finalTask = await _repository.getTaskById(createdTask.id);
       }
     }
     
-    return createdTask;
+    // Trigger notification to all taskers about the new task
+    try {
+      // Get poster name from current user profile - using a simple approach
+      final currentUser = _ref.read(currentUserProvider);
+      final posterName = currentUser?.userMetadata?['full_name'] ?? 'Someone';
+      
+      await _ref.read(notificationControllerProvider.notifier).notifyTaskersOfNewTask(
+        taskId: finalTask.id,
+        taskTitle: finalTask.title,
+        posterName: posterName,
+      );
+    } catch (e) {
+      dev.log('Failed to send task notifications: $e');
+      // Don't fail the task creation if notifications fail
+    }
+    
+    return finalTask;
   }
 
   Future<Task> updateTask(String id, Map<String, dynamic> data) async {
@@ -254,6 +273,23 @@ class TaskController {
       'offers': updatedOffers,
       'updated_at': DateTime.now().toIso8601String(),
     });
+
+    // Trigger notification to tasker about accepted offer
+    try {
+      final currentUser = _ref.read(currentUserProvider);
+      final posterName = currentUser?.userMetadata?['full_name'] ?? 'Someone';
+      
+      await _ref.read(notificationControllerProvider.notifier).notifyTaskerOfAcceptedOffer(
+        taskerId: taskerId,
+        taskId: taskId,
+        applicationId: offerId, // Using offerId as applicationId for now
+        taskTitle: updatedTask.title,
+        posterName: posterName,
+      );
+    } catch (e) {
+      dev.log('Failed to send offer acceptance notification: $e');
+      // Don't fail the acceptance if notification fails
+    }
 
     // After successful offer acceptance, create a chat channel between poster and tasker
     try {
