@@ -7,7 +7,7 @@ part of 'application_controller.dart';
 // **************************************************************************
 
 String _$userApplicationForTaskHash() =>
-    r'018ce7906a429b8b5aeefdd3fc59a7645053ce82';
+    r'e937e78be62888e07a84bc28fc74395b1d6d0f48';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -161,7 +161,7 @@ class _UserApplicationForTaskProviderElement
 }
 
 String _$applicationControllerHash() =>
-    r'3c018a70b7180f75a8665b606b0400710cb561c1';
+    r'c58f10ddaeb0baea263f7c53d70c492307f24608';
 
 /// See also [ApplicationController].
 @ProviderFor(ApplicationController)
