@@ -30,9 +30,8 @@ class _PaymentCompletionScreenState extends ConsumerState<PaymentCompletionScree
 
   Future<void> _processPayment() async {
     try {
-      await ref.read(paymentControllerProvider).handlePaymentCallback(
+      await ref.read(paymentControllerProvider).getPaymentStatus(
         widget.paymentId,
-        widget.billplzParams,
       );
     } catch (e) {
       setState(() {

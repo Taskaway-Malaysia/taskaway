@@ -36,6 +36,7 @@ dependencies:
   shared_preferences: ^2.5.3
   firebase_analytics: ^11.3.0
   web: ^1.1.1
+  flutter_stripe: ^11.5.0
   # Replacing url_strategy with flutter_web_plugins configuration
 
 dev_dependencies:
