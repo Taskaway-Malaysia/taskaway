@@ -1,23 +1,17 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
+// ignore_for_file: constant_identifier_names
 
 /// Enum representing the status of a task.
 /// Matches the `taskaway_task_status` PostgreSQL enum.
 enum TaskStatus {
-  @JsonValue('pending')
   pending,
-  @JsonValue('open')
   open,
-  @JsonValue('assigned')
-  assigned,
-  @JsonValue('in_progress') // Assuming this might be a status
-  inProgress,
-  @JsonValue('completed')
+  in_progress,
+  pending_approval,
+  pending_payment,
   completed,
-  @JsonValue('cancelled')
-  cancelled,
-  @JsonValue('disputed') // Assuming this might be a status
-  disputed;
+  cancelled;
 
   String toJson() => name;
-  static TaskStatus fromJson(String json) => values.byName(json);
+  static TaskStatus fromJson(String json) =>
+      TaskStatus.values.firstWhere((e) => e.name == json);
 }

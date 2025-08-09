@@ -23,6 +23,8 @@ import '../features/tasks/screens/task_details_screen.dart';
 import '../features/tasks/screens/apply_task_screen.dart';
 import '../features/tasks/screens/offer_accepted_success_screen.dart';
 import '../features/payments/screens/payment_completion_screen.dart';
+import '../features/payments/screens/payment_authorization_screen.dart';
+import '../features/payments/screens/payment_success_screen.dart';
 import '../features/notifications/screens/notifications_screen.dart';
 import '../core/services/analytics_service.dart';
 import '../core/widgets/responsive_layout.dart';
@@ -250,6 +252,30 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             path: '/onboarding',
             name: 'onboarding',
             builder: (context, state) => const OnboardingScreen(),
+          ),
+          GoRoute(
+            path: '/payment/authorize',
+            name: 'payment-authorize',
+            builder: (context, state) {
+              final extra = (state.extra as Map?) ?? {};
+              return PaymentAuthorizationScreen(
+                paymentId: extra['paymentId'] as String,
+                clientSecret: extra['clientSecret'] as String,
+                amount: (extra['amount'] as num).toDouble(),
+                taskTitle: extra['taskTitle'] as String,
+              );
+            },
+          ),
+          GoRoute(
+            path: '/payment/success',
+            name: 'payment-success',
+            builder: (context, state) {
+              final extra = (state.extra as Map?) ?? {};
+              return PaymentSuccessScreen(
+                amount: (extra['amount'] as num).toDouble(),
+                taskTitle: extra['taskTitle'] as String,
+              );
+            },
           ),
           GoRoute(
             path: '/payment/:id',

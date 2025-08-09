@@ -82,8 +82,10 @@ String mapStatusToFilter(String status) {
   switch (status.toLowerCase()) {
     case 'open':
       return 'awaiting_offers';
-    case 'assigned':
+    case 'pending':
     case 'in_progress':
+    case 'pending_approval':
+    case 'pending_payment':
       return 'upcoming_tasks';
     case 'completed':
     case 'cancelled':
@@ -269,9 +271,9 @@ class TaskController {
       }
     }).toList();
     
-    // Update the task with the new status, accepted offer, and tasker
+    // Update the task with the new status (pending), accepted offer, and tasker
     await _repository.updateTask(taskId, {
-      'status': 'assigned',
+      'status': 'pending',
       'tasker_id': taskerId,
       'accepted_offer_id': offerId,
       'final_price': acceptedOffer['price'],
@@ -341,12 +343,14 @@ class TaskController {
     
     // Verify the current user is the tasker
     if (currentUserId != task.taskerId) {
-      throw Exception('Only the assigned tasker can start this task');
+      throw Exception('Only the tasker for this task can start it');
     }
     
-    // Verify the task is in the correct state
-    if (task.status != 'assigned') {
-      throw Exception('This task cannot be started. Current status: ${task.status}');
+    // Verify the task is in the correct state (offer accepted)
+    if (task.status != 'pending') {
+      throw Exception(
+        'This task cannot be started. Current status: ${task.status}',
+      );
     }
     
     // Update the task
@@ -364,7 +368,7 @@ class TaskController {
     
     // Verify the current user is the tasker
     if (currentUserId != task.taskerId) {
-      throw Exception('Only the assigned tasker can complete this task');
+      throw Exception('Only the tasker for this task can complete it');
     }
     
     // Verify the task is in the correct state
@@ -398,6 +402,32 @@ class TaskController {
     // Update the task
     await _repository.updateTask(taskId, {
       'status': 'completed',
+      'updated_at': DateTime.now().toIso8601String(),
+    });
+  }
+  
+  // Cancel a task (poster only) -> update status to cancelled
+  Future<void> cancelTask(String taskId) async {
+    // Get the current task
+    final task = await _repository.getTaskById(taskId);
+    final currentUserId = _supabase.auth.currentUser?.id;
+    
+    // Verify the current user is the poster
+    if (currentUserId != task.posterId) {
+      throw Exception('Only the task poster can cancel this task');
+    }
+    
+    // Allow cancelling when task is open or pending
+    if (task.status != 'open' && task.status != 'pending') {
+      throw Exception(
+        'This task can only be cancelled when it is open or pending. '
+        'Current status: ${task.status}',
+      );
+    }
+    
+    // Update the task to cancelled
+    await _repository.updateTask(taskId, {
+      'status': 'cancelled',
       'updated_at': DateTime.now().toIso8601String(),
     });
   }

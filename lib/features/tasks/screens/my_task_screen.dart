@@ -7,9 +7,49 @@ import 'package:taskaway/features/profile/controllers/profile_controller.dart';
 import 'package:taskaway/features/tasks/components/task_card.dart';
 import 'package:taskaway/features/tasks/controllers/task_controller.dart';
 import 'package:taskaway/features/tasks/models/task.dart';
+import 'package:taskaway/features/applications/repositories/application_repository.dart';
+import 'package:taskaway/features/applications/models/application.dart';
+import 'package:taskaway/features/tasks/repositories/task_repository.dart';
+import 'dart:developer' as dev;
 
 // Provider for managing the status filter state
 final statusProvider = StateProvider<String>((ref) => 'Upcoming tasks');
+
+// Provider to get tasks where user has made applications (for taskers)
+final tasksWithUserApplicationsProvider =
+    FutureProvider.autoDispose<List<Task>>((ref) async {
+  final currentUser = ref.watch(currentUserProvider);
+
+  dev.log('tasksWithUserApplicationsProvider called');
+  dev.log('currentUser: ${currentUser?.id}');
+
+  if (currentUser == null) {
+    dev.log('currentUser is null, returning empty list');
+    return [];
+  }
+
+  // 1) Get user's applications and filter in Dart to include legacy rows
+  // with null status which should be treated as pending
+  final applicationRepo = ref.read(applicationRepositoryProvider);
+  final applications = await applicationRepo.getUserApplications(currentUser.id);
+  final pendingApplications = applications
+      .where((a) => a.status == ApplicationStatus.pending)
+      .toList();
+
+  if (pendingApplications.isEmpty) {
+    dev.log('No user applications found');
+    return [];
+  }
+
+  final taskIds = {for (final a in pendingApplications) a.taskId}.toList();
+
+  // 2) Fetch corresponding tasks that are still open
+  final taskRepo = ref.read(taskRepositoryProvider);
+  final tasks = await taskRepo.getTasksByIds(taskIds, status: 'open');
+
+  dev.log('Returning ${tasks.length} tasks with user applications');
+  return tasks;
+});
 
 // Provider to filter tasks based on the current profile's role and status filter
 final selectedTasksProvider = Provider.autoDispose<AsyncValue<List<Task>>>((ref) {
@@ -26,17 +66,27 @@ final selectedTasksProvider = Provider.autoDispose<AsyncValue<List<Task>>>((ref)
 
       final role = profile.role == 'tasker' ? 'As Tasker' : 'As Poster';
 
-      return tasksAsync.whenData((tasks) {
-        return tasks.where((task) {
-          final isCorrectRole = (role == 'As Poster' && task.posterId == currentUser.id) ||
-              (role == 'As Tasker' && task.taskerId == currentUser.id);
+      if (role == 'As Tasker' && status == 'Awaiting offers') {
+        // For taskers viewing "Awaiting offers", show tasks they have applied to
+        return ref.watch(tasksWithUserApplicationsProvider).when(
+          data: (tasks) => AsyncValue.data(tasks),
+          loading: () => const AsyncValue.loading(),
+          error: (err, stack) => AsyncValue.error(err, stack),
+        );
+      } else {
+        // Original logic for other cases
+        return tasksAsync.whenData((tasks) {
+          return tasks.where((task) {
+            final isCorrectRole = (role == 'As Poster' && task.posterId == currentUser.id) ||
+                (role == 'As Tasker' && task.taskerId == currentUser.id);
 
-          final mappedStatus = _mapTaskStatusToUiStatus(task.status);
-          final isCorrectStatus = mappedStatus == status;
+            final mappedStatus = _mapTaskStatusToUiStatus(task.status);
+            final isCorrectStatus = mappedStatus == status;
 
-          return isCorrectRole && isCorrectStatus;
-        }).toList();
-      });
+            return isCorrectRole && isCorrectStatus;
+          }).toList();
+        });
+      }
     },
     loading: () => const AsyncValue.loading(),
     error: (err, stack) => AsyncValue.error(err, stack),
@@ -49,9 +99,9 @@ String _mapTaskStatusToUiStatus(String dbStatus) {
     case 'open':
       return 'Awaiting offers';
     case 'pending':
-    case 'assigned':
     case 'in_progress':
     case 'pending_approval':
+    case 'pending_payment':
       return 'Upcoming tasks';
     case 'completed':
     case 'cancelled':
