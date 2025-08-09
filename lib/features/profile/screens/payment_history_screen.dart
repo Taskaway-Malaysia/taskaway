@@ -249,9 +249,9 @@ class _PaymentHistoryScreenState extends ConsumerState<PaymentHistoryScreen>
                 ),
               ),
               const SizedBox(height: 4),
-              Text(
+              const Text(
                 'Task payment', // Simplified for now
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
                   color: Colors.black87,

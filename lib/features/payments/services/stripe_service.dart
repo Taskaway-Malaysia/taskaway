@@ -42,6 +42,21 @@ class StripeService {
       dev.log('- Description: $description');
       dev.log('- Task ID: $taskId');
 
+      // Mock mode: skip network calls (useful for web/CORS and local dev)
+      final platformFeeMock = calculatePlatformFee(amount);
+      final taskerAmountMock = calculateTaskerAmount(amount);
+      if (ApiConstants.mockPayments) {
+        final ts = DateTime.now().millisecondsSinceEpoch;
+        dev.log('[MOCK] createPaymentIntent');
+        return {
+          'payment_intent_id': 'pi_mock_$ts',
+          'client_secret': 'cs_mock_$ts',
+          'amount': amount,
+          'platform_fee': platformFeeMock,
+          'tasker_amount': taskerAmountMock,
+        };
+      }
+
       // Get current session for auth header
       final session = _supabase.auth.currentSession;
       if (session == null) {
@@ -112,6 +127,14 @@ class StripeService {
     try {
       dev.log('Authorizing payment for PaymentIntent: $paymentIntentId');
 
+      if (ApiConstants.mockPayments) {
+        dev.log('[MOCK] authorizePayment');
+        return {
+          'id': paymentIntentId,
+          'status': 'succeeded',
+        };
+      }
+
       final session = _supabase.auth.currentSession;
       if (session == null) {
         throw Exception('Not authenticated');
@@ -145,6 +168,14 @@ class StripeService {
   }) async {
     try {
       dev.log('Capturing payment for PaymentIntent: $paymentIntentId');
+
+      if (ApiConstants.mockPayments) {
+        dev.log('[MOCK] capturePayment');
+        return {
+          'id': paymentIntentId,
+          'status': 'succeeded',
+        };
+      }
 
       final session = _supabase.auth.currentSession;
       if (session == null) {
@@ -181,6 +212,16 @@ class StripeService {
     try {
       dev.log('Transferring \$${amount.toStringAsFixed(2)} to Tasker: $taskerStripeAccountId');
 
+      if (ApiConstants.mockPayments) {
+        dev.log('[MOCK] transferToTasker');
+        final ts = DateTime.now().millisecondsSinceEpoch;
+        return {
+          'id': 'tr_mock_$ts',
+          'amount': convertToStripeAmount(amount),
+          'status': 'succeeded',
+        };
+      }
+
       final session = _supabase.auth.currentSession;
       if (session == null) {
         throw Exception('Not authenticated');
@@ -216,6 +257,11 @@ class StripeService {
     try {
       dev.log('Cancelling PaymentIntent: $paymentIntentId');
 
+      if (ApiConstants.mockPayments) {
+        dev.log('[MOCK] cancelPaymentIntent');
+        return;
+      }
+
       final session = _supabase.auth.currentSession;
       if (session == null) {
         throw Exception('Not authenticated');
@@ -244,6 +290,15 @@ class StripeService {
   Future<Map<String, dynamic>> getPaymentIntentStatus(String paymentIntentId) async {
     try {
       dev.log('Getting status for PaymentIntent: $paymentIntentId');
+
+      if (ApiConstants.mockPayments) {
+        dev.log('[MOCK] getPaymentIntentStatus');
+        // Simulate a confirmed PI awaiting capture
+        return {
+          'status': 'requires_capture',
+          'id': paymentIntentId,
+        };
+      }
 
       final session = _supabase.auth.currentSession;
       if (session == null) {

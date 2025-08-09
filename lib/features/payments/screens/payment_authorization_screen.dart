@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_stripe/flutter_stripe.dart' hide Card;
 import 'package:go_router/go_router.dart';
+import '../../../core/constants/api_constants.dart';
 import '../../../core/constants/style_constants.dart';
 import '../controllers/payment_controller.dart';
 import 'dart:developer' as dev;
@@ -52,37 +53,45 @@ class _PaymentAuthorizationScreenState extends ConsumerState<PaymentAuthorizatio
     try {
       dev.log('Starting payment authorization process...');
       
-      // Validate card form
-      // Note: Card validation will be handled by Stripe during payment method creation
+      if (ApiConstants.mockPayments) {
+        dev.log('[MOCK] Skipping Stripe card flow');
+        await ref.read(paymentControllerProvider).handlePaymentAuthorization(
+          paymentId: widget.paymentId,
+          paymentMethodId: 'pm_mock',
+        );
+      } else {
+        // Validate card form
+        // Note: Card validation will be handled by Stripe during payment method creation
 
-      // Create payment method
-      final paymentMethod = await Stripe.instance.createPaymentMethod(
-        params: const PaymentMethodParams.card(
-          paymentMethodData: PaymentMethodData(),
-        ),
-      );
+        // Create payment method
+        final paymentMethod = await Stripe.instance.createPaymentMethod(
+          params: const PaymentMethodParams.card(
+            paymentMethodData: PaymentMethodData(),
+          ),
+        );
 
-      dev.log('Payment method created: ${paymentMethod.id}');
+        dev.log('Payment method created: ${paymentMethod.id}');
 
-      // Confirm payment intent
-      await Stripe.instance.confirmPayment(
-        paymentIntentClientSecret: widget.clientSecret,
-        data: PaymentMethodParams.card(
-          paymentMethodData: PaymentMethodData(
-            billingDetails: BillingDetails(
-              email: null, // Will be populated from user profile
+        // Confirm payment intent
+        await Stripe.instance.confirmPayment(
+          paymentIntentClientSecret: widget.clientSecret,
+          data: PaymentMethodParams.card(
+            paymentMethodData: PaymentMethodData(
+              billingDetails: BillingDetails(
+                email: null, // Will be populated from user profile
+              ),
             ),
           ),
-        ),
-      );
+        );
 
-      dev.log('Payment confirmed, proceeding with authorization...');
+        dev.log('Payment confirmed, proceeding with authorization...');
 
-      // Handle payment authorization through our controller
-      await ref.read(paymentControllerProvider).handlePaymentAuthorization(
-        paymentId: widget.paymentId,
-        paymentMethodId: paymentMethod.id,
-      );
+        // Handle payment authorization through our controller
+        await ref.read(paymentControllerProvider).handlePaymentAuthorization(
+          paymentId: widget.paymentId,
+          paymentMethodId: paymentMethod.id,
+        );
+      }
 
       // Navigate to success screen
       if (mounted) {
@@ -237,6 +246,38 @@ class _PaymentAuthorizationScreenState extends ConsumerState<PaymentAuthorizatio
 
               const SizedBox(height: 24),
 
+              if (ApiConstants.mockPayments) ...[
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.amber.shade200),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.bug_report,
+                        color: Colors.amber.shade700,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Developer mode: Mock payments are enabled. No real charges will occur.',
+                          style: TextStyle(
+                            color: Colors.amber.shade700,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+              ],
+
               // Card Form
               Expanded(
                 child: SingleChildScrollView(
@@ -251,16 +292,16 @@ class _PaymentAuthorizationScreenState extends ConsumerState<PaymentAuthorizatio
                       ),
                       const SizedBox(height: 12),
                       
-                      // Stripe Card Form
-                      CardFormField(
-                        controller: _cardController!,
-                        style: CardFormStyle(
-                          backgroundColor: Colors.white,
-                          borderRadius: 8,
-                          borderColor: Colors.grey.shade300,
-                          borderWidth: 1,
+                      if (!ApiConstants.mockPayments)
+                        CardFormField(
+                          controller: _cardController!,
+                          style: CardFormStyle(
+                            backgroundColor: Colors.white,
+                            borderRadius: 8,
+                            borderColor: Colors.grey.shade300,
+                            borderWidth: 1,
+                          ),
                         ),
-                      ),
 
                       if (_errorMessage != null) ...[
                         const SizedBox(height: 16),
@@ -319,7 +360,9 @@ class _PaymentAuthorizationScreenState extends ConsumerState<PaymentAuthorizatio
                               width: 20,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                          : const Text('Authorize Payment'),
+                          : Text(ApiConstants.mockPayments
+                              ? 'Simulate Authorization'
+                              : 'Authorize Payment'),
                     ),
                   ),
                 ],
@@ -330,4 +373,4 @@ class _PaymentAuthorizationScreenState extends ConsumerState<PaymentAuthorizatio
       ),
     );
   }
-} 
+}

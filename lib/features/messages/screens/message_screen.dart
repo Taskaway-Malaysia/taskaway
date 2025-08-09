@@ -492,18 +492,18 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: Colors.green.withValues(alpha: 0.1),
+                  color: Colors.orange.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: Colors.green.withValues(alpha: 0.3),
+                    color: Colors.orange.withValues(alpha: 0.3),
                   ),
                 ),
                 child: const Text(
-                  'ASSIGNED',
+                  'PENDING',
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
-                    color: Colors.green,
+                    color: Colors.orange,
                   ),
                 ),
               ),

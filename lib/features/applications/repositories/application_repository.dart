@@ -34,9 +34,14 @@ class ApplicationRepository {
   }
 
   Future<Application> createApplication(Map<String, dynamic> data) async {
+    // Ensure default status is set to 'pending' for new applications
+    final payload = {
+      ...data,
+      'status': data['status'] ?? 'pending',
+    };
     final response = await _supabaseClient
         .from('taskaway_applications')
-        .insert(data)
+        .insert(payload)
         .select()
         .single();
     return Application.fromJson(response);
@@ -63,6 +68,31 @@ class ApplicationRepository {
         .select()
         .eq('task_id', taskId);
 
+    return (response as List)
+        .map((data) => Application.fromJson(data))
+        .toList();
+  }
+
+  Future<List<Application>> getUserApplications(
+    String userId, {
+    List<String>? statuses,
+  }) async {
+    var query = _supabaseClient
+        .from('taskaway_applications')
+        .select()
+        .eq('tasker_id', userId);
+
+    if (statuses != null && statuses.isNotEmpty) {
+      if (statuses.length == 1) {
+        query = query.eq('status', statuses.first);
+      } else {
+        // Use OR expression for broader compatibility across versions
+        final orExpr = statuses.map((s) => 'status.eq.$s').join(',');
+        query = query.or(orExpr);
+      }
+    }
+
+    final response = await query;
     return (response as List)
         .map((data) => Application.fromJson(data))
         .toList();

@@ -39,6 +39,24 @@ class TaskRepository {
     }
   }
 
+  // Get tasks by IDs with optional status filter
+  Future<List<Task>> getTasksByIds(List<String> ids, {String? status}) async {
+    if (ids.isEmpty) return [];
+    try {
+      var query = supabase.from(_tableName).select();
+      final orExpr = ids.map((id) => 'id.eq.$id').join(',');
+      query = query.or(orExpr);
+      if (status != null) {
+        query = query.eq('status', status);
+      }
+      final response = await query.order('created_at', ascending: false);
+      return response.map((json) => Task.fromJson(json)).toList().cast<Task>();
+    } catch (e) {
+      dev.log('Error fetching tasks by ids: $e');
+      return [];
+    }
+  }
+
   // Creates a polling-based stream as a fallback when Realtime fails
   Stream<List<Task>> _createPollingStream() {
     // Use a periodic timer to poll data every 3 seconds
