@@ -11,7 +11,7 @@ class ApiConstants {
   static const bool mockPayments = false;
   
   // Stripe Configuration
-  static const String stripePublishableKey = 'pk_test_51RUxP5PNCUSI0FBOWAUJlNXifjQBUiGQI4VNWcrC7zymgCIWDavy7qetpxYITXe45LCjvVFDNNkafnI8uDbunDyZ00V446s1UF';
+  static const String stripePublishableKey = 'pk_live_51RUxOyAtAsSHJ3CclGI7LARBMwF2WdYZ317LQnfuakTnwP7HF9LuaDhBYG75it4kS24GUv5iCGp73rB3BPZ7V4gz00ymzncF0l';
   
   // Storage Buckets
   static const String taskImagesBucket = 'task-images';
