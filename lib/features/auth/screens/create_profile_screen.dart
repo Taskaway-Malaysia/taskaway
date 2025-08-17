@@ -547,7 +547,7 @@ class _CreateProfileScreenState extends ConsumerState<CreateProfileScreen> {
                                   // Insert profile into Supabase
                                   await Supabase.instance.client.from(DbConstants.profilesTable).insert(profileData);
 
-                                  dev.log('Profile created successfully for user: ${currentUser.id}');
+                                  print('Profile created successfully for user: ${currentUser.id}');
 
                                   if (mounted) {
                                     // Navigate to success screen using go() instead of push()
@@ -555,7 +555,7 @@ class _CreateProfileScreenState extends ConsumerState<CreateProfileScreen> {
                                     router.go('/signup-success');
                                   }
                                 } catch (e) {
-                                  dev.log('Error creating profile: $e');
+                                  print('Error creating profile: $e');
                                   if (mounted) {
                                     scaffoldMessenger.showSnackBar(
                                       SnackBar(

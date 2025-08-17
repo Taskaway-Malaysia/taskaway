@@ -78,8 +78,12 @@ class MessageListScreen extends ConsumerWidget {
 
                 return InkWell(
                   onTap: () {
-                    // Navigate to chat screen with the channel object as extra data
-                    context.push('/home/chat/${channel.id}', extra: channel);
+                    // Navigate to chat screen using named route with channel as extra
+                    context.pushNamed(
+                      'chat-room',
+                      pathParameters: {'id': channel.id},
+                      extra: channel,
+                    );
                   },
                   child: Container(
                     decoration: BoxDecoration(

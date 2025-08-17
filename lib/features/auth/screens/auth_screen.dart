@@ -234,16 +234,16 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                               );
 
                               // Post-login checks and navigation
-                              dev.log('AuthScreen: Login successful. Response user: ${response.user?.id}');
+                              print('AuthScreen: Login successful. Response user: ${response.user?.id}');
                               final currentUserNow = ref.read(currentUserProvider);
                               final authStateValue = ref.read(authStateProvider).value;
-                              dev.log('AuthScreen: Post-login check. CurrentUser: ${currentUserNow?.id}, AuthState Event: ${authStateValue?.event}');
+                              print('AuthScreen: Post-login check. CurrentUser: ${currentUserNow?.id}, AuthState Event: ${authStateValue?.event}');
 
                               if (mounted && currentUserNow != null) {
-                                dev.log('AuthScreen: User confirmed authenticated, navigating to / to re-trigger SplashScreen logic.');
+                                print('AuthScreen: User confirmed authenticated, navigating to / to re-trigger SplashScreen logic.');
                                 router.go('/');
                               } else {
-                                dev.log('AuthScreen: Post-login check. User still null or state not updated.');
+                                print('AuthScreen: Post-login check. User still null or state not updated.');
                               }
                               // Navigation is ideally handled by AuthState listener in Splash Screen
                             } on AuthException catch (e) {
@@ -292,7 +292,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                   onPressed: () {
                     ref.read(isGuestModeProvider.notifier).state = true;
                     context.go('/home/browse');
-                    dev.log('Explore as Guest pressed, guest mode activated');
+                    print('Explore as Guest pressed, guest mode activated');
                   },
                   child: const Text('Explore as Guest'),
                 ),

@@ -28,7 +28,7 @@ class ApplicationRepository {
       return response.data as Map<String, dynamic>;
     } catch (e) {
       // Log the error but rethrow for the caller to handle
-      dev.log('Edge function error: $e');
+      print('Edge function error: $e');
       rethrow;
     }
   }

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:taskaway/core/constants/style_constants.dart';
 import 'package:taskaway/core/constants/api_constants.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:taskaway/core/widgets/numpad_overlay.dart';
 import 'package:taskaway/features/auth/controllers/auth_controller.dart';
@@ -32,35 +33,38 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
   bool _showNumpad = false;
   bool _isRevisingBudget = false;
 
-  // Accept offer method
+  // Accept offer method - now uses payment-first flow
   Future<void> _acceptOffer(String offerId, String taskerId, double price) async {
-    dev.log('UI: _acceptOffer started.');
+    print('UI: _acceptOffer started with payment-first flow.');
     if (_isLoading) return;
     setState(() => _isLoading = true);
 
     try {
       final applicationController = ref.read(applicationControllerProvider.notifier);
-      dev.log('UI: Calling controller.acceptOffer...');
-      final success = await applicationController.acceptOffer(
+      print('UI: Calling controller.initiateOfferAcceptance...');
+      final paymentData = await applicationController.initiateOfferAcceptance(
         applicationId: offerId,
         taskId: widget.taskId,
         taskerId: taskerId,
       );
-      dev.log('UI: controller.acceptOffer returned: $success');
+      print('UI: controller.initiateOfferAcceptance returned payment data');
 
-      if (success && mounted) {
-        dev.log('UI: Navigating to success screen...');
-        context.go('/home/browse/${widget.taskId}/offer-accepted-success/$price');
-      } else {
-        dev.log('UI: Navigation condition not met. Success: $success, Mounted: $mounted');
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Failed to accept offer. Please try again.')),
-          );
-        }
+      if (mounted) {
+        print('UI: Navigating to payment method selection screen...');
+        context.push('/payment/method-selection', extra: {
+          'paymentId': paymentData['paymentIntentId'],
+          'clientSecret': paymentData['clientSecret'],
+          'amount': paymentData['amount'],
+          'taskTitle': paymentData['taskTitle'],
+          'paymentType': 'offer_acceptance',
+          'applicationId': paymentData['applicationId'],
+          'taskId': paymentData['taskId'],
+          'taskerId': paymentData['taskerId'],
+          'offerPrice': paymentData['offerPrice'],
+        });
       }
     } catch (e, st) {
-      dev.log('UI: _acceptOffer caught an error: $e', error: e, stackTrace: st);
+      print('UI: _acceptOffer caught an error: $e\nStackTrace: $st');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('An error occurred: $e')),
@@ -73,32 +77,6 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
     }
   }
 
-  // Dev helper: complete task from pending_payment in mock mode
-  Future<void> _completePendingPayment() async {
-    if (_isLoading) return;
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
-    try {
-      final taskController = ref.read(taskControllerProvider);
-      await taskController.updateTask(widget.taskId, {'status': 'completed'});
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Task marked as completed.')),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _errorMessage = e.toString());
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
-  }
 
   // Navigate to chat method
   Future<void> _navigateToChat() async {
@@ -109,14 +87,61 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
 
     try {
       final messageController = ref.read(messageControllerProvider);
-      final channel = await messageController.getChannelByTaskId(widget.taskId);
+      var channel = await messageController.getChannelByTaskId(widget.taskId);
+      
+      // If no channel exists, try to create one as a fallback
+      if (channel == null) {
+        final task = ref.read(taskProvider(widget.taskId)).value;
+        final currentUser = ref.read(currentUserProvider);
+        
+        if (task != null && currentUser != null) {
+          // Determine if current user is poster or tasker
+          final isPoster = currentUser.id == task.posterId;
+          
+          // Only create channel if task has both poster and tasker assigned
+          if (task.taskerId != null) {
+            try {
+              // Get profile information for channel creation
+              final supabase = Supabase.instance.client;
+              final posterProfile = await supabase
+                  .from('taskaway_profiles')
+                  .select()
+                  .eq('id', task.posterId)
+                  .single();
+              
+              final taskerProfile = await supabase
+                  .from('taskaway_profiles')
+                  .select()
+                  .eq('id', task.taskerId!)
+                  .single();
+              
+              // Create the channel
+              channel = await messageController.initiateTaskConversation(
+                taskId: widget.taskId,
+                taskTitle: task.title,
+                posterId: task.posterId,
+                posterName: posterProfile['full_name'] ?? 'Poster',
+                taskerId: task.taskerId!,
+                taskerName: taskerProfile['full_name'] ?? 'Tasker',
+                welcomeMessage: isPoster 
+                  ? 'Hi! Let\'s discuss the details of "${task.title}".'
+                  : 'Hi! I\'m ready to work on "${task.title}". Let\'s discuss the details.',
+              );
+            } catch (e) {
+              print('Failed to create channel as fallback: $e');
+            }
+          }
+        }
+      }
       
       if (channel != null && mounted) {
-        // Navigate to chat screen
-        await context.push('/home/chat/${channel.id}');
+        // Navigate to chat screen with channel object
+        await context.pushNamed('chat-room', 
+          pathParameters: {'id': channel.id}, 
+          extra: channel);
       } else {
         setState(() {
-          _errorMessage = 'No conversation found for this task';
+          _errorMessage = 'No conversation found for this task. Please ensure the task has been accepted.';
         });
       }
     } catch (e) {
@@ -171,13 +196,13 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
           // Debug logs
           final statusLc = taskData.status.trim().toLowerCase();
           final shouldShowCancel = isPoster &&
-              (statusLc == 'open' || statusLc == 'pending');
-          dev.log(
+              (statusLc == 'open' || statusLc == 'accepted');
+          print(
             'Task Details: id=${taskData.id}, status=${taskData.status}, '
             'statusLc=$statusLc, isPoster=$isPoster, currentUser=${currentUser?.id}, '
             'posterId=${taskData.posterId}, shouldShowCancel=$shouldShowCancel',
           );
-          dev.log('Offers: ${taskData.offers}');
+          print('Offers: ${taskData.offers}');
           
           return Stack(
             children: [
@@ -212,7 +237,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
                     ),
                     // Start button for tasker below the budget section when offer accepted
                     if (taskData.taskerId == currentUser?.id &&
-                        statusLc == 'pending') ...[
+                        statusLc == 'accepted') ...[
                       const SizedBox(height: 8),
                       SizedBox(
                         width: double.infinity,
@@ -233,17 +258,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
                     const SizedBox(height: 16),
                     _buildActionButtons(taskData, isPoster, currentUser?.id),
 
-                    // Dev-only: Quick complete when payment is pending and mock is on
-                    if (isPoster && statusLc == 'pending_payment' && ApiConstants.mockPayments) ...[
-                      const SizedBox(height: 8),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: _isLoading ? null : _completePendingPayment,
-                          child: const Text('Complete (Mock)'),
-                        ),
-                      ),
-                    ],
+                    // Dev mode quick complete button removed - no longer needed with simplified flow
 
                     if (_errorMessage != null) _buildErrorMessage(),
                   ],
@@ -622,7 +637,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
               child: const Text('Make an Offer'),
             ),
           ),
-        if (isPoster && (statusLc == 'open' || statusLc == 'pending')) ...[
+        if (isPoster && (statusLc == 'open' || statusLc == 'accepted')) ...[
           const SizedBox(height: 8),
           SizedBox(
             width: double.infinity,
@@ -673,8 +688,6 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
         return 'Accepted';
       case ApplicationStatus.rejected:
         return 'Rejected';
-      case ApplicationStatus.withdrawn:
-        return 'Withdrawn';
     }
   }
 
@@ -960,8 +973,6 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
         return 'In Progress';
       case 'pending_approval':
         return 'Pending Approval';
-      case 'pending_payment':
-        return 'Pending Payment';
       case 'completed':
         return 'Completed';
       case 'cancelled':
@@ -983,8 +994,6 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
         return Colors.orange;
       case 'pending_approval':
         return Colors.purple;
-      case 'pending_payment':
-        return Colors.orange;
       case 'completed':
         return Colors.green;
       case 'cancelled':
@@ -995,65 +1004,83 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
   }
 
   Widget _buildActionButtons(Task task, bool isPoster, String? currentUserId) {
+    final List<Widget> buttons = [];
+    
+    // Add Message button for active tasks (pending, in_progress, pending_approval)
+    // Show for both poster and assigned tasker
+    final canShowMessage = (task.status == 'accepted' || 
+                            task.status == 'in_progress' || 
+                            task.status == 'pending_approval') &&
+                           (isPoster || currentUserId == task.taskerId);
+    
+    if (canShowMessage) {
+      buttons.add(
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: _navigateToChat,
+            icon: const Icon(Icons.message),
+            label: Text(isPoster ? 'Message Tasker' : 'Message Poster'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: StyleConstants.primaryColor,
+              foregroundColor: Colors.white,
+            ),
+          ),
+        ),
+      );
+      buttons.add(const SizedBox(height: 8));
+    }
+    
+    // Existing action buttons
     if (isPoster) {
       if (task.status == 'pending_approval') {
-        return Column(
-          children: [
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _approveTask,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  foregroundColor: Colors.white,
-                ),
-                child: const Text('Approve Completion'),
+        buttons.add(
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _approveTask,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                foregroundColor: Colors.white,
               ),
+              child: const Text('Approve Completion'),
             ),
-          ],
+          ),
         );
       }
     } else {
       if (task.status == 'in_progress' && currentUserId == task.taskerId) {
-        return SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: _completeTask,
-            child: const Text('Submit for Review'),
+        buttons.add(
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _completeTask,
+              child: const Text('Submit for Review'),
+            ),
           ),
         );
       }
     }
-    return const SizedBox.shrink();
+    
+    return buttons.isEmpty ? const SizedBox.shrink() : Column(children: buttons);
   }
 
   Future<void> _approveTask() async {
     if (_isLoading) return;
     setState(() => _isLoading = true);
     try {
-      // Fetch task details
-      final task = await ref
-          .read(taskControllerProvider)
-          .getTaskById(widget.taskId);
-      final taskerId = task.taskerId;
-      if (taskerId == null) {
-        throw Exception('No tasker assigned to this task');
-      }
-
-      // Initialize payment and navigate to authorization
-      final init = await ref.read(paymentControllerProvider).handleTaskApproval(
-            taskId: widget.taskId,
-            posterId: task.posterId,
-            taskerId: taskerId,
-            amount: task.price,
-            taskTitle: task.title,
-          );
+      // Capture the existing payment from offer acceptance
+      // No new payment needed - we're capturing the escrow payment
+      await ref.read(paymentControllerProvider).captureTaskPayment(
+        taskId: widget.taskId,
+      );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Payment required. Authorize to finish.')),
+          const SnackBar(content: Text('Task approved and payment captured successfully!')),
         );
-        context.push('/payment/authorize', extra: init);
+        // Refresh the screen to show updated status
+        setState(() {});
       }
     } catch (e) {
       if (mounted) {

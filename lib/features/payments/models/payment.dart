@@ -1,10 +1,34 @@
+enum PaymentStatus {
+  pending,    // Payment intent created
+  authorized, // Payment authorized but not captured
+  completed,  // Payment captured
+  failed;     // Payment failed
+
+  String toJson() => name;
+  
+  static PaymentStatus fromString(String? value) {
+    if (value == null) return PaymentStatus.pending;
+    
+    switch (value.toLowerCase()) {
+      case 'authorized':
+        return PaymentStatus.authorized;
+      case 'completed':
+        return PaymentStatus.completed;
+      case 'failed':
+        return PaymentStatus.failed;
+      default:
+        return PaymentStatus.pending;
+    }
+  }
+}
+
 class Payment {
   final String id;
   final String taskId;
   final String payerId;
   final String payeeId;
   final double amount;
-  final String status;
+  final PaymentStatus status;
   final String? stripePaymentIntentId;
   final String? clientSecret;
   final double? platformFeeAmount;
@@ -18,7 +42,7 @@ class Payment {
     required this.payerId,
     required this.payeeId,
     required this.amount,
-    String? status,
+    PaymentStatus? status,
     this.stripePaymentIntentId,
     this.clientSecret,
     this.platformFeeAmount,
@@ -27,7 +51,7 @@ class Payment {
     DateTime? updatedAt,
   }) : 
     id = id ?? '',
-    status = status ?? 'pending',
+    status = status ?? PaymentStatus.pending,
     createdAt = createdAt ?? DateTime.now(),
     updatedAt = updatedAt ?? DateTime.now();
 
@@ -38,7 +62,7 @@ class Payment {
       payerId: json['payer_id'] as String,
       payeeId: json['payee_id'] as String,
       amount: (json['amount'] as num).toDouble(),
-      status: json['status'] as String,
+      status: PaymentStatus.fromString(json['status'] as String?),
       stripePaymentIntentId: json['stripe_payment_intent_id'] as String?,
       clientSecret: json['client_secret'] as String?,
       platformFeeAmount: json['platform_fee_amount'] != null 
@@ -56,7 +80,7 @@ class Payment {
       'payer_id': payerId,
       'payee_id': payeeId,
       'amount': amount,
-      'status': status,
+      'status': status.toJson(),
       'stripe_payment_intent_id': stripePaymentIntentId,
       'client_secret': clientSecret,
       'platform_fee_amount': platformFeeAmount,
@@ -72,7 +96,7 @@ class Payment {
     String? payerId,
     String? payeeId,
     double? amount,
-    String? status,
+    PaymentStatus? status,
     String? stripePaymentIntentId,
     String? clientSecret,
     double? platformFeeAmount,

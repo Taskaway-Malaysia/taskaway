@@ -32,6 +32,9 @@
   <title>Taskaway Malaysia</title>
   <link rel="manifest" href="manifest.json">
 
+  <!-- Stripe.js for web card payments -->
+  <script src="https://js.stripe.com/v3/"></script>
+
   <!-- This script adds the Flutter initialization JS code -->
   <script src="flutter.js" defer></script>
   
@@ -59,6 +62,33 @@
 </head>
 <body>
   <script>
+    // Capture Stripe payment return parameters from URL on page load
+    // This handles the case where Stripe puts parameters before the hash fragment
+    (function() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const paymentIntent = urlParams.get('payment_intent');
+      const redirectStatus = urlParams.get('redirect_status');
+      const clientSecret = urlParams.get('payment_intent_client_secret');
+      
+      // Store in sessionStorage if payment parameters exist
+      if (paymentIntent && redirectStatus) {
+        console.log('[Payment Bridge] Captured payment return parameters:', {
+          paymentIntent: paymentIntent,
+          redirectStatus: redirectStatus
+        });
+        sessionStorage.setItem('stripe_payment_intent', paymentIntent);
+        sessionStorage.setItem('stripe_redirect_status', redirectStatus);
+        if (clientSecret) {
+          sessionStorage.setItem('stripe_client_secret', clientSecret);
+        }
+        
+        // Clean the URL to remove query parameters but keep hash
+        const hash = window.location.hash || '';
+        const cleanUrl = window.location.origin + window.location.pathname + hash;
+        window.history.replaceState({}, '', cleanUrl);
+      }
+    })();
+    
     // This script initializes the Flutter web app
     window.addEventListener('load', function(ev) {
       // Declare global _flutter variable

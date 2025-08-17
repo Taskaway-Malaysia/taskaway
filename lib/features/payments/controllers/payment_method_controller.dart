@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter/foundation.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../models/payment_method.dart';
 import 'dart:developer' as dev;
@@ -19,12 +20,12 @@ final paymentMethodsStreamProvider = StreamProvider<List<PaymentMethod>>((ref) {
         .order('created_at', ascending: false)
         .map((data) => data.map((json) => PaymentMethod.fromJson(json)).toList())
         .handleError((error) {
-          dev.log('Error loading payment methods: $error');
+          print('Error loading payment methods: $error');
           // Return empty list if table doesn't exist
           return <PaymentMethod>[];
         });
   } catch (e) {
-    dev.log('Database error: $e');
+    print('Database error: $e');
     // Return mock data for now until table is created
     return Stream.value(_getMockPaymentMethods(user.id));
   }
@@ -87,10 +88,10 @@ class PaymentMethodController {
           .select()
           .single();
 
-      dev.log('Payment method added: ${response.toString()}');
+      print('Payment method added: ${response.toString()}');
       return PaymentMethod.fromJson(response);
     } catch (e) {
-      dev.log('Error adding payment method: $e');
+      print('Error adding payment method: $e');
       
       // If table doesn't exist, show helpful message
       if (e.toString().contains('does not exist')) {
@@ -126,10 +127,10 @@ class PaymentMethodController {
           .select()
           .single();
 
-      dev.log('Online banking method added: ${response.toString()}');
+      print('Online banking method added: ${response.toString()}');
       return PaymentMethod.fromJson(response);
     } catch (e) {
-      dev.log('Error adding online banking method: $e');
+      print('Error adding online banking method: $e');
       
       if (e.toString().contains('does not exist')) {
         throw Exception('Payment methods table not found. Please create the database table first.');
@@ -164,10 +165,10 @@ class PaymentMethodController {
           .select()
           .single();
 
-      dev.log('E-wallet method added: ${response.toString()}');
+      print('E-wallet method added: ${response.toString()}');
       return PaymentMethod.fromJson(response);
     } catch (e) {
-      dev.log('Error adding e-wallet method: $e');
+      print('Error adding e-wallet method: $e');
       
       if (e.toString().contains('does not exist')) {
         throw Exception('Payment methods table not found. Please create the database table first.');
@@ -208,10 +209,10 @@ class PaymentMethodController {
           .select()
           .single();
 
-      dev.log('Payment method updated: ${response.toString()}');
+      print('Payment method updated: ${response.toString()}');
       return PaymentMethod.fromJson(response);
     } catch (e) {
-      dev.log('Error updating payment method: $e');
+      print('Error updating payment method: $e');
       
       if (e.toString().contains('does not exist')) {
         throw Exception('Payment methods table not found. Please create the database table first.');
@@ -228,9 +229,9 @@ class PaymentMethodController {
           .delete()
           .eq('id', id);
 
-      dev.log('Payment method deleted: $id');
+      print('Payment method deleted: $id');
     } catch (e) {
-      dev.log('Error deleting payment method: $e');
+      print('Error deleting payment method: $e');
       
       if (e.toString().contains('does not exist')) {
         throw Exception('Payment methods table not found. Please create the database table first.');
@@ -259,9 +260,9 @@ class PaymentMethodController {
           .update({'is_default': true, 'updated_at': DateTime.now().toIso8601String()})
           .eq('id', id);
 
-      dev.log('Payment method set as default: $id');
+      print('Payment method set as default: $id');
     } catch (e) {
-      dev.log('Error setting payment method as default: $e');
+      print('Error setting payment method as default: $e');
       
       if (e.toString().contains('does not exist')) {
         throw Exception('Payment methods table not found. Please create the database table first.');

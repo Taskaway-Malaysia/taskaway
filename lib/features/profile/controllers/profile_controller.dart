@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter/foundation.dart';
 import 'package:taskaway/features/auth/models/profile.dart';
 import 'dart:developer' as dev;
 
@@ -53,10 +54,10 @@ class ProfileController {
           .select()
           .single();
       
-      dev.log('Profile updated successfully: $data');
+      print('Profile updated successfully: $data');
       return Profile.fromJson(data);
     } catch (e) {
-      dev.log('Error updating profile', error: e);
+      print('Error updating profile - Error: $e');
       return null;
     }
   }
@@ -79,10 +80,10 @@ class ProfileController {
           })
           .eq('id', userId);
       
-      dev.log('User role updated successfully to: $dbRole');
+      print('User role updated successfully to: $dbRole');
       return true;
     } catch (e) {
-      dev.log('Error updating user role', error: e);
+      print('Error updating user role - Error: $e');
       return false;
     }
   }
@@ -93,7 +94,7 @@ class ProfileController {
     required List<String> skills,
   }) async {
     try {
-      dev.log('Updating skills for user $userId: $skills');
+      print('Updating skills for user $userId: $skills');
       
       final data = await supabase
           .from('taskaway_profiles')
@@ -105,10 +106,10 @@ class ProfileController {
           .select()
           .single();
       
-      dev.log('Skills updated successfully: $data');
+      print('Skills updated successfully: $data');
       return Profile.fromJson(data);
     } catch (e) {
-      dev.log('Error updating skills', error: e);
+      print('Error updating skills - Error: $e');
       return null;
     }
   }
@@ -119,7 +120,7 @@ class ProfileController {
     required List<String> workUrls,
   }) async {
     try {
-      dev.log('Updating works for user $userId: $workUrls');
+      print('Updating works for user $userId: $workUrls');
       
       final data = await supabase
           .from('taskaway_profiles')
@@ -131,10 +132,10 @@ class ProfileController {
           .select()
           .single();
       
-      dev.log('Works updated successfully: $data');
+      print('Works updated successfully: $data');
       return Profile.fromJson(data);
     } catch (e) {
-      dev.log('Error updating works', error: e);
+      print('Error updating works - Error: $e');
       return null;
     }
   }
@@ -145,7 +146,7 @@ class ProfileController {
     required String imageUrl,
   }) async {
     try {
-      dev.log('Deleting work image: $imageUrl');
+      print('Deleting work image: $imageUrl');
       
       // First get current works
       final currentProfile = await supabase
@@ -178,10 +179,10 @@ class ProfileController {
         await supabase.storage.from('task-images').remove([filePath]);
       }
       
-      dev.log('Work image deleted successfully');
+      print('Work image deleted successfully');
       return true;
     } catch (e) {
-      dev.log('Error deleting work image', error: e);
+      print('Error deleting work image - Error: $e');
       return false;
     }
   }

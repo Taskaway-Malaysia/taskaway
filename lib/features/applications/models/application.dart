@@ -1,8 +1,7 @@
 enum ApplicationStatus {
-  pending,
-  accepted,
-  rejected,
-  withdrawn;
+  pending,   // Offer submitted, awaiting response
+  accepted,  // Offer accepted by poster
+  rejected;  // Offer rejected by poster
   
   static ApplicationStatus fromString(String? value) {
     if (value == null) return ApplicationStatus.pending;
@@ -12,8 +11,6 @@ enum ApplicationStatus {
         return ApplicationStatus.accepted;
       case 'rejected':
         return ApplicationStatus.rejected;
-      case 'withdrawn':
-        return ApplicationStatus.withdrawn;
       default:
         return ApplicationStatus.pending;
     }

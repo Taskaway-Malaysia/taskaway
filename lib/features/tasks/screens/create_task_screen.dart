@@ -76,7 +76,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
       final taskData = ref.read(createTaskDataProvider);
 
       // Print debug info
-      dev.log('Submitting task: $taskData');
+      print('Submitting task: $taskData');
 
       // Ensure price is a double
       double price = 0.0;
@@ -126,7 +126,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
         });
       }
     } catch (e) {
-      dev.log('Error creating task: $e');
+      print('Error creating task: $e');
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -231,7 +231,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
     final taskData = ref.watch(createTaskDataProvider);
     
     // Use taskData for debugging or validation if needed
-    debugPrint('Current task data: ${taskData.toString()}');
+    print('Current task data: ${taskData.toString()}');
 
     // Load data when step changes
     WidgetsBinding.instance.addPostFrameCallback((_) {

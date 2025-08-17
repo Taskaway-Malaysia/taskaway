@@ -45,5 +45,32 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	
+	<!-- URL Schemes for deep linking -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>taskaway</string>
+			</array>
+			<key>CFBundleURLName</key>
+			<string>com.taskaway.app</string>
+		</dict>
+	</array>
+	
+	<!-- Location permissions -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>This app needs location access to find nearby tasks and services.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>This app needs location access to find nearby tasks and services.</string>
+	
+	<!-- Camera and Photo Library permissions -->
+	<key>NSCameraUsageDescription</key>
+	<string>This app needs camera access to take photos for task documentation.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app needs photo library access to select images for task documentation.</string>
+	
+	<!-- Internet permission (handled automatically on iOS) -->
 </dict>
 </plist>

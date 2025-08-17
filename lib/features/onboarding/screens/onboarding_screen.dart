@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:taskaway/core/constants/style_constants.dart';
 import 'package:taskaway/features/onboarding/controllers/onboarding_controller.dart';
 import 'package:taskaway/features/onboarding/models/onboarding_page_model.dart';
-import 'dart:developer' as dev;
+import 'package:taskaway/core/utils/debug_logger.dart';
 
 class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
@@ -44,12 +44,15 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     _completeOnboarding();
   }
 
-  void _completeOnboarding() {
-    dev.log('Onboarding completed');
-    // Mark onboarding as completed
-    ref.read(onboardingCompletedProvider.notifier).state = true;
+  void _completeOnboarding() async {
+    DebugLogger.log('Onboarding completed - saving to SharedPreferences');
+    // Mark onboarding as completed and persist it
+    await completeOnboarding(ref);
+    DebugLogger.log('Onboarding saved, navigating to /login');
     // Navigate to login screen
-    context.go('/login');
+    if (mounted) {
+      context.go('/login');
+    }
   }
 
   @override

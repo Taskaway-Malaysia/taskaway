@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_stripe/flutter_stripe.dart' hide Card;
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/constants/style_constants.dart';
 import '../controllers/payment_controller.dart';
+import '../../applications/controllers/application_controller.dart';
 import 'dart:developer' as dev;
 
 class PaymentAuthorizationScreen extends ConsumerStatefulWidget {
@@ -12,6 +15,11 @@ class PaymentAuthorizationScreen extends ConsumerStatefulWidget {
   final String clientSecret;
   final double amount;
   final String taskTitle;
+  final String paymentType; // 'offer_acceptance' or 'task_completion'
+  final String? applicationId; // Required for offer_acceptance
+  final String? taskId; // Required for offer_acceptance
+  final String? taskerId; // Required for offer_acceptance
+  final double? offerPrice; // Required for offer_acceptance
 
   const PaymentAuthorizationScreen({
     super.key,
@@ -19,6 +27,11 @@ class PaymentAuthorizationScreen extends ConsumerStatefulWidget {
     required this.clientSecret,
     required this.amount,
     required this.taskTitle,
+    this.paymentType = 'task_completion',
+    this.applicationId,
+    this.taskId,
+    this.taskerId,
+    this.offerPrice,
   });
 
   @override
@@ -33,7 +46,9 @@ class _PaymentAuthorizationScreenState extends ConsumerState<PaymentAuthorizatio
   @override
   void initState() {
     super.initState();
-    _cardController = CardFormEditController();
+    if (!kIsWeb) {
+      _cardController = CardFormEditController();
+    }
   }
 
   @override
@@ -51,58 +66,116 @@ class _PaymentAuthorizationScreenState extends ConsumerState<PaymentAuthorizatio
     });
 
     try {
-      dev.log('Starting payment authorization process...');
+      print('Starting payment authorization process for type: ${widget.paymentType}');
       
       if (ApiConstants.mockPayments) {
-        dev.log('[MOCK] Skipping Stripe card flow');
-        await ref.read(paymentControllerProvider).handlePaymentAuthorization(
-          paymentId: widget.paymentId,
-          paymentMethodId: 'pm_mock',
-        );
+        print('[MOCK] Skipping Stripe card flow');
+        
+        if (widget.paymentType == 'offer_acceptance') {
+          // For offer acceptance, complete the acceptance flow
+          await ref.read(applicationControllerProvider.notifier).completeOfferAcceptance(
+            applicationId: widget.applicationId!,
+            taskId: widget.taskId!,
+            taskerId: widget.taskerId!,
+            paymentIntentId: widget.paymentId,
+            offerPrice: widget.offerPrice!,
+          );
+        } else {
+          // For task completion, use existing payment flow
+          await ref.read(paymentControllerProvider).handlePaymentAuthorization(
+            paymentId: widget.paymentId,
+            paymentMethodId: 'pm_mock',
+          );
+        }
       } else {
-        // Validate card form
-        // Note: Card validation will be handled by Stripe during payment method creation
+        // Platform-specific payment processing
+        if (kIsWeb) {
+          // Web: Use confirmPayment with required params for web
+          print('Web payment processing with CardField');
+          
+          // Web requires PaymentMethodParams to be passed
+          await Stripe.instance.confirmPayment(
+            paymentIntentClientSecret: widget.clientSecret,
+            data: const PaymentMethodParams.card(
+              paymentMethodData: PaymentMethodData(),
+            ),
+          );
+          
+          print('Payment confirmed on web, proceeding with flow...');
+          
+          if (widget.paymentType == 'offer_acceptance') {
+            // For offer acceptance, complete the acceptance flow
+            await ref.read(applicationControllerProvider.notifier).completeOfferAcceptance(
+              applicationId: widget.applicationId!,
+              taskId: widget.taskId!,
+              taskerId: widget.taskerId!,
+              paymentIntentId: widget.paymentId,
+              offerPrice: widget.offerPrice!,
+            );
+          } else {
+            // For task completion, use existing payment flow
+            // Note: We don't have paymentMethod.id on web, so we pass the paymentId
+            await ref.read(paymentControllerProvider).handlePaymentAuthorization(
+              paymentId: widget.paymentId,
+              paymentMethodId: widget.paymentId, // Use paymentId as fallback
+            );
+          }
+        } else {
+          // Mobile: Use CardFormField
+          final paymentMethod = await Stripe.instance.createPaymentMethod(
+            params: const PaymentMethodParams.card(
+              paymentMethodData: PaymentMethodData(),
+            ),
+          );
+          
+          print('Payment method created: ${paymentMethod.id}');
 
-        // Create payment method
-        final paymentMethod = await Stripe.instance.createPaymentMethod(
-          params: const PaymentMethodParams.card(
-            paymentMethodData: PaymentMethodData(),
-          ),
-        );
-
-        dev.log('Payment method created: ${paymentMethod.id}');
-
-        // Confirm payment intent
-        await Stripe.instance.confirmPayment(
-          paymentIntentClientSecret: widget.clientSecret,
-          data: PaymentMethodParams.card(
-            paymentMethodData: PaymentMethodData(
-              billingDetails: BillingDetails(
-                email: null, // Will be populated from user profile
+          await Stripe.instance.confirmPayment(
+            paymentIntentClientSecret: widget.clientSecret,
+            data: PaymentMethodParams.card(
+              paymentMethodData: PaymentMethodData(
+                billingDetails: BillingDetails(
+                  email: null, // Will be populated from user profile
+                ),
               ),
             ),
-          ),
-        );
+          );
+          
+          print('Payment confirmed, proceeding with authorization...');
 
-        dev.log('Payment confirmed, proceeding with authorization...');
-
-        // Handle payment authorization through our controller
-        await ref.read(paymentControllerProvider).handlePaymentAuthorization(
-          paymentId: widget.paymentId,
-          paymentMethodId: paymentMethod.id,
-        );
+          if (widget.paymentType == 'offer_acceptance') {
+            // For offer acceptance, complete the acceptance flow
+            await ref.read(applicationControllerProvider.notifier).completeOfferAcceptance(
+              applicationId: widget.applicationId!,
+              taskId: widget.taskId!,
+              taskerId: widget.taskerId!,
+              paymentIntentId: widget.paymentId,
+              offerPrice: widget.offerPrice!,
+            );
+          } else {
+            // For task completion, use existing payment flow
+            await ref.read(paymentControllerProvider).handlePaymentAuthorization(
+              paymentId: widget.paymentId,
+              paymentMethodId: paymentMethod.id,
+            );
+          }
+        }
       }
 
-      // Navigate to success screen
+      // Navigate to appropriate success screen
       if (mounted) {
-        context.pushReplacement('/payment/success', extra: {
-          'amount': widget.amount,
-          'taskTitle': widget.taskTitle,
-        });
+        if (widget.paymentType == 'offer_acceptance') {
+          context.go('/home/browse/${widget.taskId}/offer-accepted-success/${widget.offerPrice}');
+        } else {
+          context.go('/payment/success', extra: {
+            'amount': widget.amount,
+            'taskTitle': widget.taskTitle,
+          });
+        }
       }
 
     } catch (e) {
-      dev.log('Payment authorization error: $e');
+      print('Payment authorization error: $e');
       setState(() {
         _errorMessage = _getReadableError(e.toString());
       });
@@ -134,7 +207,9 @@ class _PaymentAuthorizationScreenState extends ConsumerState<PaymentAuthorizatio
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Authorize Payment'),
+        title: Text(widget.paymentType == 'offer_acceptance' 
+          ? 'Authorize & Accept Offer' 
+          : 'Authorize Payment'),
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
@@ -171,7 +246,7 @@ class _PaymentAuthorizationScreenState extends ConsumerState<PaymentAuthorizatio
                             style: theme.textTheme.bodyMedium,
                           ),
                           Text(
-                            '\$${(totalAmount - platformFeeAmount).toStringAsFixed(2)}',
+                            'RM ${(totalAmount - platformFeeAmount).toStringAsFixed(2)}',
                             style: theme.textTheme.bodyMedium,
                           ),
                         ],
@@ -184,7 +259,7 @@ class _PaymentAuthorizationScreenState extends ConsumerState<PaymentAuthorizatio
                             style: theme.textTheme.bodyMedium,
                           ),
                           Text(
-                            '\$${platformFeeAmount.toStringAsFixed(2)}',
+                            'RM ${platformFeeAmount.toStringAsFixed(2)}',
                             style: theme.textTheme.bodyMedium,
                           ),
                         ],
@@ -200,7 +275,7 @@ class _PaymentAuthorizationScreenState extends ConsumerState<PaymentAuthorizatio
                             ),
                           ),
                           Text(
-                            '\$${totalAmount.toStringAsFixed(2)}',
+                            'RM ${totalAmount.toStringAsFixed(2)}',
                             style: theme.textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                               color: theme.colorScheme.primary,
@@ -233,7 +308,9 @@ class _PaymentAuthorizationScreenState extends ConsumerState<PaymentAuthorizatio
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Your payment will be held securely until the task is completed. You can cancel if needed.',
+                        widget.paymentType == 'offer_acceptance'
+                          ? 'Your payment will be authorized and held securely until the task is completed. The tasker can then start work.'
+                          : 'Your payment will be held securely until the task is completed. You can cancel if needed.',
                         style: TextStyle(
                           color: Colors.blue.shade700,
                           fontSize: 12,
@@ -292,16 +369,45 @@ class _PaymentAuthorizationScreenState extends ConsumerState<PaymentAuthorizatio
                       ),
                       const SizedBox(height: 12),
                       
-                      if (!ApiConstants.mockPayments)
-                        CardFormField(
-                          controller: _cardController!,
-                          style: CardFormStyle(
-                            backgroundColor: Colors.white,
-                            borderRadius: 8,
-                            borderColor: Colors.grey.shade300,
-                            borderWidth: 1,
+                      if (!ApiConstants.mockPayments) ...[
+                        if (kIsWeb)
+                          // Web: Use CardField which is the web-compatible card input
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.grey.shade300),
+                            ),
+                            child: CardField(
+                              enablePostalCode: true,
+                              onCardChanged: (card) {
+                                // Card details changed callback
+                                if (card?.complete == true) {
+                                  print('Card details are complete and valid');
+                                } else {
+                                  print('Card details are incomplete or invalid');
+                                }
+                              },
+                              decoration: const InputDecoration(
+                                labelText: 'Card details',
+                                hintText: 'Enter card information',
+                                border: InputBorder.none,
+                              ),
+                            ),
+                          )
+                        else
+                          // Mobile: Use CardFormField (unchanged)
+                          CardFormField(
+                            controller: _cardController!,
+                            style: CardFormStyle(
+                              backgroundColor: Colors.white,
+                              borderRadius: 8,
+                              borderColor: Colors.grey.shade300,
+                              borderWidth: 1,
+                            ),
                           ),
-                        ),
+                      ],
 
                       if (_errorMessage != null) ...[
                         const SizedBox(height: 16),
@@ -362,7 +468,9 @@ class _PaymentAuthorizationScreenState extends ConsumerState<PaymentAuthorizatio
                             )
                           : Text(ApiConstants.mockPayments
                               ? 'Simulate Authorization'
-                              : 'Authorize Payment'),
+                              : widget.paymentType == 'offer_acceptance'
+                                ? 'Authorize & Accept Offer'
+                                : 'Authorize Payment'),
                     ),
                   ),
                 ],

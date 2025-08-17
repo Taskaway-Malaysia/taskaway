@@ -25,11 +25,11 @@ class NotificationRepository {
           .order('created_at', ascending: false)
           .map((data) => data.map((json) => Notification.fromJson(json)).toList())
           .handleError((error) {
-            dev.log('Realtime notification subscription error: $error');
+            print('Realtime notification subscription error: $error');
             return _createNotificationPollingStream(userId);
           });
     } catch (e) {
-      dev.log('Error setting up Realtime notification stream: $e');
+      print('Error setting up Realtime notification stream: $e');
       return _createNotificationPollingStream(userId);
     }
   }
@@ -52,7 +52,7 @@ class NotificationRepository {
       
       return response.map((json) => Notification.fromJson(json)).toList().cast<Notification>();
     } catch (e) {
-      dev.log('Error fetching notifications: $e');
+      print('Error fetching notifications: $e');
       return [];
     }
   }
@@ -69,7 +69,7 @@ class NotificationRepository {
       
       return response.count;
     } catch (e) {
-      dev.log('Error fetching unread notification count: $e');
+      print('Error fetching unread notification count: $e');
       return 0;
     }
   }
@@ -142,7 +142,7 @@ class NotificationRepository {
         await supabase.from(_tableName).insert(notifications);
       }
     } catch (e) {
-      dev.log('Error creating task notifications: $e');
+      print('Error creating task notifications: $e');
     }
   }
 
@@ -168,7 +168,7 @@ class NotificationRepository {
         'updated_at': DateTime.now().toIso8601String(),
       });
     } catch (e) {
-      dev.log('Error creating offer notification: $e');
+      print('Error creating offer notification: $e');
     }
   }
 
@@ -193,7 +193,7 @@ class NotificationRepository {
         'updated_at': DateTime.now().toIso8601String(),
       });
     } catch (e) {
-      dev.log('Error creating offer accepted notification: $e');
+      print('Error creating offer accepted notification: $e');
     }
   }
 
@@ -216,7 +216,7 @@ class NotificationRepository {
         'updated_at': DateTime.now().toIso8601String(),
       });
     } catch (e) {
-      dev.log('Error creating task completion notification: $e');
+      print('Error creating task completion notification: $e');
     }
   }
 
@@ -242,7 +242,7 @@ class NotificationRepository {
         'updated_at': DateTime.now().toIso8601String(),
       });
     } catch (e) {
-      dev.log('Error creating payment notification: $e');
+      print('Error creating payment notification: $e');
     }
   }
 } 

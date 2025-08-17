@@ -1,7 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../constants/db_constants.dart';
 import 'dart:developer' as dev;
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart';
 import 'dart:typed_data';
 import 'dart:io';
 import 'dart:async';
@@ -245,7 +245,7 @@ class SupabaseService {
       final response = client.storage.from(storageBucket).getPublicUrl(filePath);
       return response;
     } catch (e) {
-      dev.log('Error uploading file: $e');
+      print('Error uploading file: $e');
       return null;
     }
   }
@@ -255,7 +255,7 @@ class SupabaseService {
     try {
       return await file.readAsBytes();
     } catch (e) {
-      dev.log('Error reading XFile bytes: $e');
+      print('Error reading XFile bytes: $e');
       throw Exception('Failed to read file: $e');
     }
   }
@@ -291,7 +291,7 @@ class SupabaseService {
       }
       return uploadedUrls;
     } catch (e) {
-      dev.log('Error uploading files: $e');
+      print('Error uploading files: $e');
       return [];
     }
   }
@@ -304,7 +304,7 @@ class SupabaseService {
       await client.storage.from(bucket).remove([filePath]);
       return true;
     } catch (e) {
-      dev.log('Error deleting file: $e');
+      print('Error deleting file: $e');
       return false;
     }
   }
@@ -317,7 +317,7 @@ class SupabaseService {
       await client.storage.from(bucket).remove(filePaths);
       return true;
     } catch (e) {
-      dev.log('Error deleting files: $e');
+      print('Error deleting files: $e');
       return false;
     }
   }

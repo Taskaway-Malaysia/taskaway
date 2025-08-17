@@ -161,7 +161,7 @@ class _UserApplicationForTaskProviderElement
 }
 
 String _$applicationControllerHash() =>
-    r'c58f10ddaeb0baea263f7c53d70c492307f24608';
+    r'274d43469f07e74dea2c75297884aa9d02d82464';
 
 /// See also [ApplicationController].
 @ProviderFor(ApplicationController)

@@ -112,7 +112,7 @@ class Channel {
       final count = (response as List).length;
       return channel.copyWith(unreadCount: count);
     } catch (e) {
-      dev.log('Error getting unread count: $e');
+      print('Error getting unread count: $e');
       return channel;
     }
   }

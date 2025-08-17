@@ -54,7 +54,7 @@ class SignupSuccessScreen extends ConsumerWidget {
               ElevatedButton(
                 onPressed: () {
                   
-                  dev.log('Navigating from signup success to home');
+                  print('Navigating from signup success to home');
                   // Navigate to home screen
                   context.go('/home');
                 },
