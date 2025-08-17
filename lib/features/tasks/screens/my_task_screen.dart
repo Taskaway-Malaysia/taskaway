@@ -51,6 +51,37 @@ final tasksWithUserApplicationsProvider =
   return tasks;
 });
 
+// Provider to get tasks where user is the assigned tasker (for accepted/in-progress tasks)
+final taskerAssignedTasksProvider = 
+    FutureProvider.autoDispose<List<Task>>((ref) async {
+  final currentUser = ref.watch(currentUserProvider);
+  
+  print('taskerAssignedTasksProvider called');
+  print('currentUser: ${currentUser?.id}');
+  
+  if (currentUser == null) {
+    print('currentUser is null, returning empty list');
+    return [];
+  }
+  
+  // Fetch all tasks where the user is the assigned tasker
+  final taskRepo = ref.read(taskRepositoryProvider);
+  final allTasks = await taskRepo.getTasks();
+  
+  // Filter for tasks where user is the tasker
+  final taskerTasks = allTasks.where((task) => 
+    task.taskerId == currentUser.id &&
+    ['accepted', 'in_progress', 'pending_approval'].contains(task.status.toLowerCase())
+  ).toList();
+  
+  print('Found ${taskerTasks.length} assigned tasks for tasker');
+  for (var task in taskerTasks) {
+    print('  - ${task.title}: ${task.status}');
+  }
+  
+  return taskerTasks;
+});
+
 // Provider to filter tasks based on the current profile's role and status filter
 final selectedTasksProvider = Provider.autoDispose<AsyncValue<List<Task>>>((ref) {
   final tasksAsync = ref.watch(taskStreamProvider);
@@ -73,15 +104,54 @@ final selectedTasksProvider = Provider.autoDispose<AsyncValue<List<Task>>>((ref)
           loading: () => const AsyncValue.loading(),
           error: (err, stack) => AsyncValue.error(err, stack),
         );
+      } else if (role == 'As Tasker' && status == 'Upcoming tasks') {
+        // For taskers viewing "Upcoming tasks", use dedicated provider to ensure we get assigned tasks
+        return ref.watch(taskerAssignedTasksProvider).when(
+          data: (tasks) => AsyncValue.data(tasks),
+          loading: () => const AsyncValue.loading(),
+          error: (err, stack) {
+            // Fallback to original stream-based logic if provider fails
+            print('[MyTaskScreen] taskerAssignedTasksProvider error: $err');
+            return tasksAsync.whenData((tasks) {
+              return tasks.where((task) {
+                return task.taskerId == currentUser.id &&
+                       _mapTaskStatusToUiStatus(task.status) == 'Upcoming tasks';
+              }).toList();
+            });
+          },
+        );
       } else {
         // Original logic for other cases
         return tasksAsync.whenData((tasks) {
+          // Debug logging
+          print('[MyTaskScreen] Total tasks available: ${tasks.length}');
+          print('[MyTaskScreen] Current user ID: ${currentUser.id}');
+          print('[MyTaskScreen] Current role filter: $role');
+          print('[MyTaskScreen] Current status filter: $status');
+          
+          // Log tasks where user is the tasker
+          final taskerTasks = tasks.where((task) => task.taskerId == currentUser.id).toList();
+          print('[MyTaskScreen] Tasks where user is tasker: ${taskerTasks.length}');
+          for (var task in taskerTasks) {
+            print('[MyTaskScreen] - Task: ${task.title}, Status: ${task.status}, Mapped Status: ${_mapTaskStatusToUiStatus(task.status)}');
+          }
+          
           return tasks.where((task) {
             final isCorrectRole = (role == 'As Poster' && task.posterId == currentUser.id) ||
                 (role == 'As Tasker' && task.taskerId == currentUser.id);
 
             final mappedStatus = _mapTaskStatusToUiStatus(task.status);
             final isCorrectStatus = mappedStatus == status;
+            
+            // Debug log for each task
+            if (task.taskerId == currentUser.id || task.posterId == currentUser.id) {
+              print('[MyTaskScreen] Filtering task: ${task.title}');
+              print('  - TaskerId: ${task.taskerId}, PosterId: ${task.posterId}');
+              print('  - IsCorrectRole: $isCorrectRole (role=$role)');
+              print('  - Status: ${task.status} -> Mapped: $mappedStatus');
+              print('  - IsCorrectStatus: $isCorrectStatus (filter=$status)');
+              print('  - Will include: ${isCorrectRole && isCorrectStatus}');
+            }
 
             return isCorrectRole && isCorrectStatus;
           }).toList();
