@@ -58,6 +58,11 @@ android {
             } else {
                 signingConfigs.getByName("debug")
             }
+            // Add ProGuard rules for Stripe
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
 }

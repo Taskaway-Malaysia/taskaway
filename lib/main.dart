@@ -40,18 +40,25 @@ void main() async {
         // Set publishable key for both web and mobile
         Stripe.publishableKey = ApiConstants.stripePublishableKey;
         
-        if (kIsWeb) {
-          // For web, we need to apply settings after setting the key
-          await Stripe.instance.applySettings();
-          // ignore: avoid_print
-          print('[MAIN] Stripe web configuration applied successfully');
-        }
+        // ignore: avoid_print
+        print('[MAIN] Stripe publishable key set: ${ApiConstants.stripePublishableKey.substring(0, 20)}...');
+        
+        // Apply Stripe settings for all platforms
+        // The applySettings method initializes the Stripe SDK
+        await Stripe.instance.applySettings();
         
         // ignore: avoid_print
-        print('[MAIN] Stripe configuration prepared successfully');
-      } catch (e) {
+        print('[MAIN] Stripe settings applied for ${kIsWeb ? 'web' : 'mobile'}');
+        
+        // Verify initialization
         // ignore: avoid_print
-        print('[MAIN] Stripe initialization error (non-fatal): $e');
+        print('[MAIN] Stripe initialized successfully for ${kIsWeb ? 'web' : 'mobile'}');
+        print('[MAIN] Stripe instance: ${Stripe.instance}');
+      } catch (e, stack) {
+        // ignore: avoid_print
+        print('[MAIN] Stripe initialization error: $e');
+        print('[MAIN] Stack trace: $stack');
+        // Don't rethrow - let the app continue but log the error
       }
     } else {
       // ignore: avoid_print

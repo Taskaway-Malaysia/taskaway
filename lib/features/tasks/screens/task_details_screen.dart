@@ -236,6 +236,17 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
                       ),
                     ),
                     // Start button for tasker below the budget section when offer accepted
+                    // Debug logging for Start Task button
+                    () {
+                      print('DEBUG Start Task Button Check:');
+                      print('  - taskData.taskerId: ${taskData.taskerId}');
+                      print('  - currentUser?.id: ${currentUser?.id}');
+                      print('  - statusLc: $statusLc');
+                      print('  - taskerId == currentUserId: ${taskData.taskerId == currentUser?.id}');
+                      print('  - status is accepted: ${statusLc == 'accepted'}');
+                      print('  - Should show button: ${taskData.taskerId == currentUser?.id && statusLc == 'accepted'}');
+                      return const SizedBox.shrink();
+                    }(),
                     if (taskData.taskerId == currentUser?.id &&
                         statusLc == 'accepted') ...[
                       const SizedBox(height: 8),

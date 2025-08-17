@@ -154,12 +154,31 @@ class TaskRepository {
   Stream<List<Task>> watchAvailableTasks() {
     try {
       // First attempt to use Realtime subscription
+      // Note: Realtime doesn't support joins, so we'll use polling for offers
       return supabase
           .from(_tableName)
           .stream(primaryKey: ['id'])
           .eq('status', 'open') // Only show open tasks
           .order('created_at', ascending: false)
-          .map((data) => data.map((json) => Task.fromJson(json)).toList())
+          .asyncMap((data) async {
+            // For each task, fetch its offers
+            final tasksWithOffers = await Future.wait(
+              data.map((taskJson) async {
+                final taskId = taskJson['id'] as String;
+                // Fetch offers for this task
+                final offersResponse = await supabase
+                    .from('taskaway_applications')
+                    .select('*, tasker_profile:taskaway_profiles!tasker_id(*)')
+                    .eq('task_id', taskId)
+                    .eq('status', 'pending');
+                
+                // Add offers to task data
+                taskJson['offers'] = offersResponse;
+                return taskJson;
+              }).toList(),
+            );
+            return tasksWithOffers.map((json) => Task.fromJson(json)).toList();
+          })
           .handleError((error) {
             // Log the Realtime error
             print('Realtime subscription error for available tasks: $error');
@@ -191,7 +210,24 @@ class TaskRepository {
           .eq('status', 'open')
           .order('created_at', ascending: false);
       
-      return response.map((json) => Task.fromJson(json)).toList().cast<Task>();
+      // For each task, fetch its offers
+      final tasksWithOffers = await Future.wait(
+        response.map((taskJson) async {
+          final taskId = taskJson['id'] as String;
+          // Fetch offers for this task
+          final offersResponse = await supabase
+              .from('taskaway_applications')
+              .select('*, tasker_profile:taskaway_profiles!tasker_id(*)')
+              .eq('task_id', taskId)
+              .eq('status', 'pending');
+          
+          // Add offers to task data
+          taskJson['offers'] = offersResponse;
+          return taskJson;
+        }).toList(),
+      );
+      
+      return tasksWithOffers.map((json) => Task.fromJson(json)).toList().cast<Task>();
     } catch (e) {
       print('Error fetching available tasks: $e');
       return [];

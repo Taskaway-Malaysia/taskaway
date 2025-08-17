@@ -46,8 +46,25 @@ class _PaymentAuthorizationScreenState extends ConsumerState<PaymentAuthorizatio
   @override
   void initState() {
     super.initState();
+    print('[PaymentAuth] initState - Platform: ${kIsWeb ? 'Web' : 'Mobile'}');
+    print('[PaymentAuth] Mock payments enabled: ${ApiConstants.mockPayments}');
+    
     if (!kIsWeb) {
-      _cardController = CardFormEditController();
+      try {
+        print('[PaymentAuth] Creating CardFormEditController for mobile...');
+        _cardController = CardFormEditController();
+        print('[PaymentAuth] CardFormEditController created successfully');
+      } catch (e) {
+        print('[PaymentAuth] Error creating CardFormEditController: $e');
+      }
+    }
+    
+    // Log Stripe initialization status
+    try {
+      print('[PaymentAuth] Stripe publishable key: ${Stripe.publishableKey.substring(0, 20)}...');
+      print('[PaymentAuth] Stripe instance available: ${Stripe.instance != null}');
+    } catch (e) {
+      print('[PaymentAuth] Error checking Stripe status: $e');
     }
   }
 
@@ -397,15 +414,66 @@ class _PaymentAuthorizationScreenState extends ConsumerState<PaymentAuthorizatio
                             ),
                           )
                         else
-                          // Mobile: Use CardFormField (unchanged)
-                          CardFormField(
-                            controller: _cardController!,
-                            style: CardFormStyle(
-                              backgroundColor: Colors.white,
-                              borderRadius: 8,
-                              borderColor: Colors.grey.shade300,
-                              borderWidth: 1,
-                            ),
+                          // Mobile: Use CardFormField
+                          Builder(
+                            builder: (context) {
+                              print('[PaymentAuth] Building CardFormField for mobile');
+                              print('[PaymentAuth] Controller available: ${_cardController != null}');
+                              
+                              if (_cardController == null) {
+                                print('[PaymentAuth] CardController is null, showing error message');
+                                return Container(
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: Colors.red.shade50,
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: Colors.red.shade300),
+                                  ),
+                                  child: const Text(
+                                    'Error: Card input not available. Please restart the app.',
+                                    style: TextStyle(color: Colors.red),
+                                  ),
+                                );
+                              }
+                              
+                              try {
+                                return CardFormField(
+                                  controller: _cardController!,
+                                  style: CardFormStyle(
+                                    backgroundColor: Colors.white,
+                                    borderRadius: 8,
+                                    borderColor: Colors.grey.shade300,
+                                    borderWidth: 1,
+                                  ),
+                                );
+                              } catch (e) {
+                                print('[PaymentAuth] Error rendering CardFormField: $e');
+                                return Container(
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: Colors.orange.shade50,
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: Colors.orange.shade300),
+                                  ),
+                                  child: Column(
+                                    children: [
+                                      Text(
+                                        'Payment initialization error',
+                                        style: TextStyle(
+                                          color: Colors.orange.shade900,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        'Please restart the app to initialize payment system',
+                                        style: TextStyle(color: Colors.orange.shade700),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }
+                            },
                           ),
                       ],
 
