@@ -3,13 +3,12 @@
 /// Enum representing the status of a task.
 /// Matches the `taskaway_task_status` PostgreSQL enum.
 enum TaskStatus {
-  pending,
-  open,
-  in_progress,
-  pending_approval,
-  pending_payment,
-  completed,
-  cancelled;
+  open,          // Task posted, awaiting offers
+  accepted,      // Offer accepted, payment authorized
+  in_progress,   // Work has started
+  pending_approval, // Work submitted, awaiting review
+  completed,     // Task finished and approved
+  cancelled;     // Task cancelled
 
   String toJson() => name;
   static TaskStatus fromJson(String json) =>

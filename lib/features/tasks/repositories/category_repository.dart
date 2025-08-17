@@ -16,7 +16,7 @@ class CategoryRepository {
 
   Future<List<Category>> getCategories() async {
     // Since taskaway_categories is an ENUM and not a table, we'll use the hardcoded values
-    dev.log('Using hardcoded categories since taskaway_categories is an ENUM');
+    print('Using hardcoded categories since taskaway_categories is an ENUM');
     return _getDefaultCategories();
   }
 

@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter/foundation.dart';
 import '../../../core/constants/db_constants.dart';
 import '../models/message.dart';
 import '../models/channel.dart';
@@ -43,7 +44,7 @@ class MessageRepository {
 
       return Channel.fromJson(response);
     } catch (e) {
-      dev.log('Error creating channel: $e');
+      print('Error creating channel: $e');
       throw Exception('Failed to create channel');
     }
   }
@@ -58,7 +59,7 @@ class MessageRepository {
       
       return Channel.fromJson(response);
     } catch (e) {
-      dev.log('Error getting channel: $e');
+      print('Error getting channel: $e');
       return null;
     }
   }
@@ -103,7 +104,7 @@ class MessageRepository {
 
       return channel;
     } catch (e) {
-      dev.log('Error initiating task conversation: $e');
+      print('Error initiating task conversation: $e');
       throw Exception('Failed to initiate conversation');
     }
   }
@@ -193,7 +194,7 @@ class MessageRepository {
 
       return Message.fromJson(messageData);
     } catch (e) {
-      dev.log('Error sending message: $e');
+      print('Error sending message: $e');
       throw Exception('Failed to send message');
     }
   }
@@ -209,7 +210,7 @@ class MessageRepository {
 
       return (response as List).length;
     } catch (e) {
-      dev.log('Error getting unread count: $e');
+      print('Error getting unread count: $e');
       return 0;
     }
   }
@@ -232,7 +233,7 @@ class MessageRepository {
           .eq('channel_id', channelId)
           .eq('sender_id', isPoster ? channel['tasker_id'] : channel['poster_id']);
     } catch (e) {
-      dev.log('Error marking channel as read: $e');
+      print('Error marking channel as read: $e');
       throw Exception('Failed to mark channel as read');
     }
   }
@@ -385,7 +386,7 @@ class MessageRepository {
 
       return updatedMessages;
     } catch (e) {
-      dev.log('Error fetching older messages: $e');
+      print('Error fetching older messages: $e');
       return [];
     }
   }

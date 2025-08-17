@@ -1,3 +1,4 @@
+import 'dart:developer' as dev;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/task.dart';
@@ -82,10 +83,9 @@ String mapStatusToFilter(String status) {
   switch (status.toLowerCase()) {
     case 'open':
       return 'awaiting_offers';
-    case 'pending':
+    case 'accepted':
     case 'in_progress':
     case 'pending_approval':
-    case 'pending_payment':
       return 'upcoming_tasks';
     case 'completed':
     case 'cancelled':
@@ -196,7 +196,7 @@ class TaskController {
         posterName: posterName,
       );
     } catch (e) {
-      dev.log('Failed to send task notifications: $e');
+      print('Failed to send task notifications: $e');
       // Don't fail the task creation if notifications fail
     }
     
@@ -271,9 +271,9 @@ class TaskController {
       }
     }).toList();
     
-    // Update the task with the new status (pending), accepted offer, and tasker
+    // Update the task with the new status (accepted), accepted offer, and tasker
     await _repository.updateTask(taskId, {
-      'status': 'pending',
+      'status': 'accepted',
       'tasker_id': taskerId,
       'accepted_offer_id': offerId,
       'final_price': acceptedOffer['price'],
@@ -294,7 +294,7 @@ class TaskController {
         posterName: posterName,
       );
     } catch (e) {
-      dev.log('Failed to send offer acceptance notification: $e');
+      print('Failed to send offer acceptance notification: $e');
       // Don't fail the acceptance if notification fails
     }
 
@@ -316,7 +316,7 @@ class TaskController {
       );
     } catch (e) {
       // Log the error but don't fail the entire operation
-      dev.log('Error creating chat channel: $e');
+      print('Error creating chat channel: $e');
     }
   }
 
@@ -330,7 +330,7 @@ class TaskController {
           .single();
       return Profile.fromJson(data);
     } catch (e) {
-      dev.log('Error fetching profile for $userId: $e');
+      print('Error fetching profile for $userId: $e');
       return null;
     }
   }
@@ -347,7 +347,7 @@ class TaskController {
     }
     
     // Verify the task is in the correct state (offer accepted)
-    if (task.status != 'pending') {
+    if (task.status != 'accepted') {
       throw Exception(
         'This task cannot be started. Current status: ${task.status}',
       );
@@ -383,7 +383,7 @@ class TaskController {
     });
   }
   
-  // Approve a completed task (update status to completed)
+  // Approve a completed task and capture payment
   Future<void> approveTask(String taskId) async {
     // Get the current task
     final task = await _repository.getTaskById(taskId);
@@ -399,11 +399,20 @@ class TaskController {
       throw Exception('This task cannot be approved. Current status: ${task.status}');
     }
     
-    // Update the task
-    await _repository.updateTask(taskId, {
-      'status': 'completed',
-      'updated_at': DateTime.now().toIso8601String(),
-    });
+    // Check if there's a payment to capture
+    if (task.paymentIntentId != null) {
+      // Payment capture is handled by the payment controller
+      // The payment controller will also update the task status
+      // This method is called from UI which handles payment capture separately
+      print('Task has payment_intent_id: ${task.paymentIntentId}');
+    } else {
+      // Legacy flow: No payment to capture, just update status
+      print('No payment_intent_id found, using legacy approval flow');
+      await _repository.updateTask(taskId, {
+        'status': 'completed',
+        'updated_at': DateTime.now().toIso8601String(),
+      });
+    }
   }
   
   // Cancel a task (poster only) -> update status to cancelled
@@ -417,10 +426,10 @@ class TaskController {
       throw Exception('Only the task poster can cancel this task');
     }
     
-    // Allow cancelling when task is open or pending
-    if (task.status != 'open' && task.status != 'pending') {
+    // Allow cancelling when task is open or accepted
+    if (task.status != 'open' && task.status != 'accepted') {
       throw Exception(
-        'This task can only be cancelled when it is open or pending. '
+        'This task can only be cancelled when it is open or accepted. '
         'Current status: ${task.status}',
       );
     }
@@ -493,7 +502,7 @@ class TaskController {
       
       return true;
     } catch (e) {
-      dev.log('Error deleting task: $e');
+      print('Error deleting task: $e');
       return false;
     }
   }

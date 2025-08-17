@@ -58,7 +58,7 @@ class NotificationController extends _$NotificationController {
         posterName: posterName,
       );
     } catch (e) {
-      dev.log('Error in notifyTaskersOfNewTask: $e');
+      print('Error in notifyTaskersOfNewTask: $e');
     }
   }
 
@@ -82,7 +82,7 @@ class NotificationController extends _$NotificationController {
         offerPrice: offerPrice,
       );
     } catch (e) {
-      dev.log('Error in notifyPosterOfOffer: $e');
+      print('Error in notifyPosterOfOffer: $e');
     }
   }
 
@@ -104,7 +104,7 @@ class NotificationController extends _$NotificationController {
         posterName: posterName,
       );
     } catch (e) {
-      dev.log('Error in notifyTaskerOfAcceptedOffer: $e');
+      print('Error in notifyTaskerOfAcceptedOffer: $e');
     }
   }
 
@@ -124,7 +124,7 @@ class NotificationController extends _$NotificationController {
         taskerName: taskerName,
       );
     } catch (e) {
-      dev.log('Error in notifyPosterOfTaskCompletion: $e');
+      print('Error in notifyPosterOfTaskCompletion: $e');
     }
   }
 
@@ -148,7 +148,7 @@ class NotificationController extends _$NotificationController {
         posterName: posterName,
       );
     } catch (e) {
-      dev.log('Error in notifyTaskerOfPayment: $e');
+      print('Error in notifyTaskerOfPayment: $e');
     }
   }
 }

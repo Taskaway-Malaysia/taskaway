@@ -325,7 +325,7 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
                                   }
                                 }
                               } catch (e) {
-                                dev.log('Unexpected error during sign up: $e');
+                                print('Unexpected error during sign up: $e');
                                 if (mounted) {
                                   scaffoldMessenger.showSnackBar(
                                     const SnackBar(

@@ -37,6 +37,8 @@ dependencies:
   firebase_analytics: ^11.3.0
   web: ^1.1.1
   flutter_stripe: ^11.5.0
+  flutter_stripe_web: ^6.3.0
+  app_links: ^6.3.2
   # Replacing url_strategy with flutter_web_plugins configuration
 
 dev_dependencies:

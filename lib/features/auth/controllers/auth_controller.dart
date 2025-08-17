@@ -43,7 +43,7 @@ final currentProfileProvider = StreamProvider.autoDispose<Profile?>((ref) {
         .limit(1)
         .map((data) => data.isEmpty ? null : Profile.fromJson(data.first));
   } catch (e) {
-    dev.log('Error creating profile stream', error: e);
+    print('Error creating profile stream: $e');
     return Stream.value(null);
   }
 });
@@ -61,7 +61,7 @@ final profileProvider = StreamProvider.family.autoDispose<Profile?, String>((ref
         .limit(1)
         .map((data) => data.isEmpty ? null : Profile.fromJson(data.first));
   } catch (e) {
-    dev.log('Error creating profile stream for userId: $userId', error: e);
+    print('Error creating profile stream for userId: $userId - Error: $e');
     return Stream.value(null);
   }
 });
@@ -166,7 +166,7 @@ class AuthController extends StateNotifier<bool> {
   }) async {
     state = true;
     try {
-      dev.log('Verifying OTP: $email, token: $token, type: $type');
+      print('Verifying OTP: $email, token: $token, type: $type');
       final response = await supabase.auth.verifyOTP(
         email: email,
         token: token,
@@ -174,7 +174,7 @@ class AuthController extends StateNotifier<bool> {
       );
       return response;
     } catch (e) {
-      dev.log('Error verifying OTP: $e');
+      print('Error verifying OTP: $e');
       rethrow;
     } finally {
       state = false;
@@ -188,7 +188,7 @@ class AuthController extends StateNotifier<bool> {
   }) async {
     state = true;
     try {
-      dev.log('Resending OTP to: $email, type: $type');
+      print('Resending OTP to: $email, type: $type');
       if (type == OtpType.recovery) {
         await sendPasswordResetEmail(email);
       } else {
@@ -198,7 +198,7 @@ class AuthController extends StateNotifier<bool> {
         );
       }
     } catch (e) {
-      dev.log('Error resending OTP: $e');
+      print('Error resending OTP: $e');
       rethrow;
     } finally {
       state = false;
@@ -222,16 +222,16 @@ class AuthController extends StateNotifier<bool> {
   Future<UserResponse> updateUserMetadata(Map<String, dynamic> metadata) async {
     state = true;
     try {
-      dev.log('Updating user metadata: $metadata');
+      print('Updating user metadata: $metadata');
       final response = await supabase.auth.updateUser(
         UserAttributes(
           data: metadata,
         ),
       );
-      dev.log('User metadata updated successfully: ${response.user?.userMetadata}');
+      print('User metadata updated successfully: ${response.user?.userMetadata}');
       return response;
     } catch (e) {
-      dev.log('Error updating user metadata: $e');
+      print('Error updating user metadata: $e');
       rethrow;
     } finally {
       state = false;

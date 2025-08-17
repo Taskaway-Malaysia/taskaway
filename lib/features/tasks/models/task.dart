@@ -24,6 +24,7 @@ class Task {
   final String? locationType;
   final bool? providesMaterials;
   final List<Map<String, dynamic>>? offers;
+  final String? paymentIntentId;
 
   String? get posterName => posterProfile?['full_name'] as String?;
   String? get taskerName => taskerProfile?['full_name'] as String?;
@@ -51,6 +52,7 @@ class Task {
     this.timeOfDay,
     this.locationType,
     this.providesMaterials,
+    this.paymentIntentId,
   })  : id = id ?? '',
         createdAt = createdAt ?? DateTime.now(),
         updatedAt = updatedAt ?? DateTime.now();
@@ -83,6 +85,7 @@ class Task {
       timeOfDay: json['time_of_day'] as String?,
       locationType: json['location_type'] as String?,
       providesMaterials: json['provides_materials'] as bool?,
+      paymentIntentId: json['payment_intent_id'] as String?,
     );
   }
 
@@ -105,6 +108,7 @@ class Task {
       if (timeOfDay != null) 'time_of_day': timeOfDay,
       if (locationType != null) 'location_type': locationType,
       if (providesMaterials != null) 'provides_materials': providesMaterials,
+      if (paymentIntentId != null) 'payment_intent_id': paymentIntentId,
     };
   }
 
@@ -130,6 +134,7 @@ class Task {
     String? timeOfDay,
     String? locationType,
     bool? providesMaterials,
+    String? paymentIntentId,
   }) {
     return Task(
       id: id ?? this.id,
@@ -153,6 +158,7 @@ class Task {
       timeOfDay: timeOfDay ?? this.timeOfDay,
       locationType: locationType ?? this.locationType,
       providesMaterials: providesMaterials ?? this.providesMaterials,
+      paymentIntentId: paymentIntentId ?? this.paymentIntentId,
     );
   }
 
@@ -180,7 +186,8 @@ class Task {
           needsSpecificTime == other.needsSpecificTime &&
           timeOfDay == other.timeOfDay &&
           locationType == other.locationType &&
-          providesMaterials == other.providesMaterials;
+          providesMaterials == other.providesMaterials &&
+          paymentIntentId == other.paymentIntentId;
 
   // Helper method to compare lists
   bool _listEquals<T>(List<T>? a, List<T>? b) {
@@ -214,5 +221,6 @@ class Task {
       needsSpecificTime.hashCode ^
       timeOfDay.hashCode ^
       locationType.hashCode ^
-      providesMaterials.hashCode;
+      providesMaterials.hashCode ^
+      paymentIntentId.hashCode;
 }

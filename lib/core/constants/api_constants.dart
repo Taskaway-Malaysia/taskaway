@@ -8,7 +8,10 @@ class ApiConstants {
   
   // Payments / Integrations
   // Toggle to true in development to bypass real Stripe calls
-  static const bool mockPayments = true;
+  static const bool mockPayments = false;
+  
+  // Stripe Configuration
+  static const String stripePublishableKey = 'pk_test_51RUxP5PNCUSI0FBOWAUJlNXifjQBUiGQI4VNWcrC7zymgCIWDavy7qetpxYITXe45LCjvVFDNNkafnI8uDbunDyZ00V446s1UF';
   
   // Storage Buckets
   static const String taskImagesBucket = 'task-images';

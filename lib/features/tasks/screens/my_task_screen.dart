@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:taskaway/features/auth/controllers/auth_controller.dart';
 import 'package:taskaway/features/auth/models/profile.dart';
 import 'package:taskaway/features/profile/controllers/profile_controller.dart';
-import 'package:taskaway/features/tasks/components/task_card.dart';
+import 'package:taskaway/features/tasks/components/task_card_with_message.dart';
 import 'package:taskaway/features/tasks/controllers/task_controller.dart';
 import 'package:taskaway/features/tasks/models/task.dart';
 import 'package:taskaway/features/applications/repositories/application_repository.dart';
@@ -20,11 +20,11 @@ final tasksWithUserApplicationsProvider =
     FutureProvider.autoDispose<List<Task>>((ref) async {
   final currentUser = ref.watch(currentUserProvider);
 
-  dev.log('tasksWithUserApplicationsProvider called');
-  dev.log('currentUser: ${currentUser?.id}');
+  print('tasksWithUserApplicationsProvider called');
+  print('currentUser: ${currentUser?.id}');
 
   if (currentUser == null) {
-    dev.log('currentUser is null, returning empty list');
+    print('currentUser is null, returning empty list');
     return [];
   }
 
@@ -37,7 +37,7 @@ final tasksWithUserApplicationsProvider =
       .toList();
 
   if (pendingApplications.isEmpty) {
-    dev.log('No user applications found');
+    print('No user applications found');
     return [];
   }
 
@@ -47,7 +47,7 @@ final tasksWithUserApplicationsProvider =
   final taskRepo = ref.read(taskRepositoryProvider);
   final tasks = await taskRepo.getTasksByIds(taskIds, status: 'open');
 
-  dev.log('Returning ${tasks.length} tasks with user applications');
+  print('Returning ${tasks.length} tasks with user applications');
   return tasks;
 });
 
@@ -98,10 +98,9 @@ String _mapTaskStatusToUiStatus(String dbStatus) {
   switch (dbStatus.toLowerCase()) {
     case 'open':
       return 'Awaiting offers';
-    case 'pending':
+    case 'accepted':
     case 'in_progress':
     case 'pending_approval':
-    case 'pending_payment':
       return 'Upcoming tasks';
     case 'completed':
     case 'cancelled':
@@ -163,7 +162,7 @@ class MyTaskScreen extends ConsumerWidget {
                           itemBuilder: (context, index) {
                             return Padding(
                               padding: const EdgeInsets.only(bottom: 16.0),
-                              child: TaskCard(task: tasks[index]),
+                              child: TaskCardWithMessage(task: tasks[index]),
                             );
                           },
                         );

@@ -27,14 +27,14 @@ class TaskRepository {
           .map((data) => data.map((json) => Task.fromJson(json)).toList())
           .handleError((error) {
             // Log the Realtime error
-            dev.log('Realtime subscription error: $error');
+            print('Realtime subscription error: $error');
             
             // If Realtime fails, fall back to a polling-based stream
             return _createPollingStream();
           });
     } catch (e) {
       // If setting up the Realtime stream fails, fall back to polling
-      dev.log('Error setting up Realtime stream: $e');
+      print('Error setting up Realtime stream: $e');
       return _createPollingStream();
     }
   }
@@ -52,7 +52,7 @@ class TaskRepository {
       final response = await query.order('created_at', ascending: false);
       return response.map((json) => Task.fromJson(json)).toList().cast<Task>();
     } catch (e) {
-      dev.log('Error fetching tasks by ids: $e');
+      print('Error fetching tasks by ids: $e');
       return [];
     }
   }
@@ -77,14 +77,14 @@ class TaskRepository {
           .asyncMap((_) => getTaskById(id))
           .handleError((error) {
             // Log the Realtime error
-            dev.log('Realtime task subscription error: $error');
+            print('Realtime task subscription error: $error');
             
             // If Realtime fails, fall back to a polling-based stream
             return _createTaskPollingStream(id);
           });
     } catch (e) {
       // If setting up the Realtime stream fails, fall back to polling
-      dev.log('Error setting up Realtime task stream: $e');
+      print('Error setting up Realtime task stream: $e');
       return _createTaskPollingStream(id);
     }
   }
@@ -145,7 +145,7 @@ class TaskRepository {
       
       return response.map((json) => Task.fromJson(json)).toList().cast<Task>();
     } catch (e) {
-      dev.log('Error fetching tasks: $e');
+      print('Error fetching tasks: $e');
       return [];
     }
   }
@@ -162,14 +162,14 @@ class TaskRepository {
           .map((data) => data.map((json) => Task.fromJson(json)).toList())
           .handleError((error) {
             // Log the Realtime error
-            dev.log('Realtime subscription error for available tasks: $error');
+            print('Realtime subscription error for available tasks: $error');
             
             // If Realtime fails, fall back to a polling-based stream
             return _createAvailableTasksPollingStream();
           });
     } catch (e) {
       // If setting up the Realtime stream fails, fall back to polling
-      dev.log('Error setting up Realtime stream for available tasks: $e');
+      print('Error setting up Realtime stream for available tasks: $e');
       return _createAvailableTasksPollingStream();
     }
   }
@@ -193,7 +193,7 @@ class TaskRepository {
       
       return response.map((json) => Task.fromJson(json)).toList().cast<Task>();
     } catch (e) {
-      dev.log('Error fetching available tasks: $e');
+      print('Error fetching available tasks: $e');
       return [];
     }
   }
