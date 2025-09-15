@@ -6,6 +6,10 @@ import 'package:taskaway/features/tasks/components/task_card.dart';
 import 'package:taskaway/features/tasks/controllers/task_controller.dart';
 import 'package:taskaway/core/widgets/qwerty_overlay.dart';
 import 'package:taskaway/features/tasks/models/task.dart';
+import 'package:taskaway/features/home/widgets/map_widget.dart';
+import 'package:taskaway/features/home/widgets/tasker_poster_toggle.dart';
+import 'package:taskaway/features/home/widgets/search_overlay.dart';
+import 'package:taskaway/features/home/widgets/view_list_toggle.dart';
 
 // Provider for browse page region filter
 final regionFilterProvider = StateProvider<String>((ref) => 'All Regions');
@@ -134,228 +138,349 @@ class _TaskerHomeScreenState extends ConsumerState<TaskerHomeScreen> {
     final selectedSort = ref.watch(sortFilterProvider);
     final availablePostcodes = ref.watch(availablePostcodesProvider);
     final isSearching = ref.watch(isSearchingProvider);
+    final viewMode = ref.watch(viewModeProvider);
+    final userMode = ref.watch(userModeProvider);
 
-    return Stack(
-      children: [
-        Column(children: [
-          // Header with filters
-          Container(
-            padding: const EdgeInsets.only(top: 50, left: 16, right: 16, bottom: 16),
-            decoration: const BoxDecoration(
-              color: Color(0xFFF39C12),
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(30),
-                bottomRight: Radius.circular(30),
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    if (isSearching)
-                      Expanded(
-                        child: TextField(
-                          controller: _searchController,
-                          focusNode: _searchFocusNode,
-                          autofocus: true,
-                          decoration: const InputDecoration(
-                            hintText: 'Search tasks...',
-                            border: InputBorder.none,
-                            hintStyle: TextStyle(color: Colors.black54),
-                          ),
-                          style: const TextStyle(
-                            color: Colors.black,
-                            fontSize: 18,
-                          ),
-                        ),
+    return Scaffold(
+      body: Stack(
+        children: [
+          // Main content (map or list)
+          _buildMainContent(context, ref, viewMode),
+          
+          // Top Section - exact Figma implementation
+          _buildTopSection(context, ref),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMainContent(BuildContext context, WidgetRef ref, ViewMode viewMode) {
+    final tasksAsync = ref.watch(filteredAvailableTasksProvider);
+
+    return tasksAsync.when(
+      data: (tasks) {
+        if (viewMode == ViewMode.map) {
+          // Map view
+          return MapWidget(
+            tasks: tasks,
+            onTaskTap: (task) {
+              context.push('/task/${task.id}');
+            },
+          );
+        } else {
+          // List view
+          return Column(
+            children: [
+              const SizedBox(height: 200), // Space for header
+              Expanded(
+                child: tasks.isEmpty
+                    ? const Center(
+                        child: Text('No available tasks found'),
                       )
-                    else
-                      const Text(
-                        'Browse Task',
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
+                    : ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: tasks.length,
+                        itemBuilder: (context, index) {
+                          final task = tasks[index];
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 16.0),
+                            child: TaskCard(
+                              task: task,
+                            ),
+                          );
+                        },
                       ),
-                    Row(
-                      children: [
-                        IconButton(
-                          icon: Icon(isSearching ? Icons.close : Icons.search, color: Colors.black, size: 28),
-                          onPressed: () {
-                            final newIsSearching = !isSearching;
-                            ref.read(isSearchingProvider.notifier).state = newIsSearching;
-                            if (newIsSearching) {
-                              _searchFocusNode.requestFocus();
-                            } else {
-                              _searchController.clear();
-                              _searchFocusNode.unfocus();
-                            }
-                          },
-                        ),
-                        if (!isSearching)
-                          IconButton(
-                            icon: const Icon(Icons.notifications_outlined, color: Colors.black, size: 28),
-                            onPressed: () {
-                              context.push('/notifications');
-                            },
-                          ),
-                      ],
+              ),
+            ],
+          );
+        }
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, stack) => Center(child: Text('Error: $error')),
+    );
+  }
+
+  void _showFilterBottomSheet(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Filters',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            // Add filter options here
+            Row(
+              children: [
+                Expanded(
+                  child: _buildDropdownContainer(
+                    child: DropdownButton<String>(
+                      value: ref.watch(regionFilterProvider),
+                      hint: const Text('Region'),
+                      underline: Container(),
+                      icon: const Icon(Icons.arrow_drop_down),
+                      onChanged: (String? newValue) {
+                        if (newValue != null) {
+                          ref.read(regionFilterProvider.notifier).state = newValue;
+                        }
+                      },
+                      items: ref.watch(availablePostcodesProvider).map<DropdownMenuItem<String>>((String value) {
+                        return DropdownMenuItem<String>(
+                          value: value,
+                          child: Text(value, style: const TextStyle(fontSize: 14)),
+                        );
+                      }).toList(),
                     ),
-                  ],
+                  ),
                 ),
-                const SizedBox(height: 16),
-                // Filters Row
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Consumer(builder: (context, ref, _) {
-                    return Row(
-                      children: [
-                        // Region filter
-                        _buildDropdownContainer(
-                          child: DropdownButton<String>(
-                            value: selectedRegion,
-                            hint: const Text('Region'),
-                            underline: Container(),
-                            icon: const Icon(Icons.arrow_drop_down),
-                            onChanged: (String? newValue) {
-                              if (newValue != null) {
-                                ref.read(regionFilterProvider.notifier).state = newValue;
-                              }
-                            },
-                            items: availablePostcodes.map<DropdownMenuItem<String>>((String value) {
-                              return DropdownMenuItem<String>(
-                                value: value,
-                                child: Text(value, style: const TextStyle(fontSize: 14)),
-                              );
-                            }).toList(),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        // Category filter
-                        _buildDropdownContainer(
-                          child: DropdownButton<String>(
-                            value: selectedCategory,
-                            hint: const Text('Category'),
-                            underline: Container(),
-                            icon: const Icon(Icons.arrow_drop_down),
-                            onChanged: (String? newValue) {
-                              if (newValue != null) {
-                                ref.read(categoryFilterProvider.notifier).state = newValue;
-                              }
-                            },
-                            items: <String>[
-                              'All Categories',
-                              'Handyman',
-                              'Cleaning',
-                              'Gardening',
-                              'Painting',
-                              'Organizing',
-                              'Pet Care',
-                              'Self Care',
-                              'Events & Photography',
-                              'Others'
-                            ].map<DropdownMenuItem<String>>((String value) {
-                              return DropdownMenuItem<String>(
-                                value: value,
-                                child: Text(value, style: const TextStyle(fontSize: 14)),
-                              );
-                            }).toList(),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        // Sort filter
-                        _buildDropdownContainer(
-                          child: DropdownButton<String>(
-                            value: selectedSort,
-                            hint: const Text('Sort by'),
-                            underline: Container(),
-                            icon: const Icon(Icons.arrow_drop_down),
-                            onChanged: (String? newValue) {
-                              if (newValue != null) {
-                                ref.read(sortFilterProvider.notifier).state = newValue;
-                              }
-                            },
-                            items: <String>['Latest', 'Price: High to Low', 'Price: Low to High']
-                                .map<DropdownMenuItem<String>>((String value) {
-                              return DropdownMenuItem<String>(
-                                value: value,
-                                child: Text(value, style: const TextStyle(fontSize: 14)),
-                              );
-                            }).toList(),
-                          ),
-                        ),
-                      ],
-                    );
-                  }),
-                ),
-                const SizedBox(height: 16),
-                // Title text
-                const Text(
-                  'Grab a Task. Earn Money.',
-                  style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _buildDropdownContainer(
+                    child: DropdownButton<String>(
+                      value: ref.watch(categoryFilterProvider),
+                      hint: const Text('Category'),
+                      underline: Container(),
+                      icon: const Icon(Icons.arrow_drop_down),
+                      onChanged: (String? newValue) {
+                        if (newValue != null) {
+                          ref.read(categoryFilterProvider.notifier).state = newValue;
+                        }
+                      },
+                      items: <String>[
+                        'All Categories',
+                        'Handyman',
+                        'Cleaning',
+                        'Gardening',
+                        'Painting',
+                        'Organizing',
+                        'Pet Care',
+                        'Self Care',
+                        'Events & Photography',
+                        'Others'
+                      ].map<DropdownMenuItem<String>>((String value) {
+                        return DropdownMenuItem<String>(
+                          value: value,
+                          child: Text(value, style: const TextStyle(fontSize: 14)),
+                        );
+                      }).toList(),
+                    ),
+                  ),
                 ),
               ],
             ),
-          ),
-
-          // Available tasks list
-          Expanded(
-            child: Consumer(builder: (context, ref, _) {
-              final tasksAsync = ref.watch(filteredAvailableTasksProvider);
-
-              return tasksAsync.when(
-                data: (tasks) {
-                  if (tasks.isEmpty) {
-                    return const Center(
-                      child: Text('No available tasks found'),
-                    );
+            const SizedBox(height: 16),
+            _buildDropdownContainer(
+              child: DropdownButton<String>(
+                value: ref.watch(sortFilterProvider),
+                hint: const Text('Sort by'),
+                underline: Container(),
+                icon: const Icon(Icons.arrow_drop_down),
+                isExpanded: true,
+                onChanged: (String? newValue) {
+                  if (newValue != null) {
+                    ref.read(sortFilterProvider.notifier).state = newValue;
                   }
-
-                  return ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: tasks.length,
-                    itemBuilder: (context, index) {
-                      final task = tasks[index];
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 16.0),
-                        child: TaskCard(
-                          task: task,
-                        ),
-                      );
-                    },
-                  );
                 },
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (error, stack) => Center(child: Text('Error: $error')),
-              );
-            }),
-          ),
-        ]),
-        if (isSearching)
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: QwertyOverlay(
-              previewController: _searchController,
-              onCharacterPressed: (char) {
-                _searchController.text += char;
-              },
-              onBackspacePressed: () {
-                if (_searchController.text.isNotEmpty) {
-                  _searchController.text = _searchController.text.substring(0, _searchController.text.length - 1);
-                }
-              },
-              onConfirmPressed: () {
-                ref.read(isSearchingProvider.notifier).state = false;
-                _searchFocusNode.unfocus();
-              },
+                items: <String>['Latest', 'Price: High to Low', 'Price: Low to High']
+                    .map<DropdownMenuItem<String>>((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value, style: const TextStyle(fontSize: 14)),
+                  );
+                }).toList(),
+              ),
             ),
-          ),
-      ],
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Apply Filters'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTopSection(BuildContext context, WidgetRef ref) {
+    final userMode = ref.watch(userModeProvider);
+    
+    return Positioned(
+      top: 0,
+      left: 0,
+      right: 0,
+      child: Container(
+        width: 394,
+        height: 151,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border.all(color: Colors.white, width: 1),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.25),
+              blurRadius: 4,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Stack(
+          children: [
+            // Yellow accent line at bottom
+            Positioned(
+              left: 0,
+              top: 149,
+              child: Container(
+                width: 197,
+                height: 2,
+                color: const Color(0xFFFFC333),
+              ),
+            ),
+            
+            // Search area at position (25.5, 62)
+            Positioned(
+              left: 25.5,
+              top: 62,
+              child: Row(
+                children: [
+                  // Search bar (292px width, exact Figma sizing)
+                  Container(
+                    width: 292,
+                    height: 44, // Match filter button height
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      border: Border.all(color: const Color(0xFFE4E4E4), width: 1),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Row(
+                      children: [
+                        // Search icon (24x24 frame with 11x11 icon)
+                        Container(
+                          width: 24,
+                          height: 24,
+                          alignment: Alignment.center,
+                          child: const Icon(
+                            Icons.search,
+                            size: 11,
+                            color: Color(0xFF202020),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        // Search text
+                        Expanded(
+                          child: TextField(
+                            controller: _searchController,
+                            focusNode: _searchFocusNode,
+                            decoration: const InputDecoration(
+                              hintText: 'Search for any service',
+                              border: InputBorder.none,
+                              enabledBorder: InputBorder.none,
+                              focusedBorder: InputBorder.none,
+                              filled: false,
+                              hintStyle: TextStyle(
+                                fontFamily: 'Instrument Sans',
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: Color(0xFF202020),
+                              ),
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                            style: const TextStyle(
+                              fontFamily: 'Instrument Sans',
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: Color(0xFF202020),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  
+                  const SizedBox(width: 8), // 8px gap
+                  
+                  // Filter button (exactly 44x44px as per Figma)
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      border: Border.all(color: const Color(0xFFD9D9D9), width: 1),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () {
+                          _showFilterBottomSheet(context, ref);
+                        },
+                        borderRadius: BorderRadius.circular(6),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 5),
+                          child: const Icon(
+                            Icons.tune,
+                            size: 16.5,
+                            color: Colors.black,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            
+            // TASKER toggle at position (78, 123)
+            Positioned(
+              left: 78,
+              top: 123,
+              child: GestureDetector(
+                onTap: () {
+                  ref.read(userModeProvider.notifier).state = UserMode.tasker;
+                },
+                child: Text(
+                  'TASKER',
+                  style: TextStyle(
+                    fontFamily: 'Instrument Sans',
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.1,
+                    color: userMode == UserMode.tasker 
+                        ? const Color(0xFF000000) 
+                        : const Color(0xFF788494),
+                  ),
+                ),
+              ),
+            ),
+            
+            // POSTER toggle at position (251, 123)
+            Positioned(
+              left: 251,
+              top: 123,
+              child: GestureDetector(
+                onTap: () {
+                  ref.read(userModeProvider.notifier).state = UserMode.poster;
+                },
+                child: Text(
+                  'POSTER',
+                  style: TextStyle(
+                    fontFamily: 'Instrument Sans',
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.1,
+                    color: userMode == UserMode.poster 
+                        ? const Color(0xFF000000) 
+                        : const Color(0xFF788494),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

@@ -16,6 +16,10 @@ class ApiConstants {
   // Storage Buckets
   static const String taskImagesBucket = 'task-images';
   
+  // MapTiler Configuration
+  static const String mapTilerApiKey = '3rwsmrzemB8A99DT82ka'; // TODO: Replace with actual MapTiler API key
+  static const String mapTilerStyleUrl = 'https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key=';
+  
   // API Endpoints
   static const String billplzApiEndpoint = 'https://www.billplz-sandbox.com/api/v3';
   static const String billplzCallbackUrl = 'https://aytxvyemlspkzzmwpqkz.functions.supabase.co/billplz-callback';

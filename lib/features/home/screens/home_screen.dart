@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:taskaway/features/auth/controllers/auth_controller.dart';
 import 'package:taskaway/features/home/screens/poster_home_screen.dart';
 import 'package:taskaway/features/home/screens/tasker_home_screen.dart';
+import 'package:taskaway/features/home/screens/map_home_screen.dart';
 
 final currentIndexProvider = StateProvider<int>((ref) => 0);
 
@@ -22,16 +23,12 @@ class HomeScreen extends ConsumerWidget {
     
     // Determine the current index based on location
     int actualIndex;
-    if (currentLocation == '/home/browse') {
-      actualIndex = 0;
-    } else if (currentLocation == '/home/tasks') {
-      actualIndex = 1;
-    } else if (currentLocation == '/home/post-task') {
-      actualIndex = 2;
+    if (currentLocation == '/home/browse' || currentLocation == '/home/tasks' || currentLocation == '/home/post-task') {
+      actualIndex = 0; // Home tab
     } else if (currentLocation.startsWith('/home/chat')) {
-      actualIndex = 3;
+      actualIndex = 1; // Message tab
     } else if (currentLocation == '/home/profile') {
-      actualIndex = 4;
+      actualIndex = 2; // Profile tab
     } else {
       actualIndex = ref.watch(currentIndexProvider);
     }
@@ -43,14 +40,8 @@ class HomeScreen extends ConsumerWidget {
     // or the role-specific home screen for the main home route.
     Widget body;
     if (currentLocation == '/home/browse') {
-      // Always show TaskerHomeScreen (browse screen) for all users
-      body = profileAsync.when(
-        data: (profile) => TaskerHomeScreen(profile: profile),
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(
-          child: Text('Error loading profile: $error'),
-        ),
-      );
+      // Show the new map-based home screen
+      body = const MapHomeScreen();
     } else if (currentLocation == '/home/post-task') {
       // Always show PosterHomeScreen when accessing post-task route
       body = profileAsync.when(
@@ -67,45 +58,62 @@ class HomeScreen extends ConsumerWidget {
     return Scaffold(
       body: body,
       bottomNavigationBar: showBottomNav
-          ? NavigationBar(
-              selectedIndex: actualIndex,
-              onDestinationSelected: (index) {
-                // Prevent navigating to the same page
-                if (actualIndex == index) return;
+          ? Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, -2),
+                  ),
+                ],
+              ),
+              child: BottomNavigationBar(
+                currentIndex: actualIndex,
+                onTap: (index) {
+                  // Prevent navigating to the same page
+                  if (actualIndex == index) return;
 
-                ref.read(currentIndexProvider.notifier).state = index;
-                switch (index) {
-                  case 0:
-                    context.go('/home/browse');
-                    break;
-                  case 1:
-                    context.go('/home/tasks');
-                    break;
-                  case 2:
-                    // Navigate to post-task route to show poster home screen
-                    // Both poster and tasker roles can create tasks
-                    context.go('/home/post-task');
-                    break;
-                  case 3:
-                    context.go('/home/chat');
-                    break;
-                  case 4:
-                    context.go('/home/profile');
-                    break;
-                }
-              },
-              destinations: const [
-                NavigationDestination(
-                    icon: Icon(Icons.search), label: 'Browse'),
-                NavigationDestination(
-                    icon: Icon(Icons.assignment_outlined), label: 'My Tasks'),
-                NavigationDestination(
-                    icon: Icon(Icons.add_circle_outline), label: 'Post Task'),
-                NavigationDestination(
-                    icon: Icon(Icons.chat_bubble_outline), label: 'Messages'),
-                NavigationDestination(
-                    icon: Icon(Icons.person_outline), label: 'Profile'),
-              ],
+                  ref.read(currentIndexProvider.notifier).state = index;
+                  switch (index) {
+                    case 0:
+                      context.go('/home/browse');
+                      break;
+                    case 1:
+                      context.go('/home/chat');
+                      break;
+                    case 2:
+                      context.go('/home/profile');
+                      break;
+                  }
+                },
+                type: BottomNavigationBarType.fixed,
+                backgroundColor: Colors.white,
+                selectedItemColor: Colors.amber.shade800,
+                unselectedItemColor: Colors.grey.shade600,
+                selectedFontSize: 12,
+                unselectedFontSize: 12,
+                iconSize: 24,
+                elevation: 0,
+                items: const [
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.home_outlined),
+                    activeIcon: Icon(Icons.home),
+                    label: 'Home',
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.mail_outline),
+                    activeIcon: Icon(Icons.mail),
+                    label: 'Message',
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.person_outline),
+                    activeIcon: Icon(Icons.person),
+                    label: 'Profile',
+                  ),
+                ],
+              ),
             )
           : null,
     );
