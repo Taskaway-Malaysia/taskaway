@@ -16,19 +16,46 @@ class TaskRepository {
 
   TaskRepository({required this.supabase});
 
-  // Watch all tasks (stream)
+  // Watch all tasks (stream) with poster profiles
   Stream<List<Task>> watchTasks() {
     try {
       // First attempt to use Realtime subscription
+      // Note: Realtime doesn't support joins, so we need to fetch profiles separately
       return supabase
           .from(_tableName)
           .stream(primaryKey: ['id'])
           .order('created_at', ascending: false)
-          .map((data) => data.map((json) => Task.fromJson(json)).toList())
+          .asyncMap((data) async {
+            // For each task, fetch the poster profile
+            final tasksWithProfiles = await Future.wait(
+              data.map((taskJson) async {
+                final posterId = taskJson['poster_id'];
+                if (posterId != null) {
+                  try {
+                    // Fetch the poster profile
+                    final profileResponse = await supabase
+                        .from('taskaway_profiles')
+                        .select()
+                        .eq('id', posterId)
+                        .single();
+
+                    // Add the poster profile to the task data
+                    taskJson['poster_profile'] = profileResponse;
+                  } catch (e) {
+                    // If profile fetch fails, continue without it
+                    print('Error fetching poster profile for $posterId: $e');
+                  }
+                }
+                return taskJson;
+              }).toList(),
+            );
+
+            return tasksWithProfiles.map((json) => Task.fromJson(json)).toList();
+          })
           .handleError((error) {
             // Log the Realtime error
             print('Realtime subscription error: $error');
-            
+
             // If Realtime fails, fall back to a polling-based stream
             return _createPollingStream();
           });
@@ -43,7 +70,7 @@ class TaskRepository {
   Future<List<Task>> getTasksByIds(List<String> ids, {String? status}) async {
     if (ids.isEmpty) return [];
     try {
-      var query = supabase.from(_tableName).select();
+      var query = supabase.from(_tableName).select('*, poster_profile:taskaway_profiles!poster_id(*)');
       final orExpr = ids.map((id) => 'id.eq.$id').join(',');
       query = query.or(orExpr);
       if (status != null) {
@@ -53,6 +80,22 @@ class TaskRepository {
       return response.map((json) => Task.fromJson(json)).toList().cast<Task>();
     } catch (e) {
       print('Error fetching tasks by ids: $e');
+      return [];
+    }
+  }
+
+  // Get tasks by poster ID
+  Future<List<Task>> getTasksByPosterId(String posterId) async {
+    try {
+      final response = await supabase
+          .from(_tableName)
+          .select('*, poster_profile:taskaway_profiles!poster_id(*)')
+          .eq('poster_id', posterId)
+          .order('created_at', ascending: false);
+
+      return response.map((json) => Task.fromJson(json)).toList().cast<Task>();
+    } catch (e) {
+      print('Error fetching tasks by poster: $e');
       return [];
     }
   }
@@ -135,14 +178,14 @@ class TaskRepository {
         .eq('id', id);
   }
   
-  // Get all tasks (for polling fallback)
+  // Get all tasks with poster profiles (for polling fallback)
   Future<List<Task>> getTasks() async {
     try {
       final response = await supabase
           .from(_tableName)
-          .select()
+          .select('*, poster_profile:taskaway_profiles!poster_id(*)')
           .order('created_at', ascending: false);
-      
+
       return response.map((json) => Task.fromJson(json)).toList().cast<Task>();
     } catch (e) {
       print('Error fetching tasks: $e');

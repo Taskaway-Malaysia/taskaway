@@ -13,7 +13,7 @@ class MessageListScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final channelsAsync = ref.watch(userChannelsProvider);
-    
+
     return channelsAsync.when(
       data: (channels) => _buildChatList(context, theme, channels, ref),
       loading: () => _buildLoadingScaffold(theme),
@@ -25,20 +25,34 @@ class MessageListScreen extends ConsumerWidget {
     final currentUser = ref.watch(currentUserProvider);
     final currentUserId = currentUser?.id ?? '';
 
+    // Mock data for demo - map channel IDs to profile images
+    final profileImages = {
+      0: 'assets/images/profile_siti.png',
+      1: 'assets/images/profile_junior.png',
+      2: 'assets/images/profile_qistina.png',
+      3: 'assets/images/profile_mike.png',
+    };
+
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Messages'),
-        backgroundColor: const Color(0xFF6C5CE7),
-        foregroundColor: Colors.white,
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {
-              // TODO: Implement search functionality
-            },
+        backgroundColor: Colors.white,
+        elevation: 0,
+        toolbarHeight: 80,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, size: 20, color: Colors.black),
+          onPressed: () => context.go('/home'),
+        ),
+        title: const Text(
+          'Message',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF202020),
+            letterSpacing: 0.48, // 2% of 24px
           ),
-        ],
+        ),
+        centerTitle: true,
       ),
       body: channelsList.isEmpty
           ? Center(
@@ -67,8 +81,14 @@ class MessageListScreen extends ConsumerWidget {
                 ],
               ),
             )
-          : ListView.builder(
+          : ListView.separated(
+              padding: const EdgeInsets.symmetric(vertical: 8),
               itemCount: channelsList.length,
+              separatorBuilder: (context, index) => Container(
+                height: 1,
+                color: const Color(0xFFE8E9F1),
+                margin: const EdgeInsets.symmetric(horizontal: 8),
+              ),
               itemBuilder: (context, index) {
                 final channel = channelsList[index];
                 final isCurrentUserPoster = channel.posterId == currentUserId;
@@ -76,9 +96,11 @@ class MessageListScreen extends ConsumerWidget {
                     ? channel.taskerName
                     : channel.posterName;
 
+                // Get profile image based on index (cycling through available images)
+                final profileImage = profileImages[index % profileImages.length];
+
                 return InkWell(
                   onTap: () {
-                    // Navigate to chat screen using named route with channel as extra
                     context.pushNamed(
                       'chat-room',
                       pathParameters: {'id': channel.id},
@@ -86,109 +108,127 @@ class MessageListScreen extends ConsumerWidget {
                     );
                   },
                   child: Container(
-                    decoration: BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(
-                          color: Colors.grey.shade200,
-                          width: 1,
-                        ),
-                      ),
-                    ),
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
+                      horizontal: 15,
+                      vertical: 16,
                     ),
                     child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Avatar
-                        CircleAvatar(
-                          radius: 36,
-                          backgroundColor: Colors.grey.shade300,
-                          child: Text(
-                            otherPersonName.isNotEmpty
-                                ? otherPersonName[0].toUpperCase()
-                                : '?',
-                            style: const TextStyle(
-                              color: Colors.black54,
-                              fontWeight: FontWeight.bold,
-                            ),
+                        Container(
+                          width: 58,
+                          height: 58,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.grey.shade300,
+                            image: profileImage != null
+                                ? DecorationImage(
+                                    image: AssetImage(profileImage),
+                                    fit: BoxFit.cover,
+                                  )
+                                : null,
                           ),
+                          child: profileImage == null
+                              ? Center(
+                                  child: Text(
+                                    otherPersonName.isNotEmpty
+                                        ? otherPersonName[0].toUpperCase()
+                                        : '?',
+                                    style: const TextStyle(
+                                      color: Colors.black54,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 20,
+                                    ),
+                                  ),
+                                )
+                              : null,
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 7),
                         // Message content
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
+                              // Person name and time
                               Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  // Person name
                                   Text(
                                     otherPersonName,
                                     style: const TextStyle(
-                                      fontWeight: FontWeight.normal,
+                                      fontWeight: FontWeight.w400,
                                       fontSize: 14,
+                                      color: Color(0xFF050316),
                                     ),
                                   ),
-                                  // Time
                                   Text(
                                     _getFormattedTime(channel.lastMessageAt),
-                                    style: TextStyle(
-                                      color: Colors.grey.shade600,
-                                      fontSize: 12,
+                                    style: const TextStyle(
+                                      color: Color(0xFF8F9098),
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w500,
                                     ),
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 4),
+                              const SizedBox(height: 2),
                               // Task title
                               Text(
                                 channel.taskTitle,
                                 style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 16,
+                                  color: Color(0xFF050316),
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
                               const SizedBox(height: 4),
-                              // Last message with unread indicator
+                              // Last message with status indicator
                               Row(
                                 children: [
+                                  // Message status icon (for sent messages)
+                                  if (channel.lastMessageSenderId == currentUserId) ...[
+                                    Icon(
+                                      Icons.done_all,
+                                      size: 20,
+                                      color: channel.unreadCount == 0
+                                          ? const Color(0xFFFDAB2F) // Read (yellow)
+                                          : const Color(0xFF8F9098), // Sent (gray)
+                                    ),
+                                    const SizedBox(width: 4),
+                                  ],
                                   Expanded(
                                     child: Text(
-                                      channel.lastMessageContent ??
-                                          'No messages yet',
-                                      style: TextStyle(
-                                        color: channel.unreadCount > 0
-                                            ? Colors.black
-                                            : Colors.grey.shade600,
-                                        fontWeight: channel.unreadCount > 0
-                                            ? FontWeight.w500
-                                            : FontWeight.normal,
+                                      channel.lastMessageContent ?? 'No messages yet',
+                                      style: const TextStyle(
+                                        color: Color(0xFF8F9098),
+                                        fontWeight: FontWeight.w400,
+                                        fontSize: 14,
                                       ),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
-                                  if (channel.unreadCount > 0)
+                                  // Unread count badge
+                                  if (channel.unreadCount > 0 && channel.lastMessageSenderId != currentUserId)
                                     Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 4,
+                                      margin: const EdgeInsets.only(left: 8),
+                                      width: 20,
+                                      height: 20,
+                                      decoration: const BoxDecoration(
+                                        color: Color(0xFFFDAB2F),
+                                        shape: BoxShape.circle,
                                       ),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFF8B5CF6),
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: Text(
-                                        channel.unreadCount.toString(),
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold,
+                                      child: Center(
+                                        child: Text(
+                                          channel.unreadCount.toString(),
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w500,
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -222,9 +262,9 @@ class MessageListScreen extends ConsumerWidget {
       return '${difference.inMinutes} min ago';
     }
 
-    // Hours ago (less than 1 day)
+    // Today - show time
     if (difference.inDays < 1) {
-      return '${difference.inHours} h ago';
+      return DateFormat('HH:mm').format(dateTime);
     }
 
     // Yesterday
@@ -234,8 +274,7 @@ class MessageListScreen extends ConsumerWidget {
 
     // Days of the week (less than 7 days)
     if (difference.inDays < 7) {
-      final weekday = DateFormat('EEEE').format(dateTime);
-      return weekday;
+      return DateFormat('EEEE').format(dateTime);
     }
 
     // Date format (more than 7 days)
@@ -244,15 +283,31 @@ class MessageListScreen extends ConsumerWidget {
 
   Widget _buildLoadingScaffold(ThemeData theme) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Messages'),
-        backgroundColor: const Color(0xFF6C5CE7),
-        foregroundColor: Colors.white,
+        backgroundColor: Colors.white,
+        elevation: 0,
+        toolbarHeight: 80,
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: const Icon(Icons.arrow_back, size: 20, color: Colors.black),
+            onPressed: () => context.go('/home'),
+          ),
+        ),
+        title: const Text(
+          'Message',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF202020),
+            letterSpacing: 0.48,
+          ),
+        ),
         centerTitle: true,
       ),
       body: const Center(
         child: CircularProgressIndicator(
-          color: Color(0xFF6C5CE7),
+          color: Color(0xFFFDAB2F),
         ),
       ),
     );
@@ -260,10 +315,26 @@ class MessageListScreen extends ConsumerWidget {
 
   Widget _buildErrorScaffold(ThemeData theme, Object error) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Messages'),
-        backgroundColor: const Color(0xFF6C5CE7),
-        foregroundColor: Colors.white,
+        backgroundColor: Colors.white,
+        elevation: 0,
+        toolbarHeight: 80,
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: const Icon(Icons.arrow_back, size: 20, color: Colors.black),
+            onPressed: () => context.go('/home'),
+          ),
+        ),
+        title: const Text(
+          'Message',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF202020),
+            letterSpacing: 0.48,
+          ),
+        ),
         centerTitle: true,
       ),
       body: Center(

@@ -82,7 +82,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     DebugLogger.log('AuthState event: ${authState?.event}');
     DebugLogger.log('AuthState session: ${authState?.session != null ? "exists" : "null"}');
     DebugLogger.log('isPasswordRecoveryFlow: $isPasswordRecoveryFlow');
-    
+
     String? determinedRoute;
 
     if (authState?.event == AuthChangeEvent.passwordRecovery) {
@@ -115,7 +115,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
         final user = authState!.session!.user;
         DebugLogger.log('User authenticated with ID: ${user.id}');
         DebugLogger.log('User email: ${user.email}');
-        
+
         try {
           DebugLogger.log('Checking for user profile...');
           final profileResponse = await Supabase.instance.client
@@ -125,7 +125,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
               .maybeSingle();
 
           DebugLogger.log('Profile response: $profileResponse');
-          
+
           if (profileResponse != null) {
             DebugLogger.log('Profile found! Setting target: /home');
             determinedRoute = '/home';
@@ -140,8 +140,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
           determinedRoute = '/login';
         }
       } else {
-        DebugLogger.log('No session found. User not authenticated. Target: /login');
-        determinedRoute = '/login';
+        DebugLogger.log('No session found. User not authenticated. Target: /landing');
+        determinedRoute = '/landing';
       }
     }
 
@@ -192,15 +192,15 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       // Check if onboarding has been completed (async)
       DebugLogger.log('Checking onboarding status...');
       final onboardingProvider = ref.read(onboardingCompletedProvider);
-      
+
       if (onboardingProvider is AsyncLoading) {
         DebugLogger.log('Onboarding provider is still loading, waiting...');
         final onboardingAsync = await ref.read(onboardingCompletedProvider.future);
         DebugLogger.log('Onboarding completed status: $onboardingAsync');
         final bool onboardingCompleted = onboardingAsync;
-        
+
         // If onboarding not completed, navigate to onboarding first
-        if (!onboardingCompleted && (_targetRoute == '/login' || _targetRoute == '/home')) {
+        if (!onboardingCompleted && (_targetRoute == '/login' || _targetRoute == '/home' || _targetRoute == '/landing')) {
           DebugLogger.log('Onboarding not completed, navigating to /onboarding');
           context.go('/onboarding');
         } else {
@@ -209,8 +209,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       } else if (onboardingProvider is AsyncData) {
         final bool onboardingCompleted = onboardingProvider.value ?? false;
         DebugLogger.log('Onboarding completed status (from AsyncData): $onboardingCompleted');
-        
-        if (!onboardingCompleted && (_targetRoute == '/login' || _targetRoute == '/home')) {
+
+        if (!onboardingCompleted && (_targetRoute == '/login' || _targetRoute == '/home' || _targetRoute == '/landing')) {
           DebugLogger.log('Onboarding not completed, navigating to /onboarding');
           context.go('/onboarding');
         } else {

@@ -100,6 +100,36 @@ final categoriesProvider = FutureProvider<List<Category>>((ref) {
   return ref.watch(taskControllerProvider).getCategories();
 });
 
+// Provider for tasks grouped by poster
+final posterTasksProvider = StreamProvider<List<Task>>((ref) {
+  return ref.watch(taskControllerProvider).watchTasksWithPosterInfo();
+});
+
+// Provider for tasks by specific poster ID
+final tasksByPosterProvider = FutureProvider.family<List<Task>, String>((ref, posterId) {
+  return ref.watch(taskControllerProvider).getTasksByPosterId(posterId);
+});
+
+// Provider for available tasks (open status) with poster info
+final availableTasksWithPosterProvider = StreamProvider<List<Task>>((ref) {
+  return ref.watch(taskControllerProvider).watchTasks().map((taskList) {
+    return taskList.where((task) => task.status.toLowerCase() == 'open').toList();
+  });
+});
+
+// Provider for current user's posted tasks
+final currentUserPostedTasksProvider = StreamProvider<List<Task>>((ref) {
+  final currentUserId = ref.watch(currentUserIdProvider);
+
+  if (currentUserId.isEmpty) {
+    return Stream.value([]);
+  }
+
+  return ref.watch(taskControllerProvider).watchTasks().map((taskList) {
+    return taskList.where((task) => task.posterId == currentUserId).toList();
+  });
+});
+
 class TaskController {
   final TaskRepository _repository;
   final CategoryRepository _categoryRepository;
@@ -116,10 +146,16 @@ class TaskController {
        _ref = ref;
 
   Stream<List<Task>> watchTasks() => _repository.watchTasks();
-  
+
   Stream<Task> watchTask(String id) => _repository.watchTask(id);
 
   Future<Task> getTaskById(String id) => _repository.getTaskById(id);
+
+  // Get tasks with poster information
+  Stream<List<Task>> watchTasksWithPosterInfo() => _repository.watchTasks();
+
+  // Get tasks by poster ID
+  Future<List<Task>> getTasksByPosterId(String posterId) => _repository.getTasksByPosterId(posterId);
 
   // Upload images to Supabase storage and return URLs
   Future<List<String>> _uploadTaskImages(List<dynamic> images, String taskId) async {

@@ -38,6 +38,120 @@ class TaskCard extends StatelessWidget {
         ),
         child: Column(
           children: [
+            // Poster information section
+            if (task.posterProfile != null) ...[
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade50,
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(12),
+                    topRight: Radius.circular(12),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    // Poster avatar
+                    CircleAvatar(
+                      radius: 20,
+                      backgroundColor: Colors.grey.shade300,
+                      backgroundImage: task.posterProfile?['avatar_url'] != null
+                          ? CachedNetworkImageProvider(
+                              task.posterProfile!['avatar_url'] as String,
+                            )
+                          : null,
+                      child: task.posterProfile?['avatar_url'] == null
+                          ? Text(
+                              (task.posterProfile?['full_name'] as String? ?? 'U')[0].toUpperCase(),
+                              style: const TextStyle(
+                                color: Colors.black54,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            )
+                          : null,
+                    ),
+                    const SizedBox(width: 8),
+                    // Poster name and badge
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                'Posted by ',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                              Text(
+                                task.posterProfile?['full_name'] as String? ?? 'Unknown',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (task.posterProfile?['rating'] != null) ...[
+                            const SizedBox(height: 2),
+                            Row(
+                              children: [
+                                Icon(Icons.star, size: 12, color: Colors.amber.shade600),
+                                const SizedBox(width: 2),
+                                Text(
+                                  '${(task.posterProfile!['rating'] as num).toStringAsFixed(1)}',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.grey.shade700,
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '(${task.posterProfile!['review_count'] ?? 0} reviews)',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.grey.shade600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    // Verified badge if applicable
+                    if (task.posterProfile?['is_verified'] == true)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.green.shade50,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.green.shade200),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.verified, size: 12, color: Colors.green.shade700),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Verified',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Colors.green.shade700,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1, thickness: 1),
+            ],
             // Top section: Title and Price
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
@@ -59,7 +173,7 @@ class TaskCard extends StatelessWidget {
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black, // Changed to black
+                      color: Colors.black,
                     ),
                   ),
                 ],

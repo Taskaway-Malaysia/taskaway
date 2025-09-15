@@ -1,25 +1,25 @@
 import 'package:flutter/material.dart';
+import '../../tasks/models/task.dart';
 
 class ServiceCard extends StatelessWidget {
-  final String title;
+  final Task task;
   final String distance;
-  final String postedBy;
-  final String price;
   final VoidCallback onViewDetails;
   final bool isFocused;
 
   const ServiceCard({
     super.key,
-    required this.title,
+    required this.task,
     required this.distance,
-    required this.postedBy,
-    required this.price,
     required this.onViewDetails,
     this.isFocused = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final posterName = task.posterProfile?['full_name'] as String? ?? 'Unknown User';
+    final offerCount = task.offers?.length ?? 0;
+
     return Container(
       decoration: BoxDecoration(
         color: isFocused ? const Color(0xFFFDD835) : Colors.white, // Yellow when focused, white otherwise
@@ -43,7 +43,7 @@ class ServiceCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    title,
+                    task.title,
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -53,7 +53,7 @@ class ServiceCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 2),
-                  
+
                   Text(
                     distance,
                     style: TextStyle(
@@ -62,7 +62,7 @@ class ServiceCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  
+
                   Row(
                     children: [
                       Text(
@@ -74,7 +74,7 @@ class ServiceCard extends StatelessWidget {
                       ),
                       Flexible(
                         child: Text(
-                          postedBy,
+                          posterName,
                           style: const TextStyle(
                             fontSize: 12,
                             color: Colors.black,
@@ -86,15 +86,23 @@ class ServiceCard extends StatelessWidget {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '$offerCount Offer${offerCount != 1 ? 's' : ''}',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.black.withOpacity(0.6),
+                    ),
+                  ),
                 ],
               ),
             ),
-            
+
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  price,
+                  'RM ${task.price.toStringAsFixed(0)}',
                   style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,

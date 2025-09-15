@@ -2,36 +2,31 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../../core/constants/style_constants.dart';
 import '../controllers/auth_controller.dart';
 
-class CreateAccountScreen extends ConsumerStatefulWidget {
-  const CreateAccountScreen({super.key});
+class LoginScreen extends ConsumerStatefulWidget {
+  const LoginScreen({super.key});
 
   @override
-  ConsumerState<CreateAccountScreen> createState() => _CreateAccountScreenState();
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
-  final _formKey = GlobalKey<FormState>();
+class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
-  bool _agreedToTerms = false;
+  final _formKey = GlobalKey<FormState>();
   bool _obscurePassword = true;
-  bool _obscureConfirmPassword = true;
   bool _isLoading = false;
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
-    _confirmPasswordController.dispose();
     super.dispose();
   }
 
-  Future<void> _handleSignUp() async {
-    if (_formKey.currentState!.validate() && _agreedToTerms) {
+  Future<void> _handleLogin() async {
+    if (_formKey.currentState!.validate()) {
       setState(() {
         _isLoading = true;
       });
@@ -41,19 +36,13 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
 
       try {
         final authController = ref.read(authControllerProvider.notifier);
-        final response = await authController.signUp(
+        final response = await authController.signIn(
           email: _emailController.text.trim(),
           password: _passwordController.text,
         );
 
-        if (mounted && response.user != null) {
-          router.go(
-            '/otp-verification',
-            extra: {
-              'email': _emailController.text.trim(),
-              'type': OtpType.signup
-            },
-          );
+        if (mounted) {
+          router.go('/');
         }
       } on AuthException catch (e) {
         if (mounted) {
@@ -63,15 +52,12 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
               backgroundColor: Colors.red,
             ),
           );
-          if (e.message.contains('already exists') || e.message.contains('have an account')) {
-            router.go('/login');
-          }
         }
       } catch (e) {
         if (mounted) {
           scaffoldMessenger.showSnackBar(
             const SnackBar(
-              content: Text('An unexpected error occurred. Please try again.'),
+              content: Text('An unexpected error occurred.'),
               backgroundColor: Colors.red,
             ),
           );
@@ -83,21 +69,14 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
           });
         }
       }
-    } else if (!_agreedToTerms) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please agree to the Terms & Conditions'),
-          backgroundColor: Colors.orange,
-        ),
-      );
     }
   }
 
-  Future<void> _handleGoogleSignUp() async {
-    // TODO: Implement Google Sign-Up
+  Future<void> _handleGoogleSignIn() async {
+    // TODO: Implement Google Sign-In
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Google Sign-Up coming soon'),
+        content: Text('Google Sign-In coming soon'),
       ),
     );
   }
@@ -143,9 +122,9 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
 
                   const SizedBox(height: 20),
 
-                  // Create Account heading
+                  // Welcome text
                   const Text(
-                    'Create your account',
+                    'Welcome to Taskaway',
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.w700,
@@ -158,7 +137,7 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
 
                   // Subtitle
                   const Text(
-                    'Sign up to get started with Taskaway',
+                    'Please enter your registration email and password',
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w400,
@@ -247,7 +226,7 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
                           if (value == null || value.isEmpty) {
                             return 'Please enter your email';
                           }
-                          if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(value)) {
+                          if (!value.contains('@')) {
                             return 'Please enter a valid email';
                           }
                           return null;
@@ -350,8 +329,8 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
                           if (value == null || value.isEmpty) {
                             return 'Please enter your password';
                           }
-                          if (value.length < 8) {
-                            return 'Password must be at least 8 characters';
+                          if (value.length < 6) {
+                            return 'Password must be at least 6 characters';
                           }
                           return null;
                         },
@@ -359,178 +338,35 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
                     ],
                   ),
 
-                  const SizedBox(height: 19),
+                  const SizedBox(height: 12),
 
-                  // Confirm Password field
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Confirm Password',
+                  // Forgot password link
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: GestureDetector(
+                      onTap: () {
+                        context.go('/forgot-password');
+                      },
+                      child: const Text(
+                        'Forgot Password?',
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize: 12,
                           fontWeight: FontWeight.w500,
-                          color: Color(0xFF414651),
+                          color: Color(0xFFFFC333),
+                          decoration: TextDecoration.underline,
                         ),
                       ),
-                      const SizedBox(height: 6),
-                      TextFormField(
-                        controller: _confirmPasswordController,
-                        obscureText: _obscureConfirmPassword,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        decoration: InputDecoration(
-                          hintText: 'Confirm your password...',
-                          hintStyle: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: Color(0xFF717680),
-                          ),
-                          prefixIcon: const Icon(
-                            Icons.lock_outline,
-                            color: Color(0xFF8F9098),
-                            size: 20,
-                          ),
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _obscureConfirmPassword
-                                  ? Icons.visibility_off_outlined
-                                  : Icons.visibility_outlined,
-                              color: const Color(0xFF8F9098),
-                              size: 20,
-                            ),
-                            onPressed: () {
-                              setState(() {
-                                _obscureConfirmPassword = !_obscureConfirmPassword;
-                              });
-                            },
-                          ),
-                          filled: true,
-                          fillColor: Colors.white,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 10,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(6),
-                            borderSide: const BorderSide(
-                              color: Color(0xFFE4E4E4),
-                              width: 1,
-                            ),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(6),
-                            borderSide: const BorderSide(
-                              color: Color(0xFFE4E4E4),
-                              width: 1,
-                            ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(6),
-                            borderSide: const BorderSide(
-                              color: Color(0xFFFFC333),
-                              width: 1,
-                            ),
-                          ),
-                          errorBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(6),
-                            borderSide: const BorderSide(
-                              color: Colors.red,
-                              width: 1,
-                            ),
-                          ),
-                          focusedErrorBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(6),
-                            borderSide: const BorderSide(
-                              color: Colors.red,
-                              width: 1,
-                            ),
-                          ),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please confirm your password';
-                          }
-                          if (value != _passwordController.text) {
-                            return 'Passwords do not match';
-                          }
-                          return null;
-                        },
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  // Password requirements
-                  const Text(
-                    'Must include at least 8 characters',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w400,
-                      color: Color(0xFF717680),
                     ),
                   ),
 
                   const SizedBox(height: 16),
 
-                  // Terms and Conditions checkbox
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: Checkbox(
-                          value: _agreedToTerms,
-                          activeColor: const Color(0xFFFFC333),
-                          side: const BorderSide(
-                            color: Color(0xFFE4E4E4),
-                            width: 1,
-                          ),
-                          onChanged: (value) {
-                            setState(() {
-                              _agreedToTerms = value ?? false;
-                            });
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: RichText(
-                          text: const TextSpan(
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w400,
-                              color: Color(0xFF717680),
-                            ),
-                            children: [
-                              TextSpan(text: 'I have read and agree to '),
-                              TextSpan(
-                                text: 'Terms & Conditions',
-                                style: TextStyle(
-                                  color: Color(0xFFFFC333),
-                                  fontWeight: FontWeight.w500,
-                                  decoration: TextDecoration.underline,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 18),
-
-                  // Create Account button
+                  // Continue button
                   SizedBox(
                     width: double.infinity,
                     height: 48,
                     child: ElevatedButton(
-                      onPressed: _isLoading ? null : _handleSignUp,
+                      onPressed: _isLoading ? null : _handleLogin,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFFFDB5B),
                         foregroundColor: Colors.black,
@@ -553,7 +389,7 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
                               ),
                             )
                           : const Text(
-                              'Create Account',
+                              'Continue',
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
@@ -596,12 +432,12 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
 
                   const SizedBox(height: 14),
 
-                  // Google sign up button
+                  // Google sign in button
                   SizedBox(
                     width: double.infinity,
                     height: 48,
                     child: OutlinedButton(
-                      onPressed: _handleGoogleSignUp,
+                      onPressed: _handleGoogleSignIn,
                       style: OutlinedButton.styleFrom(
                         backgroundColor: Colors.white,
                         foregroundColor: Colors.black,
@@ -634,15 +470,15 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: 48),
+                  const SizedBox(height: 107),
 
-                  // Already have an account
+                  // Don't have an account? Sign Up
                   Center(
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const Text(
-                          'Already have an account? ',
+                          "Don't have an account? ",
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w400,
@@ -651,10 +487,10 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
                         ),
                         GestureDetector(
                           onTap: () {
-                            context.go('/login');
+                            context.go('/create-account');
                           },
                           child: const Text(
-                            'Login',
+                            'Sign Up',
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w400,

@@ -14,7 +14,9 @@ import 'package:taskaway/core/providers/deep_link_provider.dart';
 import 'package:taskaway/core/providers/router_refresh_notifier.dart';
 import 'dart:developer' as dev; // For logging
 import '../features/splash/screens/splash_screen.dart';
+import '../features/landing/screens/landing_screen.dart';
 import '../features/auth/screens/auth_screen.dart';
+import '../features/auth/screens/login_screen.dart';
 import '../features/auth/screens/create_account_screen.dart';
 import '../features/auth/screens/otp_verification_screen.dart';
 import '../features/auth/screens/create_profile_screen.dart';
@@ -23,6 +25,7 @@ import '../features/home/screens/home_screen.dart';
 import '../features/tasks/screens/my_task_screen.dart';
 import '../features/tasks/screens/create_task_screen.dart';
 import '../features/tasks/screens/task_details_screen.dart';
+import '../features/tasks/screens/task_details_screen_new.dart';
 import '../features/tasks/screens/apply_task_screen.dart';
 import '../features/tasks/screens/offer_accepted_success_screen.dart';
 import '../features/payments/screens/payment_completion_screen.dart';
@@ -109,6 +112,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // Base public routes accessible to anyone, including guests if not specifically redirected elsewhere
       final basePublicRoutes = [
         '/',
+        '/landing',
         '/login',
         '/create-account',
         '/otp-verification',
@@ -218,15 +222,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             !profileEditingRoutes.contains(location) &&
             location != '/guest-prompt') {
           print(
-              'GoRouter Redirect: Not logged in (and not guest), trying to access $location. Redirecting to /login.');
-          return '/login';
+              'GoRouter Redirect: Not logged in (and not guest), trying to access $location. Redirecting to /landing.');
+          return '/landing';
         }
 
-        // If not logged in but trying to access profile editing routes, redirect to login
+        // If not logged in but trying to access profile editing routes, redirect to landing
         if (profileEditingRoutes.contains(location)) {
           print(
-              'GoRouter Redirect: Not logged in, trying to access profile editing route $location. Redirecting to /login.');
-          return '/login';
+              'GoRouter Redirect: Not logged in, trying to access profile editing route $location. Redirecting to /landing.');
+          return '/landing';
         }
       }
       print('GoRouter Redirect: No redirect needed for $location.');
@@ -247,6 +251,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
         routes: [
           GoRoute(
+            path: '/landing',
+            name: 'landing',
+            builder: (context, state) => const LandingScreen(),
+          ),
+          GoRoute(
             path: '/guest-prompt',
             name: 'guest-prompt',
             builder: (context, state) => const GuestPromptOverlay(),
@@ -254,7 +263,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/login',
             name: 'login',
-            builder: (context, state) => const AuthScreen(),
+            builder: (context, state) => const LoginScreen(),
           ),
           GoRoute(
             path: '/create-account',
@@ -443,7 +452,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                   GoRoute(
                     path: ':id',
                     name: 'task-details',
-                    builder: (context, state) => TaskDetailsScreen(
+                    builder: (context, state) => TaskDetailsScreenNew(
                       taskId: state.pathParameters['id']!,
                     ),
                     routes: [
@@ -480,7 +489,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                   GoRoute(
                     path: ':id',
                     name: 'task-details-from-tasks',
-                    builder: (context, state) => TaskDetailsScreen(
+                    builder: (context, state) => TaskDetailsScreenNew(
                       taskId: state.pathParameters['id']!,
                     ),
                     routes: [
