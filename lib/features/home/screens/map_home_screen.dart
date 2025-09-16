@@ -8,6 +8,7 @@ import '../../tasks/models/task.dart';
 import '../../tasks/controllers/task_controller.dart';
 import '../widgets/map_search_bar.dart';
 import '../widgets/service_card.dart';
+import 'tasker_home_screen.dart'; // Import to use filter providers
 
 class MapHomeScreen extends ConsumerStatefulWidget {
   const MapHomeScreen({super.key});
@@ -73,11 +74,183 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
     }
   }
 
+  void _showFilterBottomSheet(BuildContext context) {
+    print('_showFilterBottomSheet called in MapHomeScreen');
+    try {
+      showModalBottomSheet(
+        context: context,
+        builder: (context) {
+          print('Building filter bottom sheet in MapHomeScreen');
+          return StatefulBuilder(
+            builder: (context, setState) => Container(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Filters',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      // Show result count
+                      Consumer(
+                        builder: (context, ref, child) {
+                          final tasksAsync = ref.watch(filteredAvailableTasksProvider);
+                          return tasksAsync.maybeWhen(
+                            data: (tasks) => Text(
+                              '${tasks.length} results',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: Color(0xFF788494),
+                              ),
+                            ),
+                            orElse: () => const SizedBox.shrink(),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  // Category filter
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: DropdownButton<String>(
+                      value: ref.watch(categoryFilterProvider),
+                      hint: const Text('Category'),
+                      underline: Container(),
+                      icon: const Icon(Icons.arrow_drop_down),
+                      isExpanded: true,
+                      onChanged: (String? newValue) {
+                        if (newValue != null) {
+                          ref.read(categoryFilterProvider.notifier).state = newValue;
+                          setState(() {}); // Refresh to update result count
+                        }
+                      },
+                      items: <String>[
+                        'All Categories',
+                        'Handyman',
+                        'Cleaning',
+                        'Gardening',
+                        'Painting',
+                        'Organizing',
+                        'Pet Care',
+                        'Self Care',
+                        'Events & Photography',
+                        'Others'
+                      ].map<DropdownMenuItem<String>>((String value) {
+                        return DropdownMenuItem<String>(
+                          value: value,
+                          child: Text(value, style: const TextStyle(fontSize: 14)),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  // Sort filter
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: DropdownButton<String>(
+                      value: ref.watch(sortFilterProvider),
+                      hint: const Text('Sort by'),
+                      underline: Container(),
+                      icon: const Icon(Icons.arrow_drop_down),
+                      isExpanded: true,
+                      onChanged: (String? newValue) {
+                        if (newValue != null) {
+                          ref.read(sortFilterProvider.notifier).state = newValue;
+                          setState(() {}); // Refresh to update result count
+                        }
+                      },
+                      items: <String>['Latest', 'Price: High to Low', 'Price: Low to High']
+                          .map<DropdownMenuItem<String>>((String value) {
+                        return DropdownMenuItem<String>(
+                          value: value,
+                          child: Text(value, style: const TextStyle(fontSize: 14)),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  // Clear All Filters button
+                  if (ref.watch(categoryFilterProvider) != 'All Categories' ||
+                      ref.watch(sortFilterProvider) != 'Latest')
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: OutlinedButton(
+                        onPressed: () {
+                          ref.read(categoryFilterProvider.notifier).state = 'All Categories';
+                          ref.read(sortFilterProvider.notifier).state = 'Latest';
+                          setState(() {}); // Refresh to update UI
+                        },
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size(double.infinity, 44),
+                          side: const BorderSide(color: Color(0xFFE4E4E4)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                        ),
+                        child: const Text(
+                          'Clear All Filters',
+                          style: TextStyle(
+                            color: Color(0xFF788494),
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  // Apply Filters button
+                  ElevatedButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: const Size(double.infinity, 48),
+                      backgroundColor: const Color(0xFFFFDB5B),
+                      foregroundColor: Colors.black,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(6),
+                        side: const BorderSide(
+                          color: Color(0xFFFFC333),
+                          width: 1,
+                        ),
+                      ),
+                    ),
+                    child: const Text(
+                      'Apply Filters',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+    } catch (e) {
+      print('Error showing filter bottom sheet: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Use different providers based on mode
+    // Use filtered tasks when in tasker mode
     final tasksAsync = _isTaskerMode
-        ? ref.watch(availableTasksWithPosterProvider)  // Show all open tasks for taskers
+        ? ref.watch(filteredAvailableTasksProvider)  // Use filtered tasks for taskers
         : ref.watch(currentUserPostedTasksProvider);    // Show only user's posted tasks for posters
 
     return Scaffold(
@@ -167,7 +340,7 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
                 child: Container(
                   color: const Color(0xFFF8F8F8), // Light gray background
                   child: ListView.builder(
-                    padding: const EdgeInsets.only(top: 12), // Padding at the top
+                    padding: const EdgeInsets.only(top: 24), // Increased padding to prevent overlap with tabs
                     itemCount: tasks.length,
                     itemBuilder: (context, index) {
                       return _TaskListItem(
@@ -210,6 +383,10 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
                     if (_isTaskerMode)
                       MapSearchBar(
                         isTaskerMode: _isTaskerMode,
+                        onFilterTap: () {
+                          print('Filter tap received in MapHomeScreen');
+                          _showFilterBottomSheet(context);
+                        },
                         onToggle: (isTasker) {
                           setState(() {
                             _isTaskerMode = isTasker;

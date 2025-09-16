@@ -4,12 +4,14 @@ class MapSearchBar extends StatelessWidget {
   final bool isTaskerMode;
   final Function(bool) onToggle;
   final Function(String) onSearch;
+  final VoidCallback? onFilterTap;
 
   const MapSearchBar({
     super.key,
     required this.isTaskerMode,
     required this.onToggle,
     required this.onSearch,
+    this.onFilterTap,
   });
 
   @override
@@ -79,7 +81,8 @@ class MapSearchBar extends StatelessWidget {
                   ),
                   child: IconButton(
                     onPressed: () {
-                      // Show filter options
+                      print('Filter button tapped in MapSearchBar!');
+                      onFilterTap?.call();
                     },
                     icon: const Icon(Icons.tune, size: 20),
                     color: Colors.grey.shade700,

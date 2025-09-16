@@ -59,63 +59,96 @@ class HomeScreen extends ConsumerWidget {
       body: body,
       bottomNavigationBar: showBottomNav
           ? Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 8,
-                    offset: const Offset(0, -2),
+              color: Colors.white,
+              child: SafeArea(
+                child: Container(
+                  height: 56,
+                  color: Colors.white,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _buildNavItem(
+                        index: 0,
+                        icon: Icons.home_outlined,
+                        activeIcon: Icons.home,
+                        label: 'Home',
+                        isSelected: actualIndex == 0,
+                        onTap: () {
+                          if (actualIndex == 0) return;
+                          ref.read(currentIndexProvider.notifier).state = 0;
+                          context.go('/home/browse');
+                        },
+                      ),
+                      const SizedBox(width: 46), // Figma design spacing
+                      _buildNavItem(
+                        index: 1,
+                        icon: Icons.mail_outline,
+                        activeIcon: Icons.mail,
+                        label: 'Message',
+                        isSelected: actualIndex == 1,
+                        onTap: () {
+                          if (actualIndex == 1) return;
+                          ref.read(currentIndexProvider.notifier).state = 1;
+                          context.go('/home/chat');
+                        },
+                      ),
+                      const SizedBox(width: 46), // Figma design spacing
+                      _buildNavItem(
+                        index: 2,
+                        icon: Icons.person_outline,
+                        activeIcon: Icons.person,
+                        label: 'Profile',
+                        isSelected: actualIndex == 2,
+                        onTap: () {
+                          if (actualIndex == 2) return;
+                          ref.read(currentIndexProvider.notifier).state = 2;
+                          context.go('/home/profile');
+                        },
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              child: BottomNavigationBar(
-                currentIndex: actualIndex,
-                onTap: (index) {
-                  // Prevent navigating to the same page
-                  if (actualIndex == index) return;
-
-                  ref.read(currentIndexProvider.notifier).state = index;
-                  switch (index) {
-                    case 0:
-                      context.go('/home/browse');
-                      break;
-                    case 1:
-                      context.go('/home/chat');
-                      break;
-                    case 2:
-                      context.go('/home/profile');
-                      break;
-                  }
-                },
-                type: BottomNavigationBarType.fixed,
-                backgroundColor: Colors.white,
-                selectedItemColor: Colors.amber.shade800,
-                unselectedItemColor: Colors.grey.shade600,
-                selectedFontSize: 12,
-                unselectedFontSize: 12,
-                iconSize: 24,
-                elevation: 0,
-                items: const [
-                  BottomNavigationBarItem(
-                    icon: Icon(Icons.home_outlined),
-                    activeIcon: Icon(Icons.home),
-                    label: 'Home',
-                  ),
-                  BottomNavigationBarItem(
-                    icon: Icon(Icons.mail_outline),
-                    activeIcon: Icon(Icons.mail),
-                    label: 'Message',
-                  ),
-                  BottomNavigationBarItem(
-                    icon: Icon(Icons.person_outline),
-                    activeIcon: Icon(Icons.person),
-                    label: 'Profile',
-                  ),
-                ],
+                ),
               ),
             )
           : null,
+    );
+  }
+
+  Widget _buildNavItem({
+    required int index,
+    required IconData icon,
+    required IconData activeIcon,
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      splashColor: Colors.transparent,
+      highlightColor: Colors.transparent,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            isSelected ? activeIcon : icon,
+            color: isSelected ? const Color(0xFF202020) : const Color(0xFF575656),
+            size: 24,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontFamily: 'Roboto',
+              color: isSelected ? const Color(0xFF202020) : const Color(0xFF575656),
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              letterSpacing: 0.4, // 3.33% of 12px
+              height: 1.33,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
