@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
 import '../models/channel.dart';
 import '../models/message.dart';
 import '../controllers/message_controller.dart';
 import '../../auth/controllers/auth_controller.dart';
+import '../../auth/models/profile.dart';
+import '../../tasks/controllers/task_controller.dart';
+import '../../../core/utils/time_formatter.dart';
 
 class MessageScreen extends ConsumerStatefulWidget {
   final Channel channel;
@@ -23,21 +27,14 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
   final _messageController = TextEditingController();
   final _scrollController = ScrollController();
   bool _isLoading = false;
-  bool _isLoadingMore = false;
+  bool _showSuggestions = true;
   late Channel _channel;
-  DateTime? _oldestMessageTimestamp;
+  int _selectedIndex = 3; // Message tab selected
 
   @override
   void initState() {
     super.initState();
-
-    // Set channel from widget
     _channel = widget.channel;
-
-    // Add scroll listener for infinite scroll
-    _scrollController.addListener(_onScroll);
-
-    // Schedule scroll to bottom after build
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _scrollToBottom();
     });
@@ -50,51 +47,10 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
     super.dispose();
   }
 
-  void _onScroll() {
-    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent * 0.8 &&
-        !_isLoadingMore &&
-        _oldestMessageTimestamp != null) {
-      _loadOlderMessages();
-    }
-  }
-
-  Future<void> _loadOlderMessages() async {
-    if (_isLoadingMore) return;
-
-    setState(() {
-      _isLoadingMore = true;
-    });
-
-    try {
-      final messageController = ref.read(messageControllerProvider);
-      final olderMessages = await messageController.getOlderMessages(
-        channelId: _channel.id,
-        beforeTimestamp: _oldestMessageTimestamp!,
-      );
-
-      if (olderMessages.isNotEmpty) {
-        // Update the oldest message timestamp
-        _oldestMessageTimestamp = olderMessages.last.createdAt;
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to load older messages: $e')),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoadingMore = false;
-        });
-      }
-    }
-  }
-
   void _scrollToBottom() {
     if (_scrollController.hasClients) {
       _scrollController.animateTo(
-        0,
+        _scrollController.position.maxScrollExtent,
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeOut,
       );
@@ -117,8 +73,10 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
       );
 
       _messageController.clear();
-      
-      // Schedule scroll to bottom after the message is added
+      setState(() {
+        _showSuggestions = false;
+      });
+
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _scrollToBottom();
       });
@@ -137,438 +95,859 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
     }
   }
 
+  void _sendSuggestedMessage(String message) {
+    _messageController.text = message;
+    _sendMessage();
+  }
+
+  Widget _buildNavItem(dynamic iconData, String label, int index) {
+    final isSelected = _selectedIndex == index;
+    final isTaskaway = label == 'Taskaway';
+
+    // Helper to build icon widget
+    Widget buildIcon() {
+      if (iconData is String) {
+        // Single SVG icon
+        return SvgPicture.asset(
+          iconData,
+          width: isTaskaway ? 16 : 24,
+          height: isTaskaway ? 16 : 24,
+          colorFilter: ColorFilter.mode(
+            isTaskaway ? Colors.black : (isSelected ? const Color(0xFF202020) : const Color(0xFF575656)),
+            BlendMode.srcIn,
+          ),
+        );
+      } else if (iconData is List<String>) {
+        // Composite SVG icon (for message and profile)
+        return SizedBox(
+          width: 24,
+          height: 24,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              if (label == 'Message') ...[
+                // Message body (envelope rectangle)
+                Positioned(
+                  bottom: 2,
+                  child: SvgPicture.asset(
+                    iconData[1], // message_icon_body.svg
+                    width: 22,
+                    height: 18,
+                    colorFilter: ColorFilter.mode(
+                      isSelected ? const Color(0xFF202020) : const Color(0xFF575656),
+                      BlendMode.srcIn,
+                    ),
+                  ),
+                ),
+                // Message top (envelope flap)
+                Positioned(
+                  top: 7,
+                  child: SvgPicture.asset(
+                    iconData[0], // message_icon_top.svg
+                    width: 22,
+                    height: 8,
+                    colorFilter: ColorFilter.mode(
+                      isSelected ? const Color(0xFF202020) : const Color(0xFF575656),
+                      BlendMode.srcIn,
+                    ),
+                  ),
+                ),
+              ] else if (label == 'Profile') ...[
+                // Profile body (shoulders)
+                Positioned(
+                  bottom: 3,
+                  child: SvgPicture.asset(
+                    iconData[1], // profile_icon_body.svg
+                    width: 19,
+                    height: 8,
+                    colorFilter: ColorFilter.mode(
+                      isSelected ? const Color(0xFF202020) : const Color(0xFF575656),
+                      BlendMode.srcIn,
+                    ),
+                  ),
+                ),
+                // Profile head (circle)
+                Positioned(
+                  top: 3,
+                  child: SvgPicture.asset(
+                    iconData[0], // profile_icon_head.svg
+                    width: 11,
+                    height: 11,
+                    colorFilter: ColorFilter.mode(
+                      isSelected ? const Color(0xFF202020) : const Color(0xFF575656),
+                      BlendMode.srcIn,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        );
+      } else {
+        // Material icon fallback
+        return Icon(
+          iconData as IconData,
+          size: isTaskaway ? 16 : 24,
+          color: isTaskaway ? Colors.black : (isSelected ? const Color(0xFF202020) : const Color(0xFF575656)),
+        );
+      }
+    }
+
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedIndex = index;
+        });
+        // Navigate to appropriate screen
+        if (index == 0) context.go('/home');
+      },
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          if (isTaskaway)
+            Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFDB5B),
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(
+                  color: const Color(0xFFFFC333),
+                  width: 0.5,
+                ),
+              ),
+              child: Center(child: buildIcon()),
+            )
+          else
+            buildIcon(),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              fontFamily: 'Roboto',
+              color: isSelected ? const Color(0xFF202020) : const Color(0xFF575656),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final currentUser = ref.watch(currentUserProvider);
     final currentUserId = currentUser?.id ?? '';
     final messagesAsync = ref.watch(channelMessagesProvider(_channel.id));
+    final taskAsync = ref.watch(taskProvider(_channel.taskId));
+
+    // Get the other user's ID to fetch their profile and online status
+    final otherUserId = currentUserId == _channel.posterId
+        ? _channel.taskerId
+        : _channel.posterId;
+
+    // Watch the other user's profile for their last sign in
+    final otherUserProfileAsync = ref.watch(profileProvider(otherUserId));
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF6C5CE7),
-        foregroundColor: Colors.white,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: Row(
-          children: [
-            CircleAvatar(
-              radius: 16,
-              backgroundColor: Colors.white,
-              child: Text(
-                _channel.posterName.substring(0, 1).toUpperCase(),
-                style: const TextStyle(color: Color(0xFF6C5CE7)),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    _channel.posterName,
-                    style: const TextStyle(fontSize: 16),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  Text(
-                    _channel.taskTitle,
-                    style: const TextStyle(fontSize: 12),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.more_vert),
-            onPressed: () {
-              // Show options menu
-            },
-          ),
-        ],
-      ),
-      body: Column(
+      backgroundColor: Colors.white,
+      body: Stack(
         children: [
-          // Task context card
-          _buildTaskContextCard(),
-          // Messages
-          Expanded(
-            child: messagesAsync.when(
-              data: (messages) => messages.isEmpty
-                  ? const Center(
-                      child: Text(
-                        'No messages yet\nSay hello!',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.grey,
-                          fontSize: 16,
-                        ),
+          // Purple header curve
+          Positioned(
+            top: 0,
+            left: 662,
+            child: Container(
+              width: 396,
+              height: 171,
+              decoration: const BoxDecoration(
+                color: Color(0xFF525DC0),
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(20),
+                  bottomRight: Radius.circular(20),
+                ),
+              ),
+            ),
+          ),
+
+          Column(
+            children: [
+              // Safe area spacer
+              SafeArea(
+                bottom: false,
+                child: Container(),
+              ),
+
+              // Navigation bar
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 29, vertical: 8),
+                child: Row(
+                  children: [
+                    IconButton(
+                      icon: SvgPicture.asset(
+                        'assets/icons/back_arrow.svg',
+                        width: 24,
+                        height: 24,
+                        colorFilter: const ColorFilter.mode(Colors.black, BlendMode.srcIn),
                       ),
-                    )
-                  : ListView.builder(
-                      controller: _scrollController,
-                      padding: const EdgeInsets.all(16),
-                      itemCount: messages.length + (_isLoadingMore ? 1 : 0),
-                      reverse: true,
-                      itemBuilder: (context, index) {
-                        if (index == messages.length) {
-                          return const Center(
-                            child: Padding(
-                              padding: EdgeInsets.all(8.0),
-                              child: CircularProgressIndicator(),
-                            ),
-                          );
-                        }
-
-                        final message = messages[index];
-                        // Update oldest message timestamp for infinite scroll
-                        if (index == messages.length - 1) {
-                          _oldestMessageTimestamp = message.createdAt;
-                        }
-
-                        final isCurrentUser = message.senderId == currentUserId;
-                        
-                        // Show date separator for first message or when date changes
-                        bool showDateSeparator = false;
-                        if (index == 0) {
-                          showDateSeparator = true;
-                        } else {
-                          final previousMessage = messages[index - 1];
-                          final currentDate = DateTime(
-                            message.createdAt.year,
-                            message.createdAt.month,
-                            message.createdAt.day,
-                          );
-                          final previousDate = DateTime(
-                            previousMessage.createdAt.year,
-                            previousMessage.createdAt.month,
-                            previousMessage.createdAt.day,
-                          );
-                          showDateSeparator = !currentDate.isAtSameDay(previousDate);
-                        }
-                        
-                        return Column(
+                      onPressed: () => context.pop(),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                    Expanded(
+                      child: Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            if (showDateSeparator)
-                              _buildDateSeparator(_formatDate(message.createdAt)),
-                            _buildMessageBubble(message, isCurrentUser),
-                          ],
-                        );
-                      },
-                    ),
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, stack) => Center(
-                child: Text('Error loading messages: $error'),
-              ),
-            ),
-          ),
-          // Message input
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, -3),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _messageController,
-                    decoration: InputDecoration(
-                      hintText: 'Text Message',
-                      filled: true,
-                      fillColor: Colors.grey.shade100,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(24),
-                        borderSide: BorderSide.none,
-                      ),
-                    ),
-                    textInputAction: TextInputAction.send,
-                    onSubmitted: (_) => _sendMessage(),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Color(0xFF6C5CE7),
-                  ),
-                  child: IconButton(
-                    icon: _isLoading
-                        ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor:
-                                  AlwaysStoppedAnimation<Color>(Colors.white),
+                            Text(
+                              currentUserId == _channel.posterId
+                                  ? _channel.taskerName
+                                  : _channel.posterName,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF050316),
+                                fontFamily: 'Instrument Sans',
+                              ),
+                              textAlign: TextAlign.center,
                             ),
-                          )
-                        : const Icon(Icons.send, color: Colors.white),
-                    onPressed: _isLoading ? null : _sendMessage,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDateSeparator(String date) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      child: Center(
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-          decoration: BoxDecoration(
-            color: Colors.grey.shade200,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Text(
-            date,
-            style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMessageBubble(Message message, bool isCurrentUser) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Row(
-        mainAxisAlignment:
-            isCurrentUser ? MainAxisAlignment.end : MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (!isCurrentUser)
-            CircleAvatar(
-              radius: 16,
-              backgroundColor: Colors.grey.shade200,
-              child: Text(
-                message.senderName?.isNotEmpty == true
-                    ? message.senderName![0].toUpperCase()
-                    : '?',
-                style: const TextStyle(
-                  color: Colors.black54,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
+                            const SizedBox(height: 4),
+                            // Online status
+                            otherUserProfileAsync.when(
+                              data: (profile) {
+                                // Check if we have last sign-in info from profile
+                                if (profile?.lastSignInAt != null) {
+                                  final onlineStatus = TimeFormatter.formatOnlineStatus(profile!.lastSignInAt);
+                                  return Text(
+                                    onlineStatus,
+                                    style: const TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w400,
+                                      color: Color(0xFF009178),
+                                      fontFamily: 'Instrument Sans',
+                                    ),
+                                  );
+                                } else {
+                                  // Fallback to using updatedAt if available
+                                  final lastActivity = profile?.updatedAt;
+                                  final onlineStatus = lastActivity != null
+                                      ? TimeFormatter.formatOnlineStatus(lastActivity)
+                                      : '';
+                                  return onlineStatus.isNotEmpty
+                                      ? Text(
+                                          onlineStatus,
+                                          style: const TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w400,
+                                            color: Color(0xFF009178),
+                                            fontFamily: 'Instrument Sans',
+                                          ),
+                                        )
+                                      : const SizedBox.shrink();
+                                }
+                              },
+                              loading: () => const SizedBox(
+                                height: 10,
+                                width: 60,
+                                child: LinearProgressIndicator(
+                                  color: Color(0xFF009178),
+                                  backgroundColor: Color(0xFFE0E0E0),
+                                ),
+                              ),
+                              error: (_, __) => const SizedBox.shrink(),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            Positioned(
+                              top: 4,
+                              child: SvgPicture.asset(
+                                'assets/icons/more_menu_dot1.svg',
+                                width: 4,
+                                height: 4,
+                                colorFilter: const ColorFilter.mode(Colors.black, BlendMode.srcIn),
+                              ),
+                            ),
+                            Positioned(
+                              top: 10,
+                              child: SvgPicture.asset(
+                                'assets/icons/more_menu_dot2.svg',
+                                width: 4,
+                                height: 4,
+                                colorFilter: const ColorFilter.mode(Colors.black, BlendMode.srcIn),
+                              ),
+                            ),
+                            Positioned(
+                              top: 16,
+                              child: SvgPicture.asset(
+                                'assets/icons/more_menu_dot3.svg',
+                                width: 4,
+                                height: 4,
+                                colorFilter: const ColorFilter.mode(Colors.black, BlendMode.srcIn),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      onPressed: () {},
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
                 ),
               ),
-            ),
-          if (!isCurrentUser) const SizedBox(width: 8),
-          Flexible(
-            child: Column(
-              crossAxisAlignment: isCurrentUser
-                  ? CrossAxisAlignment.end
-                  : CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: isCurrentUser
-                        ? const Color(0xFFE9ECEF) // Light gray for current user
-                        : const Color(
-                            0xFFFFF8E1), // Light yellow for other user
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Text(
-                    message.content,
-                    style: const TextStyle(color: Colors.black87),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(top: 4, left: 4, right: 4),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
+
+              const SizedBox(height: 16),
+
+              // Task info
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: taskAsync.when(
+                  data: (task) => Row(
                     children: [
-                      Text(
-                        DateFormat('h:mm a').format(message.createdAt),
-                        style: TextStyle(
-                            fontSize: 10, color: Colors.grey.shade600),
-                      ),
-                      if (isCurrentUser)
-                        Padding(
-                          padding: const EdgeInsets.only(left: 4),
-                          child: Icon(Icons.done_all,
-                              size: 14, color: Colors.blue.shade300),
+                      // Task image
+                      Container(
+                        width: 49,
+                        height: 52,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(6),
+                          color: Colors.grey.shade300,
+                          image: task != null && task.images != null && task.images!.isNotEmpty
+                              ? DecorationImage(
+                                  image: NetworkImage(task.images!.first),
+                                  fit: BoxFit.cover,
+                                )
+                              : null,
                         ),
+                      ),
+                      const SizedBox(width: 7),
+                      // Task details
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              task?.title ?? _channel.taskTitle,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w400,
+                                color: Color(0xFF050316),
+                                fontFamily: 'Instrument Sans',
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 7),
+                            Text(
+                              task != null ? 'RM${task.price.toStringAsFixed(2)}' : 'RM--',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w400,
+                                color: Color(0xFF050316),
+                                fontFamily: 'Instrument Sans',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  loading: () => const Center(
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Color(0xFFFFDB5B),
+                      ),
+                    ),
+                  ),
+                  error: (_, __) => Row(
+                    children: [
+                      Container(
+                        width: 49,
+                        height: 52,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(6),
+                          color: Colors.grey.shade300,
+                        ),
+                        child: const Icon(Icons.error_outline, color: Colors.grey),
+                      ),
+                      const SizedBox(width: 7),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _channel.taskTitle,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w400,
+                                color: Color(0xFF050316),
+                                fontFamily: 'Instrument Sans',
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 7),
+                            const Text(
+                              'Price unavailable',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w400,
+                                color: Color(0xFF8F9098),
+                                fontFamily: 'Instrument Sans',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
                 ),
+              ),
+
+              const SizedBox(height: 19),
+
+              // Action buttons
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  children: [
+                    InkWell(
+                      onTap: () {},
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFDB5B),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Text(
+                          'Make Offer',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                            color: Colors.black,
+                            fontFamily: 'Noto Sans',
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 9),
+                    InkWell(
+                      onTap: () {},
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: const Color(0xFF606163),
+                          ),
+                        ),
+                        child: const Text(
+                          'View Seller',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                            color: Colors.black,
+                            fontFamily: 'Noto Sans',
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 48),
+
+              // Date time header
+              messagesAsync.when(
+                data: (messages) {
+                  if (messages.isNotEmpty) {
+                    final latestMessage = messages.last;
+                    final date = DateFormat('dd/MM/yy').format(latestMessage.createdAt);
+                    final time = DateFormat('h:mm a').format(latestMessage.createdAt);
+
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          date,
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w500,
+                            color: Color(0xFF8F9098),
+                            fontFamily: 'Instrument Sans',
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          time,
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w500,
+                            color: Color(0xFF8F9098),
+                            fontFamily: 'Instrument Sans',
+                          ),
+                        ),
+                      ],
+                    );
+                  }
+                  return const SizedBox.shrink();
+                },
+                loading: () => const SizedBox.shrink(),
+                error: (_, __) => const SizedBox.shrink(),
+              ),
+
+              const SizedBox(height: 42),
+
+              // Chat messages
+              Expanded(
+                child: messagesAsync.when(
+                  data: (messages) {
+                    if (messages.isEmpty) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.chat_bubble_outline,
+                              size: 64,
+                              color: Colors.grey.shade300,
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'No messages yet',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.grey.shade600,
+                                fontFamily: 'Instrument Sans',
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Start the conversation!',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey.shade400,
+                                fontFamily: 'Instrument Sans',
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
+                    return ListView.separated(
+                      controller: _scrollController,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: messages.length,
+                      separatorBuilder: (context, index) => const SizedBox(height: 30),
+                      itemBuilder: (context, index) {
+                        final message = messages[index];
+                        final isMe = message.senderId == currentUserId;
+                        return _buildMessageBubble(message.content, isMe);
+                      },
+                    );
+                  },
+                  loading: () => const Center(
+                    child: CircularProgressIndicator(
+                      color: Color(0xFFFFDB5B),
+                    ),
+                  ),
+                  error: (error, __) => Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.error_outline,
+                          size: 48,
+                          color: Colors.red,
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'Failed to load messages',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          error.toString(),
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey.shade600,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+              // Seen status
+              messagesAsync.when(
+                data: (messages) {
+                  // Only show seen status if there are messages and last message is from current user
+                  if (messages.isNotEmpty && messages.last.senderId == currentUserId) {
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 21, top: 10, bottom: 10),
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: const [
+                            Icon(
+                              Icons.done_all,
+                              size: 12,
+                              color: Color(0xFF009178),
+                            ),
+                            SizedBox(width: 4),
+                            Text(
+                              'Delivered',
+                              style: TextStyle(
+                                fontSize: 7,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.black,
+                                fontFamily: 'Instrument Sans',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+                  return const SizedBox.shrink();
+                },
+                loading: () => const SizedBox.shrink(),
+                error: (_, __) => const SizedBox.shrink(),
+              ),
+
+              // Message suggestions
+              if (_showSuggestions)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 19),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Select a message or type your own below.',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
+                          color: const Color(0xFF202020).withOpacity(0.34),
+                          fontFamily: 'Noto Sans',
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          _buildSuggestionChip("I'm interested!"),
+                          const SizedBox(width: 14),
+                          _buildSuggestionChip("Hello! Could I get this please?"),
+                        ],
+                      ),
+                      const SizedBox(height: 18),
+                    ],
+                  ),
+                ),
+
+              // Input area
+              Container(
+                padding: const EdgeInsets.all(19),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border(
+                    top: BorderSide(
+                      color: const Color(0xFFE8E8E8),
+                      width: 1,
+                    ),
+                  ),
+                ),
+                child: Container(
+                  height: 52,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: const Color(0xFF606163),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const SizedBox(width: 13),
+                      GestureDetector(
+                        onTap: () {},
+                        child: Container(
+                          width: 24,
+                          height: 24,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: const Color(0xFFC5C6CC),
+                            ),
+                          ),
+                          child: const Icon(
+                            Icons.emoji_emotions_outlined,
+                            size: 16,
+                            color: Color(0xFFC5C6CC),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 15),
+                      Expanded(
+                        child: TextField(
+                          controller: _messageController,
+                          decoration: const InputDecoration(
+                            hintText: 'Text Message',
+                            hintStyle: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w400,
+                              color: Color(0xFF575656),
+                              fontFamily: 'Noto Sans',
+                            ),
+                            border: InputBorder.none,
+                          ),
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontFamily: 'Noto Sans',
+                            color: Colors.black,
+                          ),
+                          onChanged: (value) {
+                            if (value.isNotEmpty && _showSuggestions) {
+                              setState(() {
+                                _showSuggestions = false;
+                              });
+                            }
+                          },
+                          onSubmitted: (_) => _sendMessage(),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(
+                          Icons.send,
+                          size: 17,
+                          color: Color(0xFFC5C6CC),
+                        ),
+                        onPressed: _isLoading ? null : _sendMessage,
+                      ),
+                      const SizedBox(width: 8),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              offset: const Offset(0, -1),
+              blurRadius: 4,
+              color: Colors.black.withOpacity(0.1),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          child: Container(
+            height: 64,
+            padding: const EdgeInsets.symmetric(horizontal: 30),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _buildNavItem('assets/icons/home_icon_outline.svg', 'Home', 0),
+                _buildNavItem('assets/icons/activity_icon_outline.svg', 'Activity', 1),
+                _buildNavItem('assets/icons/taskaway_icon_outline.svg', 'Taskaway', 2),
+                _buildNavItem([
+                  'assets/icons/message_icon_top.svg',
+                  'assets/icons/message_icon_body.svg',
+                ], 'Message', 3),
+                _buildNavItem([
+                  'assets/icons/profile_icon_head.svg',
+                  'assets/icons/profile_icon_body.svg',
+                ], 'Profile', 4),
               ],
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTaskContextCard() {
-    return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF6C5CE7).withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: const Color(0xFF6C5CE7).withValues(alpha: 0.3),
-          width: 1,
         ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF6C5CE7),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Text(
-                  'TASK',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              const Spacer(),
-              Icon(
-                Icons.push_pin,
-                size: 16,
-                color: const Color(0xFF6C5CE7).withValues(alpha: 0.7),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            _channel.taskTitle,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Icon(
-                Icons.person_outline,
-                size: 14,
-                color: Colors.grey.shade600,
-              ),
-              const SizedBox(width: 4),
-              Text(
-                'Posted by ${_channel.posterName}',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey.shade600,
-                ),
-              ),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Colors.orange.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: Colors.orange.withValues(alpha: 0.3),
-                  ),
-                ),
-                child: const Text(
-                  'PENDING',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.orange,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () {
-                    // Navigate to task details
-                    context.push('/home/tasks/${_channel.taskId}');
-                  },
-                  icon: const Icon(Icons.visibility_outlined, size: 16),
-                  label: const Text('View Task'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF6C5CE7),
-                    side: const BorderSide(color: Color(0xFF6C5CE7)),
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    // Quick actions - maybe payment or completion
-                  },
-                  icon: const Icon(Icons.check_circle_outline, size: 16),
-                  label: const Text('Complete'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF6C5CE7),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
     );
   }
 
-  String _formatDate(DateTime dateTime) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final yesterday = today.subtract(const Duration(days: 1));
-    final messageDate = DateTime(dateTime.year, dateTime.month, dateTime.day);
-
-    if (messageDate == today) {
-      return 'Today';
-    } else if (messageDate == yesterday) {
-      return 'Yesterday';
-    } else if (now.difference(messageDate).inDays < 7) {
-      return DateFormat('EEEE').format(dateTime);
-    } else {
-      return DateFormat('MMM d, yyyy').format(dateTime);
-    }
+  Widget _buildMessageBubble(String text, bool isMe) {
+    return Row(
+      mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+      children: [
+        if (!isMe) ...[
+          CircleAvatar(
+            radius: 16,
+            backgroundColor: Colors.grey.shade300,
+            child: Icon(
+              Icons.person,
+              size: 16,
+              color: Colors.grey.shade600,
+            ),
+          ),
+          const SizedBox(width: 8),
+        ],
+        Flexible(
+          child: Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF0F1F1),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Text(
+              text,
+              style: const TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w500,
+                color: Color(0xFF2C2C2D),
+                fontFamily: 'Instrument Sans',
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
   }
-}
 
-extension DateTimeComparison on DateTime {
-  bool isAtSameDay(DateTime other) {
-    return year == other.year && month == other.month && day == other.day;
+  Widget _buildSuggestionChip(String text) {
+    return InkWell(
+      onTap: () => _sendSuggestedMessage(text),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: const Color(0xFF606163),
+          ),
+        ),
+        child: Text(
+          text,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w400,
+            color: Colors.black,
+            fontFamily: 'Noto Sans',
+          ),
+        ),
+      ),
+    );
   }
 }

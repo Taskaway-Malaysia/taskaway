@@ -15,6 +15,7 @@ class Profile {
   final String? about;
   final List<String>? skills;
   final List<String>? myWorks;
+  final DateTime? lastSignInAt;
 
   Profile({
     required this.id,
@@ -33,6 +34,7 @@ class Profile {
     this.about,
     this.skills,
     this.myWorks,
+    this.lastSignInAt,
   });
 
   factory Profile.fromJson(Map<String, dynamic> json) {
@@ -53,6 +55,7 @@ class Profile {
       about: json['about'] as String?,
       skills: json['skills'] != null ? List<String>.from(json['skills']) : null,
       myWorks: json['my_works'] != null ? List<String>.from(json['my_works']) : null,
+      lastSignInAt: json['last_sign_in_at'] != null ? DateTime.parse(json['last_sign_in_at'] as String) : null,
     );
   }
 
@@ -73,6 +76,7 @@ class Profile {
     if (about != null) 'about': about,
     if (skills != null) 'skills': skills,
     if (myWorks != null) 'my_works': myWorks,
+    if (lastSignInAt != null) 'last_sign_in_at': lastSignInAt!.toIso8601String(),
   };
 
   Profile copyWith({
@@ -92,6 +96,7 @@ class Profile {
     String? about,
     List<String>? skills,
     List<String>? myWorks,
+    DateTime? lastSignInAt,
   }) {
     return Profile(
       id: id ?? this.id,
@@ -110,6 +115,7 @@ class Profile {
       about: about ?? this.about,
       skills: skills ?? this.skills,
       myWorks: myWorks ?? this.myWorks,
+      lastSignInAt: lastSignInAt ?? this.lastSignInAt,
     );
   }
   
@@ -132,7 +138,8 @@ class Profile {
         other.bio == bio &&
         other.about == about &&
         other.skills == skills &&
-        other.myWorks == myWorks;
+        other.myWorks == myWorks &&
+        other.lastSignInAt == lastSignInAt;
   }
 
   @override
@@ -154,6 +161,7 @@ class Profile {
       about,
       skills,
       myWorks,
+      lastSignInAt,
     );
   }
 }

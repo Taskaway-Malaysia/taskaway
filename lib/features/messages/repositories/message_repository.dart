@@ -110,14 +110,27 @@ class MessageRepository {
   }
 
   Stream<List<Channel>> watchUserChannels(String userId) {
+    print('Watching channels for user: $userId');
     return supabase
         .from(_channelsTable)
         .stream(primaryKey: ['id'])
         .map((response) async {
+          print('Total channels received: ${response.length}');
+
           // Filter channels where user is either poster or tasker
-          final userChannels = response.where((row) =>
-            row['poster_id'] == userId || row['tasker_id'] == userId
-          ).toList();
+          final userChannels = response.where((row) {
+            final isPoster = row['poster_id'] == userId;
+            final isTasker = row['tasker_id'] == userId;
+            final shouldInclude = isPoster || isTasker;
+
+            if (!shouldInclude) {
+              print('Excluding channel: poster_id=${row['poster_id']}, tasker_id=${row['tasker_id']}, current_user=$userId');
+            }
+
+            return shouldInclude;
+          }).toList();
+
+          print('Filtered to ${userChannels.length} channels for user $userId');
           
           // Sort by last_message_at in descending order
           userChannels.sort((a, b) {
