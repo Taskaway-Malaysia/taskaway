@@ -379,8 +379,16 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
                           ),
                         ),
                       ),
-                    // Only show search bar in Tasker mode
-                    if (_isTaskerMode)
+                    // Show Taskaway logo and search bar in Tasker mode
+                    if (_isTaskerMode) ...[
+                      Padding(
+                        padding: const EdgeInsets.only(top: 16, bottom: 8),
+                        child: Image.asset(
+                          'assets/images/taskaway_logo.png',
+                          height: 40,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
                       MapSearchBar(
                         isTaskerMode: _isTaskerMode,
                         onFilterTap: () {
@@ -402,8 +410,8 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
                         onSearch: (query) {
                           // Handle search
                         },
-                      )
-                    else
+                      ),
+                    ] else
                       // Show only tabs in Poster mode
                       Container(
                         color: Colors.white,

@@ -16,6 +16,9 @@ class Profile {
   final List<String>? skills;
   final List<String>? myWorks;
   final DateTime? lastSignInAt;
+  final double? latitude;
+  final double? longitude;
+  final bool? isAvailable;
 
   Profile({
     required this.id,
@@ -35,6 +38,9 @@ class Profile {
     this.skills,
     this.myWorks,
     this.lastSignInAt,
+    this.latitude,
+    this.longitude,
+    this.isAvailable,
   });
 
   factory Profile.fromJson(Map<String, dynamic> json) {
@@ -56,6 +62,9 @@ class Profile {
       skills: json['skills'] != null ? List<String>.from(json['skills']) : null,
       myWorks: json['my_works'] != null ? List<String>.from(json['my_works']) : null,
       lastSignInAt: json['last_sign_in_at'] != null ? DateTime.parse(json['last_sign_in_at'] as String) : null,
+      latitude: json['latitude'] != null ? (json['latitude'] as num).toDouble() : null,
+      longitude: json['longitude'] != null ? (json['longitude'] as num).toDouble() : null,
+      isAvailable: json['is_available'] as bool?,
     );
   }
 
@@ -77,6 +86,9 @@ class Profile {
     if (skills != null) 'skills': skills,
     if (myWorks != null) 'my_works': myWorks,
     if (lastSignInAt != null) 'last_sign_in_at': lastSignInAt!.toIso8601String(),
+    if (latitude != null) 'latitude': latitude,
+    if (longitude != null) 'longitude': longitude,
+    if (isAvailable != null) 'is_available': isAvailable,
   };
 
   Profile copyWith({
@@ -97,6 +109,9 @@ class Profile {
     List<String>? skills,
     List<String>? myWorks,
     DateTime? lastSignInAt,
+    double? latitude,
+    double? longitude,
+    bool? isAvailable,
   }) {
     return Profile(
       id: id ?? this.id,
@@ -116,6 +131,9 @@ class Profile {
       skills: skills ?? this.skills,
       myWorks: myWorks ?? this.myWorks,
       lastSignInAt: lastSignInAt ?? this.lastSignInAt,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
+      isAvailable: isAvailable ?? this.isAvailable,
     );
   }
   
@@ -139,7 +157,10 @@ class Profile {
         other.about == about &&
         other.skills == skills &&
         other.myWorks == myWorks &&
-        other.lastSignInAt == lastSignInAt;
+        other.lastSignInAt == lastSignInAt &&
+        other.latitude == latitude &&
+        other.longitude == longitude &&
+        other.isAvailable == isAvailable;
   }
 
   @override
@@ -161,7 +182,10 @@ class Profile {
       about,
       skills,
       myWorks,
-      lastSignInAt,
+      Object.hash(lastSignInAt, latitude, longitude, isAvailable),
     );
   }
+
+  // Helper getter for profile image URL (alias for avatarUrl)
+  String? get profileImageUrl => avatarUrl;
 }

@@ -180,6 +180,9 @@ class TaskController {
     String? locationType,
     bool? providesMaterials,
     List<dynamic>? images,
+    double? latitude,
+    double? longitude,
+    String? paymentMethod,
   }) async {
     // Create the task first to get an ID
     final task = Task(
@@ -197,6 +200,9 @@ class TaskController {
       timeOfDay: timeOfDay,
       locationType: locationType,
       providesMaterials: providesMaterials,
+      latitude: latitude,
+      longitude: longitude,
+      paymentMethod: paymentMethod,
       images: [],
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),

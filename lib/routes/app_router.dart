@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:taskaway/features/auth/controllers/auth_controller.dart';
 import 'package:taskaway/features/auth/screens/change_password_screen.dart';
 import 'package:taskaway/features/auth/screens/change_password_success_screen.dart';
@@ -24,10 +25,13 @@ import '../features/auth/screens/signup_success_screen.dart';
 import '../features/home/screens/home_screen.dart';
 import '../features/tasks/screens/my_task_screen.dart';
 import '../features/tasks/screens/create_task_screen.dart';
+import '../features/tasks/screens/create_task_single_page_screen.dart';
 import '../features/tasks/screens/task_details_screen.dart';
 import '../features/tasks/screens/task_details_screen_new.dart';
 import '../features/tasks/screens/apply_task_screen.dart';
 import '../features/tasks/screens/offer_accepted_success_screen.dart';
+import '../features/tasks/screens/map_location_picker_screen.dart';
+import '../features/tasks/screens/waiting_for_tasker_screen.dart';
 import '../features/payments/screens/payment_completion_screen.dart';
 import '../features/payments/screens/payment_authorization_screen.dart';
 import '../features/payments/screens/payment_success_screen.dart';
@@ -35,6 +39,11 @@ import '../features/payments/screens/payment_method_selection_screen.dart';
 import '../features/payments/screens/fpx_bank_selection_screen.dart';
 import '../features/payments/screens/grabpay_payment_screen.dart';
 import '../features/payments/screens/payment_return_handler.dart';
+import '../features/payments/screens/chip_payment_screen.dart';
+import '../features/payments/screens/chip_success_screen.dart';
+import '../features/tasks/screens/find_tasker_map_screen.dart';
+import '../features/tasks/screens/tasker_details_screen.dart';
+import '../features/home/screens/activity_screen.dart';
 import '../features/notifications/screens/notifications_screen.dart';
 import '../features/admin/screens/admin_tools_screen.dart';
 import '../core/services/analytics_service.dart';
@@ -403,6 +412,41 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               );
             },
           ),
+          // CHIP payment success - must be before wildcard /payment/:id
+          GoRoute(
+            path: '/payment/chip-success',
+            name: 'chip-success',
+            builder: (context, state) {
+              final extra = state.extra as Map<String, dynamic>;
+              return ChipSuccessScreen(
+                taskId: extra['taskId'] as String,
+                amount: extra['amount'] as double,
+                taskTitle: extra['taskTitle'] as String,
+              );
+            },
+          ),
+          // Find tasker map screen
+          GoRoute(
+            path: '/tasks/:taskId/find-tasker',
+            name: 'find-tasker',
+            builder: (context, state) {
+              final taskId = state.pathParameters['taskId']!;
+              return FindTaskerMapScreen(taskId: taskId);
+            },
+          ),
+          // Tasker details screen
+          GoRoute(
+            path: '/tasks/:taskId/tasker/:taskerId',
+            name: 'tasker-details',
+            builder: (context, state) {
+              final taskId = state.pathParameters['taskId']!;
+              final taskerId = state.pathParameters['taskerId']!;
+              return TaskerDetailsScreen(
+                taskId: taskId,
+                taskerId: taskerId,
+              );
+            },
+          ),
           GoRoute(
             path: '/payment/:id',
             name: 'payment-callback',
@@ -482,6 +526,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 ],
               ),
               GoRoute(
+                path: '/home/activity',
+                name: 'activity',
+                builder: (context, state) => const ActivityScreen(),
+              ),
+              GoRoute(
                 path: '/home/tasks',
                 name: 'tasks',
                 builder: (context, state) => const MyTaskScreen(),
@@ -507,7 +556,38 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/create-task',
                 name: 'create-task',
-                builder: (context, state) => const CreateTaskScreen(),
+                builder: (context, state) => const CreateTaskSinglePageScreen(),
+              ),
+              GoRoute(
+                path: '/map-picker',
+                name: 'map-picker',
+                builder: (context, state) {
+                  final initialLocation = state.extra as LatLng?;
+                  return MapLocationPickerScreen(
+                    initialLocation: initialLocation,
+                  );
+                },
+              ),
+              GoRoute(
+                path: '/waiting-for-tasker/:taskId',
+                name: 'waiting-for-tasker',
+                builder: (context, state) {
+                  final taskId = state.pathParameters['taskId']!;
+                  return WaitingForTaskerScreen(taskId: taskId);
+                },
+              ),
+              GoRoute(
+                path: '/chip-payment',
+                name: 'chip-payment',
+                builder: (context, state) {
+                  final extra = state.extra as Map<String, dynamic>;
+                  return ChipPaymentScreen(
+                    checkoutUrl: extra['checkoutUrl'] as String,
+                    taskId: extra['taskId'] as String,
+                    amount: extra['amount'] as double,
+                    taskTitle: extra['taskTitle'] as String,
+                  );
+                },
               ),
               ...ProfileRouter.routes,
               ...ChatRouter.routes,

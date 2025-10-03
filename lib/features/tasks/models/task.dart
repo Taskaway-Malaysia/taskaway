@@ -25,6 +25,9 @@ class Task {
   final bool? providesMaterials;
   final List<Map<String, dynamic>>? offers;
   final String? paymentIntentId;
+  final double? latitude;
+  final double? longitude;
+  final String? paymentMethod;
 
   String? get posterName => posterProfile?['full_name'] as String?;
   String? get taskerName => taskerProfile?['full_name'] as String?;
@@ -53,6 +56,9 @@ class Task {
     this.locationType,
     this.providesMaterials,
     this.paymentIntentId,
+    this.latitude,
+    this.longitude,
+    this.paymentMethod,
   })  : id = id ?? '',
         createdAt = createdAt ?? DateTime.now(),
         updatedAt = updatedAt ?? DateTime.now();
@@ -86,6 +92,9 @@ class Task {
       locationType: json['location_type'] as String?,
       providesMaterials: json['provides_materials'] as bool?,
       paymentIntentId: json['payment_intent_id'] as String?,
+      latitude: (json['latitude'] as num?)?.toDouble(),
+      longitude: (json['longitude'] as num?)?.toDouble(),
+      paymentMethod: json['payment_method'] as String?,
     );
   }
 
@@ -109,6 +118,9 @@ class Task {
       if (locationType != null) 'location_type': locationType,
       if (providesMaterials != null) 'provides_materials': providesMaterials,
       if (paymentIntentId != null) 'payment_intent_id': paymentIntentId,
+      if (latitude != null) 'latitude': latitude,
+      if (longitude != null) 'longitude': longitude,
+      if (paymentMethod != null) 'payment_method': paymentMethod,
     };
   }
 
@@ -135,6 +147,9 @@ class Task {
     String? locationType,
     bool? providesMaterials,
     String? paymentIntentId,
+    double? latitude,
+    double? longitude,
+    String? paymentMethod,
   }) {
     return Task(
       id: id ?? this.id,
@@ -159,6 +174,9 @@ class Task {
       locationType: locationType ?? this.locationType,
       providesMaterials: providesMaterials ?? this.providesMaterials,
       paymentIntentId: paymentIntentId ?? this.paymentIntentId,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
+      paymentMethod: paymentMethod ?? this.paymentMethod,
     );
   }
 
@@ -187,7 +205,10 @@ class Task {
           timeOfDay == other.timeOfDay &&
           locationType == other.locationType &&
           providesMaterials == other.providesMaterials &&
-          paymentIntentId == other.paymentIntentId;
+          paymentIntentId == other.paymentIntentId &&
+          latitude == other.latitude &&
+          longitude == other.longitude &&
+          paymentMethod == other.paymentMethod;
 
   // Helper method to compare lists
   bool _listEquals<T>(List<T>? a, List<T>? b) {
@@ -222,5 +243,8 @@ class Task {
       timeOfDay.hashCode ^
       locationType.hashCode ^
       providesMaterials.hashCode ^
-      paymentIntentId.hashCode;
+      paymentIntentId.hashCode ^
+      latitude.hashCode ^
+      longitude.hashCode ^
+      paymentMethod.hashCode;
 }

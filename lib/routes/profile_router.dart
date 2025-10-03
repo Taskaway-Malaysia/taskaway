@@ -1,5 +1,5 @@
 import 'package:go_router/go_router.dart';
-import '../features/profile/screens/profile_screen.dart';
+import '../features/profile/screens/profile_screen_new.dart';
 import '../features/profile/screens/edit_profile_screen.dart';
 import '../features/profile/screens/settings_screen.dart';
 import '../features/profile/screens/payment_options_screen.dart';
@@ -13,7 +13,7 @@ class ProfileRouter {
     GoRoute(
       path: '/home/profile',
       name: 'profile',
-      builder: (context, state) => const ProfileScreen(),
+      builder: (context, state) => const ProfileScreenNew(),
     ),
     // Profile edit routes (these were originally standalone in the redirect logic)
     GoRoute(

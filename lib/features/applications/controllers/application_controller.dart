@@ -374,6 +374,89 @@ class ApplicationController extends _$ApplicationController {
       return false;
     }
   }
+
+  /// Approve task completion and release escrow payment to tasker
+  /// This method is called when the poster approves the completed task
+  Future<bool> approveTaskCompletion({
+    required String taskId,
+    required String approverId, // poster_id
+  }) async {
+    dev.log('[ApproveTask] Starting approval for task $taskId by poster $approverId');
+    state = const AsyncValue.loading();
+
+    try {
+      final supabase = SupabaseService.client;
+
+      // Get task details
+      dev.log('[ApproveTask] Fetching task details...');
+      final taskData = await supabase
+          .from('taskaway_tasks')
+          .select('id, status, poster_id, tasker_id, payment_method, chip_payment_id')
+          .eq('id', taskId)
+          .single();
+
+      // Verify approver is the poster
+      if (taskData['poster_id'] != approverId) {
+        throw Exception('Unauthorized: Only the task poster can approve completion');
+      }
+
+      // Verify task is in correct status
+      if (taskData['status'] != 'pending_approval') {
+        throw Exception('Task is not in pending_approval status. Current status: ${taskData['status']}');
+      }
+
+      final paymentMethod = taskData['payment_method'] as String?;
+
+      // If payment method is online_banking, release CHIP escrow
+      if (paymentMethod == 'online_banking') {
+        dev.log('[ApproveTask] Releasing CHIP escrow payment...');
+
+        try {
+          // Call Supabase Edge Function to release payout
+          final response = await supabase.functions.invoke(
+            'chip-release-payout',
+            body: {
+              'taskId': taskId,
+              'approverId': approverId,
+            },
+          );
+
+          dev.log('[ApproveTask] Payout release response: ${response.data}');
+
+          if (response.data == null || response.data['success'] != true) {
+            throw Exception(response.data?['error'] ?? 'Failed to release payout');
+          }
+
+          dev.log('[ApproveTask] Escrow released successfully. Payout ID: ${response.data['payout_id']}');
+        } catch (payoutError) {
+          dev.log('[ApproveTask] Error releasing payout: $payoutError');
+          throw Exception('Failed to release payment to tasker: $payoutError');
+        }
+      } else {
+        // For other payment methods (cash, taskaway_credit), just update task status
+        dev.log('[ApproveTask] Non-escrow payment method: $paymentMethod. Updating task status only.');
+
+        await supabase
+            .from('taskaway_tasks')
+            .update({
+              'status': 'completed',
+              'updated_at': DateTime.now().toIso8601String(),
+            })
+            .eq('id', taskId);
+      }
+
+      // Note: Task completion notification already sent when tasker marked task as complete
+      dev.log('[ApproveTask] Task approved successfully');
+
+      dev.log('[ApproveTask] Task approval completed successfully');
+      state = const AsyncValue.data(null);
+      return true;
+    } catch (e, st) {
+      dev.log('[ApproveTask] Error: $e\nStackTrace: $st');
+      state = AsyncValue.error(e, st);
+      return false;
+    }
+  }
 }
 
 @riverpod

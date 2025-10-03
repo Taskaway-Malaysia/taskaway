@@ -120,11 +120,11 @@ class NotificationRepository {
     required String posterName,
   }) async {
     try {
-      // Get all taskers (users with role 'tasker' or 'both')
+      // Get all taskers (users with role 'tasker')
       final taskers = await supabase
           .from('taskaway_profiles')
           .select('id')
-          .inFilter('role', ['tasker', 'both']);
+          .eq('role', 'tasker');
 
       // Create notifications for all taskers
       final notifications = taskers.map((tasker) => {
