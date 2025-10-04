@@ -12,7 +12,6 @@ import 'package:taskaway/features/applications/controllers/application_controlle
 import 'package:taskaway/features/applications/models/application.dart';
 import 'package:taskaway/features/messages/controllers/message_controller.dart';
 import 'package:taskaway/features/tasks/controllers/task_controller.dart';
-import 'package:taskaway/features/payments/controllers/payment_controller.dart';
 import 'package:taskaway/features/tasks/models/task.dart';
 import 'package:intl/intl.dart';
 
@@ -33,46 +32,75 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
   bool _showNumpad = false;
   bool _isRevisingBudget = false;
 
-  // Accept offer method - now uses payment-first flow
+  // Accept offer method - handles both online (CHIPP) and cash on delivery payments
   Future<void> _acceptOffer(String offerId, String taskerId, double price) async {
-    print('UI: _acceptOffer started with payment-first flow.');
+    dev.log('[TaskDetails] _acceptOffer started');
     if (_isLoading) return;
     setState(() => _isLoading = true);
 
     try {
       final applicationController = ref.read(applicationControllerProvider.notifier);
-      print('UI: Calling controller.initiateOfferAcceptance...');
+      dev.log('[TaskDetails] Calling controller.initiateOfferAcceptance...');
       final paymentData = await applicationController.initiateOfferAcceptance(
         applicationId: offerId,
         taskId: widget.taskId,
         taskerId: taskerId,
       );
-      print('UI: controller.initiateOfferAcceptance returned payment data');
+      dev.log('[TaskDetails] controller.initiateOfferAcceptance returned payment data');
 
-      if (mounted) {
-        print('UI: Navigating to payment method selection screen...');
-        context.push('/payment/method-selection', extra: {
-          'paymentId': paymentData['paymentIntentId'],
-          'clientSecret': paymentData['clientSecret'],
-          'amount': paymentData['amount'],
-          'taskTitle': paymentData['taskTitle'],
-          'paymentType': 'offer_acceptance',
-          'applicationId': paymentData['applicationId'],
-          'taskId': paymentData['taskId'],
-          'taskerId': paymentData['taskerId'],
-          'offerPrice': paymentData['offerPrice'],
-        });
+      if (!mounted) return;
+
+      // Check payment type - cash or online
+      if (paymentData['paymentType'] == 'cash') {
+        dev.log('[TaskDetails] Cash on delivery payment - completing offer acceptance directly');
+
+        // Complete offer acceptance without payment screen
+        await applicationController.completeOfferAcceptance(
+          applicationId: paymentData['applicationId'],
+          taskId: paymentData['taskId'],
+          taskerId: paymentData['taskerId'],
+          chipPaymentId: '', // No payment ID for cash
+          offerPrice: paymentData['offerPrice'],
+        );
+
+        if (mounted) {
+          // Show success message
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Offer accepted! Task assigned to tasker.'),
+              backgroundColor: Colors.green,
+            ),
+          );
+
+          // Refresh task details to show updated status
+          ref.invalidate(taskProvider(widget.taskId));
+        }
+      } else {
+        dev.log('[TaskDetails] Online payment - navigating to CHIPP payment screen...');
+        if (mounted) {
+          // Clear loading state before navigation
+          setState(() => _isLoading = false);
+
+          // Navigate to payment screen
+          context.go('/chip-payment', extra: {
+            'checkoutUrl': paymentData['checkoutUrl'],
+            'taskId': paymentData['taskId'],
+            'amount': paymentData['amount'],
+            'taskTitle': paymentData['taskTitle'],
+            'paymentType': 'offer_acceptance',
+            'applicationId': paymentData['applicationId'],
+            'taskerId': paymentData['taskerId'],
+            'chipPaymentId': paymentData['chipPaymentId'],
+          });
+        }
       }
     } catch (e, st) {
-      print('UI: _acceptOffer caught an error: $e\nStackTrace: $st');
+      dev.log('[TaskDetails] _acceptOffer caught an error: $e\nStackTrace: $st');
       if (mounted) {
+        setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('An error occurred: $e')),
         );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
       }
     }
   }
@@ -806,30 +834,37 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
           break;
 
         case 'approve':
-          // Initialize payment flow instead of directly completing task
-          final task = await ref
-              .read(taskControllerProvider)
-              .getTaskById(widget.taskId);
-          final taskerId = task.taskerId;
-          if (taskerId == null) {
-            throw Exception('No tasker assigned to this task');
+          // Approve task completion and release CHIPP escrow payment
+          final currentUser = ref.read(currentUserProvider);
+          if (currentUser == null) {
+            throw Exception('User not authenticated');
           }
 
-          final init = await ref.read(paymentControllerProvider).handleTaskApproval(
+          final success = await ref
+              .read(applicationControllerProvider.notifier)
+              .approveTaskCompletion(
                 taskId: widget.taskId,
-                posterId: task.posterId,
-                taskerId: taskerId,
-                amount: task.price,
-                taskTitle: task.title,
+                approverId: currentUser.id,
               );
 
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Redirecting to payment authorization...'),
-              ),
-            );
-            context.push('/payment/authorize', extra: init);
+            if (success) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Task approved successfully! Payment released to tasker.'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+              // Refresh task details
+              ref.invalidate(taskProvider(widget.taskId));
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Failed to approve task. Please try again.'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
           }
           break;
 
@@ -1124,18 +1159,33 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
     if (_isLoading) return;
     setState(() => _isLoading = true);
     try {
-      // Capture the existing payment from offer acceptance
-      // No new payment needed - we're capturing the escrow payment
-      await ref.read(paymentControllerProvider).captureTaskPayment(
-        taskId: widget.taskId,
-      );
+      // Approve task completion and release CHIPP escrow payment
+      final currentUser = ref.read(currentUserProvider);
+      if (currentUser == null) {
+        throw Exception('User not authenticated');
+      }
+
+      final success = await ref
+          .read(applicationControllerProvider.notifier)
+          .approveTaskCompletion(
+            taskId: widget.taskId,
+            approverId: currentUser.id,
+          );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Task approved and payment captured successfully!')),
-        );
-        // Refresh the screen to show updated status
-        setState(() {});
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Task approved and payment released to tasker!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          // Refresh the screen to show updated status
+          ref.invalidate(taskProvider(widget.taskId));
+          setState(() {});
+        } else {
+          throw Exception('Failed to approve task');
+        }
       }
     } catch (e) {
       if (mounted) {

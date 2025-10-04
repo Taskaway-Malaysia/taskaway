@@ -9,7 +9,7 @@ import 'package:taskaway/features/notifications/controllers/notification_control
 import 'package:taskaway/features/tasks/controllers/task_controller.dart';
 import 'package:taskaway/features/messages/repositories/message_repository.dart';
 import 'package:taskaway/core/services/supabase_service.dart';
-import 'package:taskaway/features/payments/services/stripe_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 part 'application_controller.g.dart';
 
 @riverpod
@@ -72,16 +72,16 @@ class ApplicationController extends _$ApplicationController {
     }
   }
 
-  /// Initiates offer acceptance by validating data and preparing for payment
-  /// Returns payment initialization data for the payment screen
+  /// Initiates offer acceptance by validating data and creating CHIPP payment
+  /// Returns CHIPP checkout URL and payment data for the payment screen
   Future<Map<String, dynamic>> initiateOfferAcceptance({
     required String applicationId,
     required String taskId,
     required String taskerId, // The user who made the offer
   }) async {
-    print('initiateOfferAcceptance started for appId: $applicationId, taskId: $taskId');
+    dev.log('[initiateOfferAcceptance] Started for appId: $applicationId, taskId: $taskId');
     state = const AsyncValue.loading();
-    
+
     try {
       final currentUser = ref.read(currentUserProvider);
       if (currentUser == null) {
@@ -101,124 +101,125 @@ class ApplicationController extends _$ApplicationController {
         throw Exception('Application not found');
       }
       final offerPrice = acceptedApplication.offerPrice;
-      print('Retrieved offer price: $offerPrice');
+      dev.log('[initiateOfferAcceptance] Retrieved offer price: $offerPrice');
 
-      // Don't create PaymentIntent here - it will be created based on payment method
-      // Card: needs PaymentIntent upfront
-      // FPX/GrabPay: create their own PaymentIntents
-      
-      print('Offer data validated successfully - proceeding to payment method selection');
-      state = const AsyncValue.data(null);
-      
-      // Calculate platform fee here for display purposes
+      // Calculate platform fee
       final platformFee = offerPrice * 0.05; // 5% platform fee
       final taskerAmount = offerPrice - platformFee;
-      
+
+      // Check payment method - if cash on delivery, skip payment
+      if (task.paymentMethod == 'cash_on_delivery') {
+        dev.log('[initiateOfferAcceptance] Cash on delivery payment - skipping CHIPP');
+        state = const AsyncValue.data(null);
+
+        return {
+          'paymentType': 'cash',
+          'applicationId': applicationId,
+          'taskId': taskId,
+          'taskerId': taskerId,
+          'taskTitle': task.title,
+          'offerPrice': offerPrice,
+          'amount': offerPrice,
+          'platformFee': platformFee,
+          'taskerAmount': taskerAmount,
+        };
+      }
+
+      dev.log('[initiateOfferAcceptance] Creating CHIPP payment for offer acceptance...');
+
+      // Call Supabase Edge Function to create CHIPP payment
+      final supabase = Supabase.instance.client;
+      final response = await supabase.functions.invoke(
+        'chip-create-payment',
+        body: {
+          'taskId': taskId,
+          'amount': offerPrice,
+          'posterId': currentUser.id,
+          'posterEmail': currentUser.email,
+          'taskTitle': task.title,
+          'posterName': currentUser.userMetadata?['full_name'],
+          'paymentType': 'offer_acceptance',
+          'applicationId': applicationId,
+          'taskerId': taskerId,
+        },
+      );
+
+      dev.log('[initiateOfferAcceptance] CHIPP payment response: ${response.data}');
+
+      if (response.data == null) {
+        throw Exception('No response from CHIPP payment service');
+      }
+
+      if (response.data['success'] != true) {
+        final error = response.data['error'] ?? 'Failed to create CHIPP payment';
+        dev.log('[initiateOfferAcceptance] Payment creation failed: $error');
+        throw Exception(error);
+      }
+
+      final checkoutUrl = response.data['checkout_url'];
+      final chipPaymentId = response.data['payment_id'];
+
+      if (checkoutUrl == null || checkoutUrl.toString().isEmpty) {
+        dev.log('[initiateOfferAcceptance] Missing checkout_url in response');
+        throw Exception('CHIPP payment service did not return checkout URL');
+      }
+
+      dev.log('[initiateOfferAcceptance] CHIPP payment created successfully. Payment ID: $chipPaymentId');
+      state = const AsyncValue.data(null);
+
       return {
+        'checkoutUrl': checkoutUrl,
+        'chipPaymentId': chipPaymentId,
         'applicationId': applicationId,
         'taskId': taskId,
         'taskerId': taskerId,
         'taskTitle': task.title,
         'offerPrice': offerPrice,
-        'paymentIntentId': '', // Will be created based on payment method
-        'clientSecret': '', // Will be created based on payment method
         'amount': offerPrice,
         'platformFee': platformFee,
         'taskerAmount': taskerAmount,
       };
     } catch (e, st) {
-      print('initiateOfferAcceptance failed with error: $e\nStackTrace: $st');
+      dev.log('[initiateOfferAcceptance] Failed with error: $e\nStackTrace: $st');
       state = AsyncValue.error(e, st);
       rethrow;
     }
   }
 
-  /// Completes offer acceptance AFTER payment is successfully authorized
+  /// Completes offer acceptance AFTER CHIPP payment is successfully authorized
   /// Updates all database records and creates messaging channel
   Future<bool> completeOfferAcceptance({
     required String applicationId,
     required String taskId,
     required String taskerId,
-    required String paymentIntentId,
+    required String chipPaymentId,
     required double offerPrice,
   }) async {
-    print('completeOfferAcceptance started for appId: $applicationId, taskId: $taskId');
+    dev.log('[completeOfferAcceptance] Started for appId: $applicationId, taskId: $taskId');
     state = const AsyncValue.loading();
     final repo = ref.read(applicationRepositoryProvider);
-    
+
     try {
       // Update application status to 'accepted'
-      print('Step 1: Updating application status...');
+      dev.log('[completeOfferAcceptance] Step 1: Updating application status...');
       await repo.updateApplication(applicationId, {'status': 'accepted'});
-      
-      // Update task status to 'accepted' (not 'pending') and set price
-      print('Step 2: Updating task data...');
+
+      // Update task status to 'accepted' and set price
+      dev.log('[completeOfferAcceptance] Step 2: Updating task data...');
       final supabase = SupabaseService.client;
       final taskData = {
         'status': 'accepted', // Set status to 'accepted' after payment is authorized
         'tasker_id': taskerId,
         'price': offerPrice,
-        'payment_intent_id': paymentIntentId, // Save payment_intent_id
+        'chip_payment_id': chipPaymentId.isNotEmpty ? chipPaymentId : null, // Save CHIPP payment ID (null for cash)
+        'payment_method': chipPaymentId.isNotEmpty ? 'online_banking' : 'cash_on_delivery', // Set payment method
         'updated_at': DateTime.now().toIso8601String(),
       };
-      await supabase
-          .from('taskaway_tasks')
-          .update(taskData)
-          .eq('id', taskId);
-      print('Task updated successfully');
-      
-      // Update payment record status (only for card payments that need manual capture)
-      print('Step 2b: Checking payment method and updating status if needed...');
-      try {
-        // First, get the existing payment record to check payment method
-        var paymentRecord = await supabase
-            .from('taskaway_payments')
-            .select('payment_method_type, capture_method, payment_status')
-            .eq('stripe_payment_intent_id', paymentIntentId)
-            .maybeSingle();
-        
-        if (paymentRecord != null) {
-          final paymentMethodType = paymentRecord['payment_method_type'];
-          final captureMethod = paymentRecord['capture_method'];
-          final currentStatus = paymentRecord['payment_status'];
-          
-          print('Payment method: $paymentMethodType, capture method: $captureMethod, current status: $currentStatus');
-          
-          // Only update to 'requires_capture' for card payments with manual capture
-          // Skip update for FPX/GrabPay which are already captured
-          if (paymentMethodType == 'card' || paymentMethodType == null) {
-            // Card payment or legacy payment (assume card) - update to requires_capture
-            var paymentUpdateResult = await supabase
-                .from('taskaway_payments')
-                .update({
-                  'status': 'authorized',
-                  'payment_status': 'requires_capture', // Payment is authorized but not captured yet
-                  'updated_at': DateTime.now().toIso8601String(),
-                })
-                .eq('stripe_payment_intent_id', paymentIntentId)
-                .select();
-            
-            if (paymentUpdateResult.isNotEmpty) {
-              print('Card payment record updated to authorized/requires_capture status');
-            }
-          } else if (paymentMethodType == 'fpx' || paymentMethodType == 'grabpay') {
-            // FPX/GrabPay - these are automatically captured, don't change status
-            print('FPX/GrabPay payment detected - keeping existing status: $currentStatus');
-            // Optionally update only the timestamp to track the return
-            await supabase
-                .from('taskaway_payments')
-                .update({
-                  'updated_at': DateTime.now().toIso8601String(),
-                })
-                .eq('stripe_payment_intent_id', paymentIntentId);
-          }
-        } else {
-          print('Warning: No payment record found to update');
-        }
-      } catch (e) {
-        print('Warning: Failed to update payment status: $e');
-        // Don't fail the whole process if payment status update fails
-      }
+      await supabase.from('taskaway_tasks').update(taskData).eq('id', taskId);
+      dev.log('[completeOfferAcceptance] Task updated successfully');
+
+      // CHIPP payments are held in escrow automatically - no status update needed
+      dev.log('[completeOfferAcceptance] CHIPP payment is in escrow, will be released on task approval');
       
       // Reject other offers
       print('Step 3: Rejecting other offers...');

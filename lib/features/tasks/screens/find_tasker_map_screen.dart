@@ -1059,12 +1059,20 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
     }
   }
 
-  /// Handle accepting an offer
+  /// Handle accepting an offer with payment-first flow
   Future<void> _handleAcceptOffer(Application application, BuildContext sheetContext) async {
     try {
-      // Show loading indicator in the button
+      // Close the bottom sheet first before navigating
+      Navigator.of(sheetContext).pop();
+
+      // Small delay to ensure sheet is closed
+      await Future.delayed(const Duration(milliseconds: 100));
+
+      if (!mounted) return;
+
+      // Show loading indicator
       showDialog(
-        context: sheetContext,
+        context: context,
         barrierDismissible: false,
         builder: (context) => const Center(
           child: CircularProgressIndicator(
@@ -1073,9 +1081,9 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
         ),
       );
 
-      // Call the acceptOffer method from the application controller
+      // Initiate offer acceptance (validates and prepares payment data)
       final applicationController = ref.read(applicationControllerProvider.notifier);
-      final success = await applicationController.acceptOffer(
+      final paymentData = await applicationController.initiateOfferAcceptance(
         applicationId: application.id!,
         taskId: widget.taskId,
         taskerId: application.taskerId,
@@ -1084,40 +1092,52 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
       if (!mounted) return;
 
       // Close loading dialog
-      Navigator.of(sheetContext).pop();
+      Navigator.of(context).pop();
 
-      // Close the bottom sheet
-      Navigator.of(sheetContext).pop();
-
-      if (success) {
-        // Navigate to the tracking screen immediately
-        // The tracking screen will show its own success state
-        context.goNamed(
-          'waiting-for-tasker',
-          pathParameters: {'taskId': widget.taskId},
+      // Check payment type - cash or online
+      if (paymentData['paymentType'] == 'cash') {
+        // Cash on delivery - complete offer acceptance directly
+        await applicationController.completeOfferAcceptance(
+          applicationId: paymentData['applicationId'],
+          taskId: paymentData['taskId'],
+          taskerId: paymentData['taskerId'],
+          chipPaymentId: '', // No payment ID for cash
+          offerPrice: paymentData['offerPrice'],
         );
-      } else {
-        // Show error message (only if we're staying on this screen)
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Failed to accept offer. Please try again.'),
-              backgroundColor: Colors.red,
-              duration: Duration(seconds: 3),
+              content: Text('Offer accepted! Task assigned to tasker.'),
+              backgroundColor: Colors.green,
             ),
           );
+
+          // Navigate to task details
+          context.go('/task/${widget.taskId}');
+        }
+      } else {
+        // Online payment - navigate to CHIPP payment screen
+        if (mounted) {
+          context.go('/chip-payment', extra: {
+            'checkoutUrl': paymentData['checkoutUrl'],
+            'taskId': paymentData['taskId'],
+            'amount': paymentData['amount'],
+            'taskTitle': paymentData['taskTitle'],
+            'paymentType': 'offer_acceptance',
+            'applicationId': paymentData['applicationId'],
+            'taskerId': paymentData['taskerId'],
+            'chipPaymentId': paymentData['chipPaymentId'],
+          });
         }
       }
     } catch (e) {
       if (!mounted) return;
 
-      // Try to close dialogs safely
+      // Try to close loading dialog if it's open
       try {
-        Navigator.of(sheetContext).pop(); // Close loading
-        Navigator.of(sheetContext).pop(); // Close sheet
-      } catch (_) {
-        // Ignore if already closed
-      }
+        Navigator.of(context).pop();
+      } catch (_) {}
 
       // Show error message
       if (mounted) {

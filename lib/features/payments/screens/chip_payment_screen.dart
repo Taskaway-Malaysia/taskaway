@@ -15,6 +15,7 @@ class ChipPaymentScreen extends StatefulWidget {
   final String taskId;
   final double amount;
   final String taskTitle;
+  final String? paymentType; // 'task_creation' or 'offer_acceptance'
 
   const ChipPaymentScreen({
     super.key,
@@ -22,6 +23,7 @@ class ChipPaymentScreen extends StatefulWidget {
     required this.taskId,
     required this.amount,
     required this.taskTitle,
+    this.paymentType,
   });
 
   @override
@@ -147,6 +149,7 @@ class _ChipPaymentScreenState extends State<ChipPaymentScreen> {
         'taskId': widget.taskId,
         'amount': widget.amount,
         'taskTitle': widget.taskTitle,
+        'paymentType': widget.paymentType ?? 'task_creation',
       });
     }
   }

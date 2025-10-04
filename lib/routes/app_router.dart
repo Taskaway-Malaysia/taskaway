@@ -32,13 +32,7 @@ import '../features/tasks/screens/apply_task_screen.dart';
 import '../features/tasks/screens/offer_accepted_success_screen.dart';
 import '../features/tasks/screens/map_location_picker_screen.dart';
 import '../features/tasks/screens/waiting_for_tasker_screen.dart';
-import '../features/payments/screens/payment_completion_screen.dart';
-import '../features/payments/screens/payment_authorization_screen.dart';
 import '../features/payments/screens/payment_success_screen.dart';
-import '../features/payments/screens/payment_method_selection_screen.dart';
-import '../features/payments/screens/fpx_bank_selection_screen.dart';
-import '../features/payments/screens/grabpay_payment_screen.dart';
-import '../features/payments/screens/payment_return_handler.dart';
 import '../features/payments/screens/chip_payment_screen.dart';
 import '../features/payments/screens/chip_success_screen.dart';
 import '../features/tasks/screens/find_tasker_map_screen.dart';
@@ -65,26 +59,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     redirect: (BuildContext context, GoRouterState state) async {
       final String location = state.uri.toString(); // Use full URI
       
-      // Handle web payment returns where Stripe puts parameters before the hash
-      // Example: http://localhost:56844/?payment_intent=pi_xxx#/payment-return
-      if (kIsWeb && state.uri.queryParameters.containsKey('payment_intent') && 
-          state.uri.queryParameters.containsKey('redirect_status')) {
-        print('GoRouter Redirect: Detected Stripe payment return parameters on web');
-        final paymentIntent = state.uri.queryParameters['payment_intent'];
-        final redirectStatus = state.uri.queryParameters['redirect_status'];
-        final clientSecret = state.uri.queryParameters['payment_intent_client_secret'];
-        
-        // Build the proper payment-return path with parameters
-        final queryParams = <String, String>{};
-        if (paymentIntent != null) queryParams['payment_intent'] = paymentIntent;
-        if (redirectStatus != null) queryParams['redirect_status'] = redirectStatus;
-        if (clientSecret != null) queryParams['payment_intent_client_secret'] = clientSecret;
-        
-        final queryString = Uri(queryParameters: queryParams).query;
-        final redirectPath = '/payment-return?$queryString';
-        print('GoRouter Redirect: Redirecting to $redirectPath');
-        return redirectPath;
-      }
+      // CHIPP payment returns are handled via deep links (taskaway://payment-return)
+      // No special redirect handling needed for web
       
       // Handle taskaway:// deep links that come directly (mobile)
       if (location.startsWith('taskaway://payment-return')) {
@@ -324,26 +300,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const OnboardingScreen(),
           ),
           GoRoute(
-            path: '/payment/authorize',
-            name: 'payment-authorize',
-            builder: (context, state) {
-              final extra = (state.extra as Map?) ?? {};
-              return PaymentAuthorizationScreen(
-                paymentId: extra['paymentId'] as String,
-                clientSecret: extra['clientSecret'] as String,
-                amount: (extra['amount'] as num).toDouble(),
-                taskTitle: extra['taskTitle'] as String,
-                paymentType: extra['paymentType'] as String? ?? 'task_completion',
-                applicationId: extra['applicationId'] as String?,
-                taskId: extra['taskId'] as String?,
-                taskerId: extra['taskerId'] as String?,
-                offerPrice: extra['offerPrice'] != null 
-                  ? (extra['offerPrice'] as num).toDouble() 
-                  : null,
-              );
-            },
-          ),
-          GoRoute(
             path: '/payment/success',
             name: 'payment-success',
             builder: (context, state) {
@@ -351,64 +307,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               return PaymentSuccessScreen(
                 amount: (extra['amount'] as num).toDouble(),
                 taskTitle: extra['taskTitle'] as String,
-              );
-            },
-          ),
-          GoRoute(
-            path: '/payment/method-selection',
-            name: 'payment-method-selection',
-            builder: (context, state) {
-              final extra = (state.extra as Map?) ?? {};
-              return PaymentMethodSelectionScreen(
-                paymentId: extra['paymentId'] as String,
-                clientSecret: extra['clientSecret'] as String,
-                amount: (extra['amount'] as num).toDouble(),
-                taskTitle: extra['taskTitle'] as String,
-                paymentType: extra['paymentType'] as String? ?? 'task_completion',
-                applicationId: extra['applicationId'] as String?,
-                taskId: extra['taskId'] as String?,
-                taskerId: extra['taskerId'] as String?,
-                offerPrice: extra['offerPrice'] != null 
-                  ? (extra['offerPrice'] as num).toDouble() 
-                  : null,
-              );
-            },
-          ),
-          GoRoute(
-            path: '/payment/fpx-banks',
-            name: 'payment-fpx-banks',
-            builder: (context, state) {
-              final extra = (state.extra as Map?) ?? {};
-              return FPXBankSelectionScreen(
-                paymentId: extra['paymentId'] as String,
-                amount: (extra['amount'] as num).toDouble(),
-                taskTitle: extra['taskTitle'] as String,
-                paymentType: extra['paymentType'] as String? ?? 'task_completion',
-                applicationId: extra['applicationId'] as String?,
-                taskId: extra['taskId'] as String?,
-                taskerId: extra['taskerId'] as String?,
-                offerPrice: extra['offerPrice'] != null 
-                  ? (extra['offerPrice'] as num).toDouble() 
-                  : null,
-              );
-            },
-          ),
-          GoRoute(
-            path: '/payment/grabpay',
-            name: 'payment-grabpay',
-            builder: (context, state) {
-              final extra = (state.extra as Map?) ?? {};
-              return GrabPayPaymentScreen(
-                paymentId: extra['paymentId'] as String,
-                amount: (extra['amount'] as num).toDouble(),
-                taskTitle: extra['taskTitle'] as String,
-                paymentType: extra['paymentType'] as String? ?? 'task_completion',
-                applicationId: extra['applicationId'] as String?,
-                taskId: extra['taskId'] as String?,
-                taskerId: extra['taskerId'] as String?,
-                offerPrice: extra['offerPrice'] != null 
-                  ? (extra['offerPrice'] as num).toDouble() 
-                  : null,
               );
             },
           ),
@@ -422,6 +320,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 taskId: extra['taskId'] as String,
                 amount: extra['amount'] as double,
                 taskTitle: extra['taskTitle'] as String,
+                paymentType: extra['paymentType'] as String?,
               );
             },
           ),
@@ -447,34 +346,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               );
             },
           ),
-          GoRoute(
-            path: '/payment/:id',
-            name: 'payment-callback',
-            builder: (context, state) {
-              final paymentId = state.pathParameters['id']!;
-              final queryParams =
-                  Map<String, String>.from(state.uri.queryParameters);
-              return PaymentCompletionScreen(
-                paymentId: paymentId,
-                billplzParams: queryParams,
-              );
-            },
-          ),
-          GoRoute(
-            path: '/payment-return',
-            name: 'payment-return',
-            builder: (context, state) {
-              // Extract Stripe redirect parameters
-              final paymentIntent = state.uri.queryParameters['payment_intent'];
-              final redirectStatus = state.uri.queryParameters['redirect_status'];
-              
-              // Use our PaymentReturnHandler to process the return
-              return PaymentReturnHandler(
-                paymentIntent: paymentIntent,
-                redirectStatus: redirectStatus,
-              );
-            },
-          ),
+          // Payment callback routes removed - using CHIPP payment flow with deep links instead
           GoRoute(
             path: '/admin-tools',
             name: 'admin-tools',
@@ -586,6 +458,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                     taskId: extra['taskId'] as String,
                     amount: extra['amount'] as double,
                     taskTitle: extra['taskTitle'] as String,
+                    paymentType: extra['paymentType'] as String?,
                   );
                 },
               ),

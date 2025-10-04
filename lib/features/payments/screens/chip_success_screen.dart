@@ -6,16 +6,19 @@ import '../../../core/constants/style_constants.dart';
 ///
 /// Displays success message after CHIP payment completion
 /// Provides navigation options to view task or return home
+/// Handles both task creation and offer acceptance payment flows
 class ChipSuccessScreen extends StatelessWidget {
   final String taskId;
   final double amount;
   final String taskTitle;
+  final String? paymentType; // 'task_creation' or 'offer_acceptance'
 
   const ChipSuccessScreen({
     super.key,
     required this.taskId,
     required this.amount,
     required this.taskTitle,
+    this.paymentType,
   });
 
   @override
@@ -58,9 +61,11 @@ class ChipSuccessScreen extends StatelessWidget {
 
               const SizedBox(height: 16),
 
-              // Success message
+              // Success message - varies by payment type
               Text(
-                'Your task has been posted and payment authorized.',
+                paymentType == 'offer_acceptance'
+                    ? 'Offer accepted and payment authorized!'
+                    : 'Your task has been posted and payment authorized.',
                 style: theme.textTheme.bodyLarge,
                 textAlign: TextAlign.center,
               ),
@@ -68,7 +73,9 @@ class ChipSuccessScreen extends StatelessWidget {
               const SizedBox(height: 8),
 
               Text(
-                'Taskers can now submit offers for your task.',
+                paymentType == 'offer_acceptance'
+                    ? 'You can now communicate with the tasker and start the task.'
+                    : 'Taskers can now submit offers for your task.',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: Colors.grey.shade600,
                 ),
@@ -176,37 +183,70 @@ class ChipSuccessScreen extends StatelessWidget {
 
               const Spacer(),
 
-              // Action buttons
+              // Action buttons - vary by payment type
               Column(
                 children: [
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        // Navigate to find tasker map screen
-                        context.goNamed('find-tasker', pathParameters: {'taskId': taskId});
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFFFDB5B),
-                        foregroundColor: const Color(0xFF000000),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        elevation: 0,
-                        shadowColor: Colors.transparent,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                  if (paymentType == 'offer_acceptance') ...[
+                    // For offer acceptance - go to task details or messaging
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          // Navigate to task details
+                          context.go('/home/browse/$taskId');
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFFFDB5B),
+                          foregroundColor: const Color(0xFF000000),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          elevation: 0,
+                          shadowColor: Colors.transparent,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                         ),
-                      ),
-                      child: const Text(
-                        'Find Tasker',
-                        style: TextStyle(
-                          fontFamily: 'Instrument Sans',
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.3,
+                        child: const Text(
+                          'View Task Details',
+                          style: TextStyle(
+                            fontFamily: 'Instrument Sans',
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.3,
+                          ),
                         ),
                       ),
                     ),
-                  ),
+                  ] else ...[
+                    // For task creation - go to find tasker
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          // Navigate to find tasker map screen
+                          context.goNamed('find-tasker', pathParameters: {'taskId': taskId});
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFFFDB5B),
+                          foregroundColor: const Color(0xFF000000),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          elevation: 0,
+                          shadowColor: Colors.transparent,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: const Text(
+                          'Find Tasker',
+                          style: TextStyle(
+                            fontFamily: 'Instrument Sans',
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 12),
                   SizedBox(
                     width: double.infinity,

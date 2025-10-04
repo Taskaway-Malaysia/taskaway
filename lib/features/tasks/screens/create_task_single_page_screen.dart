@@ -162,103 +162,17 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
         price: price,
       );
 
-      // If payment method is online banking, initiate CHIP payment
-      if (paymentMethod == 'online_banking') {
-        dev.log('[CreateTask] Task created successfully with ID: ${createdTask.id}');
-        dev.log('[CreateTask] Initiating CHIP payment for task ${createdTask.id}');
+      // Navigate to Find Tasker Map - payment will happen AFTER poster selects an offer
+      dev.log('[CreateTask] Task created successfully with ID: ${createdTask.id}');
+      dev.log('[CreateTask] Payment method: $paymentMethod - Payment will be processed after offer acceptance');
 
-        try {
-          // Small delay to ensure task is committed to database
-          await Future.delayed(const Duration(milliseconds: 500));
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
 
-          // Call Supabase Edge Function to create CHIP payment
-          final supabase = Supabase.instance.client;
-          dev.log('[CreateTask] Calling chip-create-payment with taskId: ${createdTask.id}, posterId: ${user.id}');
-
-          final response = await supabase.functions.invoke(
-            'chip-create-payment',
-            body: {
-              'taskId': createdTask.id,
-              'amount': price,
-              'posterId': user.id,
-              'posterEmail': user.email,
-              'taskTitle': _titleController.text,
-              'posterName': user.userMetadata?['full_name'],
-            },
-          );
-
-          dev.log('[CreateTask] CHIP payment RAW response: ${response.toString()}');
-          dev.log('[CreateTask] CHIP payment response.data: ${response.data}');
-          dev.log('[CreateTask] CHIP payment response.data type: ${response.data.runtimeType}');
-
-          if (response.data == null) {
-            throw Exception('No response from payment service');
-          }
-
-          if (response.data['success'] != true) {
-            final error = response.data['error'] ?? 'Failed to create payment';
-            dev.log('[CreateTask] Payment creation failed: $error');
-            throw Exception(error);
-          }
-
-          final checkoutUrl = response.data['checkout_url'];
-          if (checkoutUrl == null || checkoutUrl.toString().isEmpty) {
-            dev.log('[CreateTask] Missing checkout_url in response: ${response.data}');
-            throw Exception('Payment service did not return checkout URL');
-          }
-
-          if (mounted) {
-            setState(() {
-              _isLoading = false;
-            });
-
-            // Navigate to CHIP payment screen
-            context.go('/chip-payment', extra: {
-              'checkoutUrl': checkoutUrl,
-              'taskId': createdTask.id,
-              'amount': price,
-              'taskTitle': _titleController.text,
-            });
-          }
-        } catch (paymentError) {
-          dev.log('[CreateTask] Payment initialization error: $paymentError');
-
-          if (mounted) {
-            setState(() {
-              _isLoading = false;
-            });
-
-            // Show error and allow user to try again or change payment method
-            showDialog(
-              context: context,
-              barrierDismissible: false,
-              builder: (context) => AlertDialog(
-                title: const Text('Payment Initialization Failed'),
-                content: Text(
-                  'Failed to initialize online banking payment: ${paymentError.toString()}\n\nYour task has been created but payment could not be processed. Please try again or contact support.',
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      context.go('/home/browse/${createdTask.id}');
-                    },
-                    child: const Text('View Task'),
-                  ),
-                ],
-              ),
-            );
-          }
-          return;
-        }
-      } else {
-        // For other payment methods (cash, taskaway_credit), navigate to waiting screen
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
-          context.go('/waiting-for-tasker/${createdTask.id}');
-        }
+        // Navigate to Find Tasker Map screen
+        context.goNamed('find-tasker', pathParameters: {'taskId': createdTask.id});
       }
     } catch (e) {
       if (mounted) {
