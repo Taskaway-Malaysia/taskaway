@@ -5,10 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:taskaway/core/theme/app_colors.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../controllers/task_controller.dart';
 import '../../../core/services/analytics_service.dart';
-import 'dart:developer' as dev;
 
 // Provider to track current step in task creation process
 final createTaskStepProvider = StateProvider<int>((ref) => 0);
@@ -242,11 +242,11 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
       appBar: AppBar(
         backgroundColor:
             const Color(0xFF6C5CE7), // Purple color from other screens
-        foregroundColor: Colors.white,
+        foregroundColor: AppColors.textWhite,
         title: const Text(
           'Post a Task',
           style: TextStyle(
-            color: Colors.white,
+            color: AppColors.textWhite,
           ),
         ),
         automaticallyImplyLeading: false, // Disable automatic back button
@@ -282,7 +282,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                       color: index <= currentStep
                           ? const Color(
                               0xFF6C5CE7) // Purple color from other screens
-                          : Colors.grey.shade300,
+                          : AppColors.backgroundDisabled,
                       border: index == currentStep
                           ? Border.all(
                               color: const Color(0xFF6C5CE7),
@@ -311,7 +311,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(
                       0xFF6C5CE7), // Purple color from other screens
-                  foregroundColor: Colors.white,
+                  foregroundColor: AppColors.textWhite,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
                 onPressed: _isLoading
@@ -325,7 +325,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                         width: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: Colors.white,
+                          color: AppColors.textWhite,
                         ),
                       )
                     : Text(currentStep == 4
@@ -376,7 +376,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
           ),
           child: const Icon(
             Icons.check,
-            color: Colors.white,
+            color: AppColors.textWhite,
             size: 40,
           ),
         ),
@@ -416,7 +416,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
             child: Text(
               stepNumber.toString(),
               style: const TextStyle(
-                color: Colors.white,
+                color: AppColors.textWhite,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -509,7 +509,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
           const SizedBox(height: 8),
           const Text(
             'In a few words, what do you need done?',
-            style: TextStyle(color: Colors.grey),
+            style: TextStyle(color: AppColors.textTertiary),
           ),
           const SizedBox(height: 16),
           TextFormField(
@@ -537,7 +537,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
           const SizedBox(height: 8),
           const Text(
             'Summarize the key details',
-            style: TextStyle(color: Colors.grey),
+            style: TextStyle(color: AppColors.textTertiary),
           ),
           const SizedBox(height: 16),
           TextFormField(
@@ -576,7 +576,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
         const SizedBox(height: 8),
         const Text(
           'Post the task when you\'re ready',
-          style: TextStyle(color: Colors.grey),
+          style: TextStyle(color: AppColors.textTertiary),
         ),
         const SizedBox(height: 24),
 
@@ -629,7 +629,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Row(
         children: [
-          Icon(icon, size: 20, color: Colors.grey),
+          Icon(icon, size: 20, color: AppColors.textTertiary),
           const SizedBox(width: 16),
           Expanded(
             child: Text(
@@ -711,7 +711,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
         const SizedBox(height: 8),
         const Text(
           'When do you need this task to be done?',
-          style: TextStyle(color: Colors.grey),
+          style: TextStyle(color: AppColors.textTertiary),
         ),
         const SizedBox(height: 24),
 
@@ -795,7 +795,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           border: Border.all(
-            color: isSelected ? const Color(0xFF6C5CE7) : Colors.grey.shade300,
+            color: isSelected ? const Color(0xFF6C5CE7) : AppColors.backgroundDisabled,
             width: isSelected ? 2 : 1,
           ),
           borderRadius: BorderRadius.circular(8),
@@ -825,7 +825,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
               timeRange,
               style: TextStyle(
                 fontSize: 12,
-                color: Colors.grey.shade600,
+                color: AppColors.textLight,
               ),
             ),
           ],
@@ -858,7 +858,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
         decoration: BoxDecoration(
           color: isSelected
               ? const Color(0xFF6C5CE7).withValues(alpha: 0.1)
-              : Colors.grey.shade200,
+              : AppColors.backgroundGray,
           borderRadius: BorderRadius.circular(8),
           border: isSelected
               ? Border.all(color: const Color(0xFF6C5CE7), width: 2)
@@ -869,7 +869,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
           textAlign: TextAlign.center,
           style: TextStyle(
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-            color: isSelected ? const Color(0xFF6C5CE7) : Colors.black,
+            color: isSelected ? const Color(0xFF6C5CE7) : AppColors.primaryBlack,
           ),
         ),
       ),
@@ -892,8 +892,8 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.light(
               primary: Color(0xFF6C5CE7),
-              onPrimary: Colors.white,
-              onSurface: Colors.black,
+              onPrimary: AppColors.textWhite,
+              onSurface: AppColors.primaryBlack,
             ),
           ),
           child: child!,
@@ -932,7 +932,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
           const SizedBox(height: 8),
           const Text(
             'Where do you need this task to be done?',
-            style: TextStyle(color: Colors.grey),
+            style: TextStyle(color: AppColors.textTertiary),
           ),
           const SizedBox(height: 16),
 
@@ -986,7 +986,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
           const SizedBox(height: 8),
           const Text(
             'Help taskers understand of what needs to be done.\nAdd up to 5 photos.',
-            style: TextStyle(color: Colors.grey),
+            style: TextStyle(color: AppColors.textTertiary),
           ),
           const SizedBox(height: 16),
           Row(
@@ -997,10 +997,10 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                   width: 80,
                   height: 80,
                   decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey.shade300),
+                    border: Border.all(color: AppColors.backgroundDisabled),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(Icons.add, color: Colors.grey),
+                  child: const Icon(Icons.add, color: AppColors.textTertiary),
                 ),
               ),
               const SizedBox(width: 12),
@@ -1021,7 +1021,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(
-                                color: Colors.grey.shade300,
+                                color: AppColors.backgroundDisabled,
                               ),
                             ),
                             child: ClipRRect(
@@ -1037,13 +1037,13 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                               child: Container(
                                 padding: const EdgeInsets.all(2),
                                 decoration: const BoxDecoration(
-                                  color: Colors.red,
+                                  color: AppColors.errorRed,
                                   shape: BoxShape.circle,
                                 ),
                                 child: const Icon(
                                   Icons.close,
                                   size: 16,
-                                  color: Colors.white,
+                                  color: AppColors.textWhite,
                                 ),
                               ),
                             ),
@@ -1064,7 +1064,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
           const SizedBox(height: 8),
           const Text(
             "Don't worry, you can always negotiate the final price later.",
-            style: TextStyle(color: Colors.grey),
+            style: TextStyle(color: AppColors.textTertiary),
           ),
           const SizedBox(height: 16),
           TextFormField(
@@ -1142,7 +1142,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           border: Border.all(
-            color: isSelected ? const Color(0xFF6C5CE7) : Colors.grey.shade300,
+            color: isSelected ? const Color(0xFF6C5CE7) : AppColors.backgroundDisabled,
             width: isSelected ? 2 : 1,
           ),
           borderRadius: BorderRadius.circular(8),
@@ -1168,7 +1168,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 12,
-                color: Colors.grey.shade600,
+                color: AppColors.textLight,
               ),
             ),
           ],
@@ -1239,7 +1239,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
           imageObj.path,
           fit: BoxFit.cover,
           errorBuilder: (context, error, stackTrace) {
-            return const Center(child: Icon(Icons.broken_image, color: Colors.red));
+            return const Center(child: Icon(Icons.broken_image, color: AppColors.errorRed));
           },
         );
       }

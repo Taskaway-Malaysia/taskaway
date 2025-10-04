@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:taskaway/core/constants/style_constants.dart';
+import 'package:taskaway/core/theme/app_colors.dart';
 import 'package:taskaway/features/tasks/controllers/task_controller.dart';
 import 'package:taskaway/features/auth/controllers/auth_controller.dart';
 
@@ -110,12 +110,12 @@ class _ApplyTaskScreenState extends ConsumerState<ApplyTaskScreen> {
     final task = ref.watch(taskProvider(widget.taskId));
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.backgroundWhite,
       appBar: AppBar(
         title: const Text('Apply for Task'),
         elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: AppColors.backgroundWhite,
+        foregroundColor: AppColors.primaryBlack,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.pop(),
@@ -136,7 +136,7 @@ class _ApplyTaskScreenState extends ConsumerState<ApplyTaskScreen> {
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
-                      color: Colors.black,
+                      color: AppColors.primaryBlack,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -145,7 +145,7 @@ class _ApplyTaskScreenState extends ConsumerState<ApplyTaskScreen> {
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w400,
-                      color: Color(0xFF6B7280),
+                      color: AppColors.textSecondary,
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -156,14 +156,14 @@ class _ApplyTaskScreenState extends ConsumerState<ApplyTaskScreen> {
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      color: Colors.black,
+                      color: AppColors.primaryBlack,
                     ),
                   ),
                   const SizedBox(height: 12),
                   Container(
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF3F4F6),
-                      border: Border.all(color: const Color(0xFFE5E7EB)),
+                      color: AppColors.backgroundGray,
+                      border: Border.all(color: AppColors.borderDefault),
                       borderRadius: BorderRadius.circular(8.0),
                     ),
                     child: Row(
@@ -174,7 +174,7 @@ class _ApplyTaskScreenState extends ConsumerState<ApplyTaskScreen> {
                             'RM',
                             style: TextStyle(
                               fontSize: 14,
-                              color: Colors.black,
+                              color: AppColors.primaryBlack,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -185,16 +185,16 @@ class _ApplyTaskScreenState extends ConsumerState<ApplyTaskScreen> {
                             keyboardType: TextInputType.number,
                             style: const TextStyle(
                               fontSize: 14,
-                              color: Colors.black,
+                              color: AppColors.primaryBlack,
                             ),
                             decoration: const InputDecoration(
                               hintText: 'Enter amount',
                               hintStyle: TextStyle(
                                 fontSize: 14,
-                                color: Color(0xFF9CA3AF),
+                                color: AppColors.textTertiary,
                               ),
                               filled: true,
-                              fillColor: Color(0xFFF3F4F6),
+                              fillColor: AppColors.backgroundGray,
                               border: InputBorder.none,
                               focusedBorder: InputBorder.none,
                               enabledBorder: InputBorder.none,
@@ -229,7 +229,7 @@ class _ApplyTaskScreenState extends ConsumerState<ApplyTaskScreen> {
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      color: Colors.black,
+                      color: AppColors.primaryBlack,
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -238,36 +238,36 @@ class _ApplyTaskScreenState extends ConsumerState<ApplyTaskScreen> {
                     maxLines: 6,
                     style: const TextStyle(
                       fontSize: 14,
-                      color: Colors.black,
+                      color: AppColors.primaryBlack,
                     ),
                     decoration: InputDecoration(
                       hintText: 'Describe why you\'re a good fit for this task',
                       hintStyle: const TextStyle(
                         fontSize: 14,
-                        color: Color(0xFF9CA3AF),
+                        color: AppColors.textTertiary,
                       ),
                       filled: true,
-                      fillColor: const Color(0xFFF3F4F6),
+                      fillColor: AppColors.backgroundGray,
                       contentPadding: const EdgeInsets.all(16),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8.0),
-                        borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                        borderSide: BorderSide(color: AppColors.borderDefault),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8.0),
-                        borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                        borderSide: BorderSide(color: AppColors.borderDefault),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8.0),
-                        borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                        borderSide: BorderSide(color: AppColors.borderDefault),
                       ),
                       errorBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8.0),
-                        borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                        borderSide: BorderSide(color: AppColors.borderDefault),
                       ),
                       focusedErrorBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8.0),
-                        borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                        borderSide: BorderSide(color: AppColors.borderDefault),
                       ),
                     ),
                     validator: (value) {
@@ -287,17 +287,17 @@ class _ApplyTaskScreenState extends ConsumerState<ApplyTaskScreen> {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Colors.red.shade50,
+                        color: AppColors.errorLight,
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.error_outline, color: Colors.red.shade700),
+                          Icon(Icons.error_outline, color: AppColors.errorRed),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               _errorMessage!,
-                              style: TextStyle(color: Colors.red.shade700),
+                              style: TextStyle(color: AppColors.errorRed),
                             ),
                           ),
                         ],
@@ -314,19 +314,19 @@ class _ApplyTaskScreenState extends ConsumerState<ApplyTaskScreen> {
                     child: ElevatedButton(
                       onPressed: _isLoading ? null : _submitOffer,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFFFDB5B),
-                        foregroundColor: Colors.black,
+                        backgroundColor: AppColors.primaryYellow,
+                        foregroundColor: AppColors.primaryBlack,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                           side: const BorderSide(
-                            color: Color(0xFFFFC333),
+                            color: AppColors.primaryYellowDark,
                             width: 1,
                           ),
                         ),
                       ),
                       child: _isLoading
-                          ? const CircularProgressIndicator(color: Colors.black)
+                          ? CircularProgressIndicator(color: AppColors.primaryBlack)
                           : const Text(
                               'Submit Offer',
                               style: TextStyle(

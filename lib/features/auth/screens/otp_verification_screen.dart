@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:taskaway/core/constants/style_constants.dart';
+import 'package:taskaway/core/theme/app_typography.dart';
+import 'package:taskaway/core/theme/app_colors.dart';
 import 'package:taskaway/core/widgets/numpad_overlay.dart';
 import 'package:taskaway/features/auth/controllers/auth_controller.dart';
 
@@ -153,12 +155,9 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const Text(
+                        Text(
                           'Enter Verification Code',
-                          style: TextStyle(
-                            fontSize: 26,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: AppTypography.headlineLarge,
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 12),

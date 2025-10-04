@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:taskaway/core/theme/app_colors.dart';
+import 'package:taskaway/core/theme/app_typography.dart';
+import 'package:taskaway/core/theme/app_spacing.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
 import '../models/channel.dart';
@@ -119,7 +122,7 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
             width: 24,
             height: 24,
             colorFilter: ColorFilter.mode(
-              isSelected ? const Color(0xFF202020) : const Color(0xFF575656),
+              isSelected ? AppColors.navActive : AppColors.navInactive,
               BlendMode.srcIn,
             ),
           ),
@@ -129,7 +132,7 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
             textAlign: TextAlign.center,
             style: TextStyle(
               fontFamily: 'Roboto',
-              color: isSelected ? const Color(0xFF202020) : const Color(0xFF575656),
+              color: isSelected ? AppColors.navActive : AppColors.navInactive,
               fontSize: 12,
               fontWeight: FontWeight.w500,
             ),
@@ -154,9 +157,9 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: const Color(0xFFFFDB5B),
+              color: AppColors.primaryYellow,
               border: Border.all(
-                color: const Color(0xFFFFC333),
+                color: AppColors.primaryYellowDark,
                 width: 1,
               ),
               borderRadius: BorderRadius.circular(2),
@@ -166,7 +169,7 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
               width: 15,
               height: 15,
               colorFilter: const ColorFilter.mode(
-                Color(0xFF000000),
+                AppColors.primaryBlack,
                 BlendMode.srcIn,
               ),
             ),
@@ -177,7 +180,7 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
             textAlign: TextAlign.center,
             style: const TextStyle(
               fontFamily: 'Roboto',
-              color: Color(0xFF575656),
+              color: AppColors.navInactive,
               fontSize: 12,
               fontWeight: FontWeight.w500,
             ),
@@ -203,7 +206,7 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
     final otherUserProfileAsync = ref.watch(profileProvider(otherUserId));
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.backgroundWhite,
       body: Column(
         children: [
               // Safe area spacer
@@ -221,7 +224,7 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                       icon: const Icon(
                         Icons.arrow_back,
                         size: 24,
-                        color: Colors.black,
+                        color: AppColors.primaryBlack,
                       ),
                       onPressed: () => context.pop(),
                       padding: EdgeInsets.zero,
@@ -239,7 +242,7 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                               style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.black,
+                                color: AppColors.primaryBlack,
                               ),
                               textAlign: TextAlign.center,
                             ),
@@ -255,7 +258,7 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                                     style: const TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w400,
-                                      color: Color(0xFF6B7280),
+                                      color: AppColors.textSecondary,
                                     ),
                                   );
                                 } else {
@@ -270,7 +273,7 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                                           style: const TextStyle(
                                             fontSize: 12,
                                             fontWeight: FontWeight.w400,
-                                            color: Color(0xFF6B7280),
+                                            color: AppColors.textSecondary,
                                           ),
                                         )
                                       : const SizedBox.shrink();
@@ -281,7 +284,7 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                                 width: 60,
                                 child: LinearProgressIndicator(
                                   color: Color(0xFF009178),
-                                  backgroundColor: Color(0xFFE0E0E0),
+                                  backgroundColor: AppColors.borderDefault,
                                 ),
                               ),
                               error: (_, __) => const SizedBox.shrink(),
@@ -294,7 +297,7 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                       icon: const Icon(
                         Icons.more_vert,
                         size: 24,
-                        color: Colors.black,
+                        color: AppColors.primaryBlack,
                       ),
                       onPressed: () {},
                       padding: EdgeInsets.zero,
@@ -304,22 +307,22 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                 ),
               ),
 
-              const Divider(color: Color(0xFFE5E7EB), height: 1),
+              const Divider(color: AppColors.borderDefault, height: 1),
               const SizedBox(height: 12),
 
               // Task info
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                 child: taskAsync.when(
                   data: (task) => Row(
                     children: [
                       // Task image
                       Container(
-                        width: 60,
-                        height: 60,
+                        width: 80,
+                        height: 80,
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(8),
-                          color: Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                          color: AppColors.backgroundTertiary,
                           image: task != null && task.images != null && task.images!.isNotEmpty
                               ? DecorationImage(
                                   image: NetworkImage(task.images!.first),
@@ -327,8 +330,11 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                                 )
                               : null,
                         ),
+                        child: task == null || task.images == null || task.images!.isEmpty
+                            ? Icon(Icons.image_outlined, color: AppColors.textTertiary, size: 32)
+                            : null,
                       ),
-                      const SizedBox(width: 12),
+                      SizedBox(width: AppSpacing.md),
                       // Task details
                       Expanded(
                         child: Column(
@@ -336,23 +342,19 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                           children: [
                             Text(
                               task?.title ?? _channel.taskTitle,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w400,
-                                color: Color(0xFF050316),
-                                fontFamily: 'Instrument Sans',
+                              style: AppTypography.bodyMedium.copyWith(
+                                fontWeight: AppTypography.semiBold,
+                                color: AppColors.textPrimary,
                               ),
-                              maxLines: 1,
+                              maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
-                            const SizedBox(height: 7),
+                            SizedBox(height: AppSpacing.xs),
                             Text(
                               task != null ? 'RM${task.price.toStringAsFixed(2)}' : 'RM--',
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w400,
-                                color: Color(0xFF050316),
-                                fontFamily: 'Instrument Sans',
+                              style: AppTypography.titleMedium.copyWith(
+                                fontWeight: AppTypography.bold,
+                                color: AppColors.textPrimary,
                               ),
                             ),
                           ],
@@ -366,7 +368,7 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                       height: 20,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: Color(0xFFFFDB5B),
+                        color: AppColors.primaryYellow,
                       ),
                     ),
                   ),
@@ -377,9 +379,9 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                         height: 60,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(8),
-                          color: Colors.grey.shade300,
+                          color: AppColors.borderDefault,
                         ),
-                        child: const Icon(Icons.error_outline, color: Colors.grey),
+                        child: const Icon(Icons.error_outline, color: AppColors.textSecondary),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -391,7 +393,7 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                               style: const TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w400,
-                                color: Color(0xFF050316),
+                                color: AppColors.primaryBlack,
                                 fontFamily: 'Instrument Sans',
                               ),
                               maxLines: 1,
@@ -403,7 +405,7 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w400,
-                                color: Color(0xFF8F9098),
+                                color: AppColors.textTertiary,
                                 fontFamily: 'Instrument Sans',
                               ),
                             ),
@@ -419,46 +421,56 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
 
               // Action buttons
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                 child: Row(
                   children: [
-                    InkWell(
-                      onTap: () {},
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFC107),
-                          borderRadius: BorderRadius.circular(20),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {},
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: AppColors.gray900,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: AppSpacing.xl,
+                            vertical: AppSpacing.md,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
+                          ),
+                          elevation: 0,
                         ),
-                        child: const Text(
+                        child: Text(
                           'Make Offer',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w400,
-                            color: Colors.black,
-                            fontFamily: 'Noto Sans',
+                          style: AppTypography.labelMedium.copyWith(
+                            fontWeight: AppTypography.semiBold,
+                            color: AppColors.gray900,
                           ),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    InkWell(
-                      onTap: () {},
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: const Color(0xFF9CA3AF),
+                    SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () {},
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.gray900,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: AppSpacing.xl,
+                            vertical: AppSpacing.md,
+                          ),
+                          side: BorderSide(
+                            color: AppColors.borderDark,
+                            width: 1.5,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
                           ),
                         ),
-                        child: const Text(
+                        child: Text(
                           'View Seller',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w400,
-                            color: Colors.black,
-                            fontFamily: 'Noto Sans',
+                          style: AppTypography.labelMedium.copyWith(
+                            fontWeight: AppTypography.semiBold,
+                            color: AppColors.gray900,
                           ),
                         ),
                       ),
@@ -485,7 +497,7 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                           style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w400,
-                            color: Color(0xFF9CA3AF),
+                            color: AppColors.textTertiary,
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -494,7 +506,7 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                           style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w400,
-                            color: Color(0xFF9CA3AF),
+                            color: AppColors.textTertiary,
                           ),
                         ),
                       ],
@@ -520,14 +532,14 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                             Icon(
                               Icons.chat_bubble_outline,
                               size: 64,
-                              color: Colors.grey.shade300,
+                              color: AppColors.borderDefault,
                             ),
                             const SizedBox(height: 16),
                             Text(
                               'No messages yet',
                               style: TextStyle(
                                 fontSize: 16,
-                                color: Colors.grey.shade600,
+                                color: AppColors.textSecondary,
                                 fontFamily: 'Instrument Sans',
                               ),
                             ),
@@ -536,7 +548,7 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                               'Start the conversation!',
                               style: TextStyle(
                                 fontSize: 14,
-                                color: Colors.grey.shade400,
+                                color: AppColors.textTertiary,
                                 fontFamily: 'Instrument Sans',
                               ),
                             ),
@@ -559,7 +571,7 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                   },
                   loading: () => const Center(
                     child: CircularProgressIndicator(
-                      color: Color(0xFFFFDB5B),
+                      color: AppColors.primaryYellow,
                     ),
                   ),
                   error: (error, __) => Center(
@@ -569,7 +581,7 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                         const Icon(
                           Icons.error_outline,
                           size: 48,
-                          color: Colors.red,
+                          color: AppColors.errorRed,
                         ),
                         const SizedBox(height: 16),
                         const Text(
@@ -577,7 +589,7 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
-                            color: Colors.black87,
+                            color: AppColors.primaryBlack,
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -585,7 +597,7 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                           error.toString(),
                           style: TextStyle(
                             fontSize: 14,
-                            color: Colors.grey.shade600,
+                            color: AppColors.textSecondary,
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -611,7 +623,7 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                             Icon(
                               Icons.done_all,
                               size: 14,
-                              color: Color(0xFF10B981),
+                              color: AppColors.successGreen,
                             ),
                             SizedBox(width: 4),
                             Text(
@@ -619,7 +631,7 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w400,
-                                color: Color(0xFF9CA3AF),
+                                color: AppColors.textTertiary,
                               ),
                             ),
                           ],
@@ -636,69 +648,64 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
               // Message suggestions
               if (_showSuggestions)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 19),
+                  padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         'Select a message or type your own below.',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w400,
-                          color: const Color(0xFF202020).withOpacity(0.34),
-                          fontFamily: 'Noto Sans',
+                        style: AppTypography.bodySmall.copyWith(
+                          color: AppColors.textTertiary,
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      Row(
+                      SizedBox(height: AppSpacing.sm),
+                      Wrap(
+                        spacing: AppSpacing.sm,
+                        runSpacing: AppSpacing.sm,
                         children: [
                           _buildSuggestionChip("I'm interested!"),
-                          const SizedBox(width: 8),
-                          Expanded(child: _buildSuggestionChip("Hello! Could I get this please?")),
-                          const SizedBox(width: 8),
+                          _buildSuggestionChip("Hello! Could I get this please?"),
                           _buildSuggestionChip("Nice!"),
                         ],
                       ),
-                      const SizedBox(height: 18),
+                      SizedBox(height: AppSpacing.lg),
                     ],
                   ),
                 ),
 
               // Input area
               Container(
-                padding: const EdgeInsets.all(16),
-                decoration: const BoxDecoration(
-                  color: Colors.white,
+                padding: EdgeInsets.all(AppSpacing.lg),
+                decoration: BoxDecoration(
+                  color: AppColors.white,
                   border: Border(
                     top: BorderSide(
-                      color: Color(0xFFE5E7EB),
+                      color: AppColors.borderDefault,
                       width: 1,
                     ),
                   ),
                 ),
                 child: Container(
-                  height: 44,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF3F4F6),
-                    borderRadius: BorderRadius.circular(22),
+                    color: AppColors.backgroundSecondary,
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
                     border: Border.all(
-                      color: const Color(0xFFE5E7EB),
+                      color: AppColors.borderDefault,
+                      width: 1,
                     ),
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      const SizedBox(width: 16),
+                      SizedBox(width: AppSpacing.lg),
                       Expanded(
                         child: TextField(
                           controller: _messageController,
                           textAlignVertical: TextAlignVertical.center,
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                             hintText: 'Text Message',
-                            hintStyle: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w400,
-                              color: Color(0xFF9CA3AF),
+                            hintStyle: AppTypography.bodyMedium.copyWith(
+                              color: AppColors.textTertiary,
                             ),
                             isDense: true,
                             border: InputBorder.none,
@@ -706,13 +713,12 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                             enabledBorder: InputBorder.none,
                             errorBorder: InputBorder.none,
                             disabledBorder: InputBorder.none,
-                            contentPadding: EdgeInsets.symmetric(vertical: 12),
+                            contentPadding: EdgeInsets.symmetric(vertical: AppSpacing.md),
                           ),
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: Colors.black,
+                          style: AppTypography.bodyMedium.copyWith(
+                            color: AppColors.textPrimary,
                           ),
-                          cursorColor: Colors.black,
+                          cursorColor: AppColors.textPrimary,
                           onChanged: (value) {
                             if (value.isNotEmpty && _showSuggestions) {
                               setState(() {
@@ -724,16 +730,16 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(
+                        icon: Icon(
                           Icons.send,
-                          size: 20,
-                          color: Color(0xFF9CA3AF),
+                          size: AppSpacing.iconMd,
+                          color: _isLoading ? AppColors.textTertiary : AppColors.primary,
                         ),
                         onPressed: _isLoading ? null : _sendMessage,
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(),
                       ),
-                      const SizedBox(width: 16),
+                      SizedBox(width: AppSpacing.lg),
                     ],
                   ),
                 ),
@@ -741,11 +747,11 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
             ],
           ),
       bottomNavigationBar: Container(
-        color: Colors.white,
+        color: AppColors.backgroundWhite,
         child: SafeArea(
           child: Container(
             height: 64,
-            color: Colors.white,
+            color: AppColors.backgroundWhite,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -816,31 +822,32 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
         children: [
           if (!isMe) ...[
             CircleAvatar(
-              radius: 16,
-              backgroundColor: Colors.grey.shade300,
+              radius: 18,
+              backgroundColor: AppColors.gray200,
               child: Icon(
                 Icons.person,
-                size: 16,
-                color: Colors.grey.shade600,
+                size: 18,
+                color: AppColors.textSecondary,
               ),
             ),
-            const SizedBox(width: 8),
+            SizedBox(width: AppSpacing.sm),
           ],
           Container(
             constraints: BoxConstraints(
               maxWidth: MediaQuery.of(context).size.width * 0.7,
             ),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            padding: EdgeInsets.symmetric(
+              horizontal: AppSpacing.lg,
+              vertical: AppSpacing.md,
+            ),
             decoration: BoxDecoration(
-              color: const Color(0xFFF0F1F1),
-              borderRadius: BorderRadius.circular(16),
+              color: AppColors.backgroundSecondary,
+              borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
             ),
             child: Text(
               text,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w400,
-                color: Color(0xFF2C2C2D),
+              style: AppTypography.bodyMedium.copyWith(
+                color: AppColors.textPrimary,
               ),
             ),
           ),
@@ -853,19 +860,23 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
     return InkWell(
       onTap: () => _sendSuggestedMessage(text),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: AppSpacing.sm,
+        ),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
           border: Border.all(
-            color: const Color(0xFFD1D5DB),
+            color: AppColors.borderDefault,
+            width: 1.5,
           ),
         ),
         child: Text(
           text,
-          style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w400,
-            color: Color(0xFF6B7280),
+          style: AppTypography.bodySmall.copyWith(
+            fontWeight: AppTypography.medium,
+            color: AppColors.textPrimary,
           ),
           overflow: TextOverflow.ellipsis,
         ),

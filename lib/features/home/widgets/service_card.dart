@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../tasks/models/task.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/app_spacing.dart';
 
 class ServiceCard extends StatelessWidget {
   final Task task;
@@ -18,123 +21,87 @@ class ServiceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final posterName = task.posterProfile?['full_name'] as String? ?? 'Unknown User';
-    final offerCount = task.offers?.length ?? 0;
 
     return Container(
       decoration: BoxDecoration(
-        color: isFocused ? const Color(0xFFFDD835) : Colors.white, // Yellow when focused, white otherwise
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.15),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        color: isFocused ? AppColors.primary : AppColors.white,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+        border: Border.all(
+          color: const Color(0xFFFCC133),
+          width: 2,
+        ),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(14),
+        padding: EdgeInsets.all(AppSpacing.xl),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    task.title,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 2),
+            // Title
+            Text(
+              task.title,
+              style: AppTypography.headlineSmall.copyWith(
+                color: AppColors.gray900,
+                fontWeight: AppTypography.bold,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            SizedBox(height: AppSpacing.sm),
 
-                  Text(
-                    distance,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.black.withOpacity(0.6),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-
-                  Row(
-                    children: [
-                      Text(
-                        'By ',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.black.withOpacity(0.6),
-                        ),
-                      ),
-                      Flexible(
-                        child: Text(
-                          posterName,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Colors.black,
-                            fontWeight: FontWeight.w500,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '$offerCount Offer${offerCount != 1 ? 's' : ''}',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Colors.black.withOpacity(0.6),
-                    ),
-                  ),
-                ],
+            // Distance
+            Text(
+              distance,
+              style: AppTypography.bodyMedium.copyWith(
+                color: AppColors.gray900,
               ),
             ),
+            SizedBox(height: AppSpacing.xs),
 
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'RM ${task.price.toStringAsFixed(0)}',
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black,
+            // Posted by (without "By" prefix)
+            Text(
+              'By $posterName',
+              style: AppTypography.bodyMedium.copyWith(
+                color: AppColors.gray900,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            SizedBox(height: AppSpacing.md),
+
+            // Price
+            Text(
+              'RM ${task.price.toStringAsFixed(2)}',
+              style: AppTypography.headlineMedium.copyWith(
+                fontWeight: AppTypography.bold,
+                color: AppColors.gray900,
+              ),
+            ),
+            SizedBox(height: AppSpacing.lg),
+
+            // View Details Button
+            SizedBox(
+              width: double.infinity,
+              height: AppSpacing.buttonHeightLg,
+              child: ElevatedButton(
+                onPressed: onViewDetails,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.gray900,
+                  foregroundColor: AppColors.white,
+                  padding: EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                  ),
+                  elevation: 0,
+                ),
+                child: Text(
+                  'View Details',
+                  style: AppTypography.titleMedium.copyWith(
+                    color: AppColors.white,
+                    fontWeight: AppTypography.bold,
                   ),
                 ),
-                const SizedBox(height: 6),
-                
-                SizedBox(
-                  width: double.infinity,
-                  height: 34,
-                  child: ElevatedButton(
-                    onPressed: onViewDetails,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: const Text(
-                      'View Details',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
           ],
         ),
