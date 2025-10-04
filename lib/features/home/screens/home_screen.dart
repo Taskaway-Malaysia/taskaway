@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:taskaway/core/theme/app_colors.dart';
 import 'package:taskaway/features/auth/controllers/auth_controller.dart';
 import 'package:taskaway/features/home/screens/poster_home_screen.dart';
 import 'package:taskaway/features/home/screens/tasker_home_screen.dart';
@@ -64,11 +65,11 @@ class HomeScreen extends ConsumerWidget {
       body: body,
       bottomNavigationBar: showBottomNav
           ? Container(
-              color: Colors.white,
+              color: AppColors.backgroundWhite,
               child: SafeArea(
                 child: Container(
                   height: 64,
-                  color: Colors.white,
+                  color: AppColors.backgroundWhite,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
@@ -153,7 +154,7 @@ class HomeScreen extends ConsumerWidget {
             width: 24,
             height: 24,
             colorFilter: ColorFilter.mode(
-              isSelected ? const Color(0xFF202020) : const Color(0xFF575656),
+              isSelected ? AppColors.navActive : AppColors.navInactive,
               BlendMode.srcIn,
             ),
           ),
@@ -163,7 +164,7 @@ class HomeScreen extends ConsumerWidget {
             textAlign: TextAlign.center,
             style: TextStyle(
               fontFamily: 'Roboto',
-              color: isSelected ? const Color(0xFF202020) : const Color(0xFF575656),
+              color: isSelected ? AppColors.navActive : AppColors.navInactive,
               fontSize: 12,
               fontWeight: FontWeight.w500,
               letterSpacing: 0.4,
@@ -190,9 +191,9 @@ class HomeScreen extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: const Color(0xFFFFDB5B),
+              color: AppColors.primaryYellow,
               border: Border.all(
-                color: const Color(0xFFC333),
+                color: AppColors.primaryYellowDark,
                 width: 1,
               ),
               borderRadius: BorderRadius.circular(2),
@@ -202,7 +203,7 @@ class HomeScreen extends ConsumerWidget {
               width: 15,
               height: 15,
               colorFilter: const ColorFilter.mode(
-                Color(0xFF000000),
+                AppColors.primaryBlack,
                 BlendMode.srcIn,
               ),
             ),
@@ -213,7 +214,7 @@ class HomeScreen extends ConsumerWidget {
             textAlign: TextAlign.center,
             style: TextStyle(
               fontFamily: 'Roboto',
-              color: Color(0xFF575656),
+              color: AppColors.navInactive,
               fontSize: 12,
               fontWeight: FontWeight.w500,
               letterSpacing: 0.4,

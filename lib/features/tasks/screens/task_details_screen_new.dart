@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:taskaway/core/theme/app_colors.dart';
 import '../controllers/task_controller.dart';
 import '../models/task.dart';
 import '../../auth/controllers/auth_controller.dart';
@@ -96,7 +97,7 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Chat channel created! You can now message the poster.'),
-                backgroundColor: Colors.green,
+                backgroundColor: AppColors.successGreen,
                 duration: Duration(seconds: 2),
               ),
             );
@@ -121,7 +122,7 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(e.toString()),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.errorRed,
             duration: const Duration(seconds: 3),
           ),
         );
@@ -142,13 +143,13 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
     final currentProfile = currentProfileAsyncValue.asData?.value;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.backgroundWhite,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.backgroundWhite,
         elevation: 0,
         toolbarHeight: 56,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, size: 20, color: Colors.black),
+          icon: const Icon(Icons.arrow_back_ios, size: 20, color: AppColors.primaryBlack),
           onPressed: () {
             // Navigate back to home screen
             context.go('/home');
@@ -160,7 +161,7 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
             fontFamily: 'Instrument Sans',
             fontSize: 24,
             fontWeight: FontWeight.w700,
-            color: Colors.black,
+            color: AppColors.primaryBlack,
             letterSpacing: 0.48,
           ),
         ),
@@ -168,7 +169,7 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
           child: Container(
-            color: const Color(0xFFE4E4E4),
+            color: AppColors.borderLight,
             height: 1,
           ),
         ),
@@ -202,7 +203,7 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
                               height: 58,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: Colors.grey[200],
+                                color: AppColors.backgroundGray,
                               ),
                               child: posterProfile?.avatarUrl != null
                                   ? ClipOval(
@@ -225,7 +226,7 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
                                           return const Icon(
                                             Icons.person,
                                             size: 30,
-                                            color: Colors.grey,
+                                            color: AppColors.textTertiary,
                                           );
                                         },
                                       ),
@@ -233,7 +234,7 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
                                   : const Icon(
                                       Icons.person,
                                       size: 30,
-                                      color: Colors.grey,
+                                      color: AppColors.textTertiary,
                                     ),
                             ),
                             const SizedBox(width: 8),
@@ -247,7 +248,7 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
                                     fontFamily: 'Instrument Sans',
                                     fontSize: 14,
                                     fontWeight: FontWeight.w600,
-                                    color: Colors.black,
+                                    color: AppColors.primaryBlack,
                                     letterSpacing: 0.1,
                                   ),
                                 ),
@@ -257,7 +258,7 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
                                     ...List.generate(5, (index) => Icon(
                                       Icons.star,
                                       size: 17,
-                                      color: index < 4 ? const Color(0xFFFCC133) : const Color(0xFFFCC133),
+                                      color: index < 4 ? AppColors.starYellow : AppColors.starYellow,
                                     )),
                                   ],
                                 ),
@@ -276,7 +277,7 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
                           fontFamily: 'Instrument Sans',
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
-                          color: Colors.black,
+                          color: AppColors.primaryBlack,
                         ),
                       ),
                     ],
@@ -306,7 +307,7 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
                                   height: 100,
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(6),
-                                    color: Colors.grey[200],
+                                    color: AppColors.backgroundGray,
                                   ),
                                   child: ClipRRect(
                                     borderRadius: BorderRadius.circular(6),
@@ -327,11 +328,11 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
                                       },
                                       errorBuilder: (context, error, stackTrace) {
                                         return Container(
-                                          color: Colors.grey[200],
+                                          color: AppColors.backgroundGray,
                                           child: const Icon(
                                             Icons.broken_image,
                                             size: 30,
-                                            color: Colors.grey,
+                                            color: AppColors.textTertiary,
                                           ),
                                         );
                                       },
@@ -348,13 +349,13 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
                                 height: 100,
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(color: const Color(0xFFEDEDED)),
+                                  border: Border.all(color: AppColors.borderLight),
                                 ),
                                 child: const Center(
                                   child: Icon(
                                     Icons.add,
                                     size: 24,
-                                    color: Color(0xFF777676),
+                                    color: AppColors.textLight,
                                   ),
                                 ),
                               ),
@@ -370,8 +371,8 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
                       child: Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: const Color(0xFFEDEDED)),
-                          color: Colors.grey[50],
+                          border: Border.all(color: AppColors.borderLight),
+                          color: AppColors.backgroundLight,
                         ),
                         child: const Center(
                           child: Column(
@@ -380,14 +381,14 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
                               Icon(
                                 Icons.image_outlined,
                                 size: 32,
-                                color: Colors.grey,
+                                color: AppColors.textTertiary,
                               ),
                               SizedBox(height: 4),
                               Text(
                                 'No images',
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: Colors.grey,
+                                  color: AppColors.textTertiary,
                                 ),
                               ),
                             ],
@@ -408,7 +409,7 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
                           fontFamily: 'Instrument Sans',
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF202020),
+                          color: AppColors.textPrimary,
                         ),
                       ),
                       const SizedBox(height: 6),
@@ -418,7 +419,7 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
                           fontFamily: 'Instrument Sans',
                           fontSize: 14,
                           fontWeight: FontWeight.w400,
-                          color: Color(0xFF6B7280),
+                          color: AppColors.textSecondary,
                           height: 1.5,
                           letterSpacing: 0.1,
                         ),
@@ -429,7 +430,7 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
                           const Icon(
                             Icons.category_outlined,
                             size: 16,
-                            color: Color(0xFF6B7280),
+                            color: AppColors.textSecondary,
                           ),
                           const SizedBox(width: 6),
                           Text(
@@ -438,7 +439,7 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
                               fontFamily: 'Instrument Sans',
                               fontSize: 13,
                               fontWeight: FontWeight.w500,
-                              color: Color(0xFF6B7280),
+                              color: AppColors.textSecondary,
                               letterSpacing: 0.1,
                             ),
                           ),
@@ -450,7 +451,7 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
                           const Icon(
                             Icons.tag,
                             size: 16,
-                            color: Color(0xFF6B7280),
+                            color: AppColors.textSecondary,
                           ),
                           const SizedBox(width: 6),
                           Text(
@@ -459,7 +460,7 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
                               fontFamily: 'Instrument Sans',
                               fontSize: 13,
                               fontWeight: FontWeight.w400,
-                              color: Color(0xFF6B7280),
+                              color: AppColors.textSecondary,
                               letterSpacing: 0.1,
                             ),
                           ),
@@ -479,7 +480,7 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
                           fontFamily: 'Instrument Sans',
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF202020),
+                          color: AppColors.textPrimary,
                         ),
                       ),
                       const SizedBox(height: 6),
@@ -488,7 +489,7 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
                           const Icon(
                             Icons.calendar_today_outlined,
                             size: 16,
-                            color: Color(0xFF6B7280),
+                            color: AppColors.textSecondary,
                           ),
                           const SizedBox(width: 6),
                           Text(
@@ -497,7 +498,7 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
                               fontFamily: 'Instrument Sans',
                               fontSize: 14,
                               fontWeight: FontWeight.w400,
-                              color: Color(0xFF6B7280),
+                              color: AppColors.textSecondary,
                               letterSpacing: 0.1,
                             ),
                           ),
@@ -509,7 +510,7 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
                           const Icon(
                             Icons.access_time,
                             size: 16,
-                            color: Color(0xFF6B7280),
+                            color: AppColors.textSecondary,
                           ),
                           const SizedBox(width: 6),
                           Text(
@@ -518,7 +519,7 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
                               fontFamily: 'Instrument Sans',
                               fontSize: 14,
                               fontWeight: FontWeight.w400,
-                              color: Color(0xFF6B7280),
+                              color: AppColors.textSecondary,
                               letterSpacing: 0.1,
                             ),
                           ),
@@ -538,7 +539,7 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
                           fontFamily: 'Instrument Sans',
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF202020),
+                          color: AppColors.textPrimary,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -548,7 +549,7 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
                           fontFamily: 'Instrument Sans',
                           fontSize: 20,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF202020),
+                          color: AppColors.textPrimary,
                         ),
                       ),
                     ],
@@ -565,8 +566,8 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
                           _showReviseBudgetDialog(context, task);
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFFFDB5B),
-                          side: const BorderSide(color: Color(0xFFFFC333)),
+                          backgroundColor: AppColors.primaryYellow,
+                          side: BorderSide(color: AppColors.primaryYellowDark),
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(2),
@@ -579,7 +580,7 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
                             fontFamily: 'Instrument Sans',
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
-                            color: Colors.black,
+                            color: AppColors.primaryBlack,
                             letterSpacing: 0.7,
                           ),
                         ),
@@ -594,7 +595,7 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
                           _showCancelTaskDialog(context);
                         },
                         style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: Color(0xFFE4E4E4)),
+                          side: BorderSide(color: AppColors.borderLight),
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(2),
@@ -606,7 +607,7 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
                             fontFamily: 'Instrument Sans',
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
-                            color: Colors.black,
+                            color: AppColors.primaryBlack,
                             letterSpacing: 0.7,
                           ),
                         ),
@@ -636,19 +637,19 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
                                   },
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: hasExistingOffer
-                                        ? Colors.grey.shade300
-                                        : const Color(0xFFFFDB5B),
+                                        ? AppColors.backgroundDisabled
+                                        : AppColors.primaryYellow,
                                     side: BorderSide(
                                       color: hasExistingOffer
-                                          ? Colors.grey.shade400
-                                          : const Color(0xFFFFC333),
+                                          ? AppColors.borderDark
+                                          : AppColors.primaryYellowDark,
                                     ),
                                     padding: const EdgeInsets.symmetric(vertical: 14),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(2),
                                     ),
                                     elevation: 0,
-                                    disabledBackgroundColor: Colors.grey.shade300,
+                                    disabledBackgroundColor: AppColors.backgroundDisabled,
                                   ),
                                   child: Text(
                                     hasExistingOffer ? 'Submitted Offer' : 'Make an Offer',
@@ -657,8 +658,8 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
                                       fontSize: 14,
                                       fontWeight: FontWeight.w600,
                                       color: hasExistingOffer
-                                          ? Colors.grey.shade600
-                                          : Colors.black,
+                                          ? AppColors.textTertiary
+                                          : AppColors.primaryBlack,
                                       letterSpacing: 0.7,
                                     ),
                                   ),
@@ -676,7 +677,7 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
                               child: OutlinedButton(
                                 onPressed: () => _navigateToChat(context),
                                 style: OutlinedButton.styleFrom(
-                                  side: const BorderSide(color: Color(0xFFE4E4E4)),
+                                  side: BorderSide(color: AppColors.borderLight),
                                   padding: EdgeInsets.zero,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(2),
@@ -685,7 +686,7 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
                                 child: const Icon(
                                   Icons.message_outlined,
                                   size: 20,
-                                  color: Colors.black,
+                                  color: AppColors.primaryBlack,
                                 ),
                               ),
                             ),
@@ -704,7 +705,7 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
       ),
       if (_isLoading)
         Container(
-          color: Colors.black.withOpacity(0.3),
+          color: AppColors.overlayColor,
           child: const Center(
             child: CircularProgressIndicator(),
           ),
@@ -751,11 +752,11 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFFDB5B),
+              backgroundColor: AppColors.primaryYellow,
             ),
             child: const Text(
               'Update',
-              style: TextStyle(color: Colors.black),
+              style: TextStyle(color: AppColors.primaryBlack),
             ),
           ),
         ],
@@ -796,11 +797,11 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
+              backgroundColor: AppColors.errorRed,
             ),
             child: const Text(
               'Yes, Cancel',
-              style: TextStyle(color: Colors.white),
+              style: TextStyle(color: AppColors.textWhite),
             ),
           ),
         ],
