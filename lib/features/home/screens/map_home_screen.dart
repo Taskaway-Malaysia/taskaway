@@ -5,6 +5,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:taskaway/core/theme/app_colors.dart';
+import 'package:taskaway/core/theme/app_typography.dart';
 import '../../tasks/models/task.dart';
 import '../../tasks/controllers/task_controller.dart';
 import '../widgets/map_search_bar.dart';
@@ -144,8 +145,18 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
       });
 
       dev.log('[MapHomeScreen] Updated _currentLocation to: $_currentLocation');
-      dev.log('[MapHomeScreen] Moving map to: $_currentLocation');
-      _mapController.move(_currentLocation, 15);
+
+      // Wait for map to be ready before moving
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          try {
+            dev.log('[MapHomeScreen] Moving map to: $_currentLocation');
+            _mapController.move(_currentLocation, 15);
+          } catch (e) {
+            dev.log('[MapHomeScreen] Error moving map: $e');
+          }
+        }
+      });
     } catch (e) {
       dev.log('[MapHomeScreen] Error getting location: $e');
       if (mounted) {
@@ -358,8 +369,18 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
 
                   try {
                     await _getCurrentLocation();
-                    // Animate map to current location
-                    _mapController.move(_currentLocation, 15);
+                    // Animate map to current location after frame is rendered
+                    if (mounted) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (mounted) {
+                          try {
+                            _mapController.move(_currentLocation, 15);
+                          } catch (e) {
+                            dev.log('[MapHomeScreen] Error moving map: $e');
+                          }
+                        }
+                      });
+                    }
                   } catch (e) {
                     dev.log('[MapHomeScreen] Error getting location: $e');
                   } finally {
@@ -645,7 +666,7 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
                 child: Column(
                   children: [
                     Container(
-                      height: 170,
+                      height: 245,
                       margin: const EdgeInsets.only(bottom: 8),
                       child: PageView.builder(
                         controller: _cardPageController,
@@ -658,7 +679,11 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
                           // Move map to actual task location if available
                           if (task.latitude != null && task.longitude != null) {
                             final position = LatLng(task.latitude!, task.longitude!);
-                            _mapController.move(position, 16);
+                            try {
+                              _mapController.move(position, 16);
+                            } catch (e) {
+                              dev.log('[MapHomeScreen] Error moving map on page change: $e');
+                            }
                           }
                         },
                         itemBuilder: (context, index) {
@@ -1048,9 +1073,8 @@ class _TaskListItem extends ConsumerWidget {
               children: [
                 Text(
                   'RM ${task.price.toStringAsFixed(0)}',
-                  style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
+                  style: AppTypography.titleMedium.copyWith(
+                    fontWeight: AppTypography.bold,
                     color: AppColors.primaryBlack,
                   ),
                 ),

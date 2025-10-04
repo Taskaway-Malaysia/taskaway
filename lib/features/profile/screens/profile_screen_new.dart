@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
 import '../../auth/controllers/auth_controller.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/app_spacing.dart';
 
 class ProfileScreenNew extends ConsumerWidget {
   const ProfileScreenNew({super.key});
@@ -12,25 +15,25 @@ class ProfileScreenNew extends ConsumerWidget {
     final profileAsync = ref.watch(currentProfileProvider);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.white,
       body: SafeArea(
         child: Column(
           children: [
             // Header
             Container(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              decoration: const BoxDecoration(
-                color: Colors.white,
+              padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
+              decoration: BoxDecoration(
+                color: AppColors.white,
                 border: Border(
                   bottom: BorderSide(
-                    color: Color(0xFFE8E9F1),
+                    color: AppColors.borderDefault,
                     width: 1,
                   ),
                 ),
               ),
               child: Row(
                 children: [
-                  const SizedBox(width: 16),
+                  SizedBox(width: AppSpacing.lg),
                   InkWell(
                     onTap: () {
                       // Check if we can pop, otherwise navigate to home
@@ -40,32 +43,28 @@ class ProfileScreenNew extends ConsumerWidget {
                         context.go('/home');
                       }
                     },
-                    child: const Icon(
+                    child: Icon(
                       Icons.arrow_back_ios,
                       size: 20,
-                      color: Color(0xFF000000),
+                      color: AppColors.textPrimary,
                     ),
                   ),
-                  const Expanded(
+                  Expanded(
                     child: Center(
                       child: Text(
                         'Profile',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF000000),
-                        ),
+                        style: AppTypography.headlineMedium,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 36),
+                  SizedBox(width: 36),
                 ],
               ),
             ),
             // Content
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
+                padding: EdgeInsets.all(AppSpacing.xl),
                 child: profileAsync.when(
                   data: (profile) => Column(
                     children: [
@@ -75,7 +74,7 @@ class ProfileScreenNew extends ConsumerWidget {
                         rating: 5.0,
                         avatarUrl: profile?.avatarUrl,
                       ),
-                      const SizedBox(height: 14),
+                      SizedBox(height: AppSpacing.lg),
                       // Location Card
                       _InfoCard(
                         children: [
@@ -86,7 +85,7 @@ class ProfileScreenNew extends ConsumerWidget {
                                 : 'Add your location',
                             isPlaceholder: profile?.postcode == null,
                           ),
-                          const SizedBox(height: 14),
+                          SizedBox(height: AppSpacing.lg),
                           _InfoRow(
                             label: 'Member since',
                             value: profile?.createdAt != null
@@ -96,7 +95,7 @@ class ProfileScreenNew extends ConsumerWidget {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 14),
+                      SizedBox(height: AppSpacing.lg),
                       // About Card
                       _EditableInfoCard(
                         title: 'About',
@@ -106,7 +105,7 @@ class ProfileScreenNew extends ConsumerWidget {
                           // TODO: Navigate to edit about
                         },
                       ),
-                      const SizedBox(height: 14),
+                      SizedBox(height: AppSpacing.lg),
                       // Skills Card
                       _EditableInfoCard(
                         title: 'Skills',
@@ -116,67 +115,58 @@ class ProfileScreenNew extends ConsumerWidget {
                           // TODO: Navigate to edit skills
                         },
                       ),
-                      const SizedBox(height: 14),
+                      SizedBox(height: AppSpacing.lg),
                       // My Works Card
                       _MyWorksCard(),
-                      const SizedBox(height: 24),
+                      SizedBox(height: AppSpacing.xl),
                       // Logout Button
-                      SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton(
+                      Center(
+                        child: TextButton(
                           onPressed: () async {
                             // Show confirmation dialog
                             final shouldLogout = await showDialog<bool>(
                               context: context,
                               builder: (dialogContext) => AlertDialog(
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
+                                  borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
                                 ),
-                                title: const Text(
+                                title: Text(
                                   'Logout',
-                                  style: TextStyle(
-                                    fontFamily: 'Instrument Sans',
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w700,
+                                  style: AppTypography.titleLarge.copyWith(
+                                    fontWeight: AppTypography.bold,
                                   ),
                                 ),
-                                content: const Text(
+                                content: Text(
                                   'Are you sure you want to logout?',
-                                  style: TextStyle(
-                                    fontFamily: 'Instrument Sans',
-                                    fontSize: 14,
-                                    color: Color(0xFF788494),
+                                  style: AppTypography.bodyMedium.copyWith(
+                                    color: AppColors.textSecondary,
                                   ),
                                 ),
                                 actions: [
                                   TextButton(
                                     onPressed: () => Navigator.of(dialogContext).pop(false),
-                                    child: const Text(
+                                    child: Text(
                                       'Cancel',
-                                      style: TextStyle(
-                                        fontFamily: 'Instrument Sans',
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                        color: Color(0xFF788494),
+                                      style: AppTypography.labelLarge.copyWith(
+                                        fontWeight: AppTypography.semiBold,
+                                        color: AppColors.textSecondary,
                                       ),
                                     ),
                                   ),
                                   ElevatedButton(
                                     onPressed: () => Navigator.of(dialogContext).pop(true),
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.red,
-                                      foregroundColor: Colors.white,
+                                      backgroundColor: AppColors.error,
+                                      foregroundColor: AppColors.white,
                                       elevation: 0,
                                       shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8),
+                                        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
                                       ),
                                     ),
-                                    child: const Text(
+                                    child: Text(
                                       'Logout',
-                                      style: TextStyle(
-                                        fontFamily: 'Instrument Sans',
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
+                                      style: AppTypography.labelLarge.copyWith(
+                                        fontWeight: AppTypography.semiBold,
                                       ),
                                     ),
                                   ),
@@ -191,26 +181,16 @@ class ProfileScreenNew extends ConsumerWidget {
                               }
                             }
                           },
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            side: const BorderSide(color: Colors.red, width: 1.5),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                          child: const Text(
+                          child: Text(
                             'Logout',
-                            style: TextStyle(
-                              fontFamily: 'Instrument Sans',
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.red,
-                              letterSpacing: 0.3,
+                            style: AppTypography.labelLarge.copyWith(
+                              fontWeight: AppTypography.semiBold,
+                              color: AppColors.error,
                             ),
                           ),
                         ),
                       ),
-                      const SizedBox(height: 24),
+                      SizedBox(height: AppSpacing.xl),
                     ],
                   ),
                   loading: () => const Center(
@@ -219,10 +199,8 @@ class ProfileScreenNew extends ConsumerWidget {
                   error: (error, stack) => Center(
                     child: Text(
                       'Error loading profile',
-                      style: TextStyle(
-                        fontFamily: 'Instrument Sans',
-                        fontSize: 16,
-                        color: Colors.red[700],
+                      style: AppTypography.bodyLarge.copyWith(
+                        color: AppColors.error,
                       ),
                     ),
                   ),
@@ -250,11 +228,11 @@ class _UserInfoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(10),
+      padding: EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: const Color(0xFFE4E4E4)),
-        borderRadius: BorderRadius.circular(4),
+        color: AppColors.white,
+        border: Border.all(color: AppColors.borderDefault),
+        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -263,11 +241,11 @@ class _UserInfoCard extends StatelessWidget {
             children: [
               // Avatar
               Container(
-                width: 58,
-                height: 58,
+                width: 70,
+                height: 70,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: const Color(0xFFE4E4E4),
+                  color: AppColors.borderDefault,
                   image: avatarUrl != null
                       ? DecorationImage(
                           image: NetworkImage(avatarUrl!),
@@ -279,39 +257,34 @@ class _UserInfoCard extends StatelessWidget {
                     ? Center(
                         child: Text(
                           name.isNotEmpty ? name.substring(0, 1).toUpperCase() : 'U',
-                          style: const TextStyle(
-                            fontFamily: 'Instrument Sans',
-                            fontSize: 24,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF788494),
+                          style: AppTypography.headlineMedium.copyWith(
+                            fontWeight: AppTypography.bold,
+                            color: AppColors.textSecondary,
                           ),
                         ),
                       )
                     : null,
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: AppSpacing.md),
               // Name and Rating
               Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     name,
-                    style: const TextStyle(
-                      fontFamily: 'Instrument Sans',
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.24,
-                      color: Color(0xFF000000),
+                    style: AppTypography.titleLarge.copyWith(
+                      fontWeight: AppTypography.bold,
+                      color: AppColors.textPrimary,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: AppSpacing.xs),
                   // Star rating
                   Row(
                     children: List.generate(5, (index) {
-                      return const Icon(
+                      return Icon(
                         Icons.star,
-                        size: 17,
-                        color: Color(0xFFFCC133),
+                        size: 20,
+                        color: AppColors.primary,
                       );
                     }),
                   ),
@@ -325,12 +298,15 @@ class _UserInfoCard extends StatelessWidget {
               // TODO: Navigate to edit profile
             },
             child: Container(
-              width: 14,
-              height: 14,
-              child: const Icon(
+              padding: EdgeInsets.all(AppSpacing.xs),
+              decoration: BoxDecoration(
+                color: AppColors.primaryExtraLight,
+                borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+              ),
+              child: Icon(
                 Icons.edit,
-                size: 12,
-                color: Color(0xFFFCC133),
+                size: 18,
+                color: AppColors.primary,
               ),
             ),
           ),
@@ -348,11 +324,11 @@ class _InfoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(10),
+      padding: EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: const Color(0xFFE4E4E4)),
-        borderRadius: BorderRadius.circular(4),
+        color: AppColors.white,
+        border: Border.all(color: AppColors.borderDefault),
+        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -380,23 +356,15 @@ class _InfoRow extends StatelessWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(
-            fontFamily: 'Instrument Sans',
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            height: 1.22,
-            color: Color(0xFF000000),
+          style: AppTypography.bodyLarge.copyWith(
+            fontWeight: AppTypography.semiBold,
+            color: AppColors.textPrimary,
           ),
         ),
         Text(
           value,
-          style: TextStyle(
-            fontFamily: 'Instrument Sans',
-            fontSize: 10,
-            fontWeight: FontWeight.w400,
-            height: 1.22,
-            letterSpacing: 0.2,
-            color: isPlaceholder ? const Color(0xFF788494) : const Color(0xFF788494),
+          style: AppTypography.bodyMedium.copyWith(
+            color: isPlaceholder ? AppColors.textTertiary : AppColors.textSecondary,
           ),
         ),
       ],
@@ -420,11 +388,11 @@ class _EditableInfoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(10),
+      padding: EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: const Color(0xFFE4E4E4)),
-        borderRadius: BorderRadius.circular(4),
+        color: AppColors.white,
+        border: Border.all(color: AppColors.borderDefault),
+        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -436,24 +404,16 @@ class _EditableInfoCard extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
-                    fontFamily: 'Instrument Sans',
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    height: 1.22,
-                    color: Color(0xFF000000),
+                  style: AppTypography.titleLarge.copyWith(
+                    fontWeight: AppTypography.semiBold,
+                    color: AppColors.textPrimary,
                   ),
                 ),
-                const SizedBox(height: 11),
+                SizedBox(height: AppSpacing.sm),
                 Text(
                   content,
-                  style: TextStyle(
-                    fontFamily: 'Instrument Sans',
-                    fontSize: 10,
-                    fontWeight: FontWeight.w400,
-                    height: 1.22,
-                    letterSpacing: 0.2,
-                    color: isPlaceholder ? const Color(0xFF788494) : const Color(0xFF000000),
+                  style: AppTypography.bodyLarge.copyWith(
+                    color: isPlaceholder ? AppColors.textTertiary : AppColors.textPrimary,
                   ),
                 ),
               ],
@@ -462,12 +422,15 @@ class _EditableInfoCard extends StatelessWidget {
           InkWell(
             onTap: onEdit,
             child: Container(
-              width: 14,
-              height: 14,
-              child: const Icon(
+              padding: EdgeInsets.all(AppSpacing.xs),
+              decoration: BoxDecoration(
+                color: AppColors.primaryExtraLight,
+                borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+              ),
+              child: Icon(
                 Icons.edit,
-                size: 12,
-                color: Color(0xFFFCC133),
+                size: 18,
+                color: AppColors.primary,
               ),
             ),
           ),
@@ -481,11 +444,11 @@ class _MyWorksCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(10),
+      padding: EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: const Color(0xFFE4E4E4)),
-        borderRadius: BorderRadius.circular(4),
+        color: AppColors.white,
+        border: Border.all(color: AppColors.borderDefault),
+        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -496,26 +459,18 @@ class _MyWorksCard extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'My works',
-                    style: TextStyle(
-                      fontFamily: 'Instrument Sans',
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      height: 1.22,
-                      color: Color(0xFF000000),
+                    style: AppTypography.titleLarge.copyWith(
+                      fontWeight: AppTypography.semiBold,
+                      color: AppColors.textPrimary,
                     ),
                   ),
-                  const SizedBox(height: 11),
-                  const Text(
-                    'Please add your skills',
-                    style: TextStyle(
-                      fontFamily: 'Instrument Sans',
-                      fontSize: 10,
-                      fontWeight: FontWeight.w400,
-                      height: 1.22,
-                      letterSpacing: 0.2,
-                      color: Color(0xFF788494),
+                  SizedBox(height: AppSpacing.sm),
+                  Text(
+                    'Please add your works',
+                    style: AppTypography.bodyLarge.copyWith(
+                      color: AppColors.textTertiary,
                     ),
                   ),
                 ],
@@ -525,36 +480,39 @@ class _MyWorksCard extends StatelessWidget {
                   // TODO: Navigate to edit works
                 },
                 child: Container(
-                  width: 14,
-                  height: 14,
-                  child: const Icon(
+                  padding: EdgeInsets.all(AppSpacing.xs),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryExtraLight,
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                  ),
+                  child: Icon(
                     Icons.edit,
-                    size: 12,
-                    color: Color(0xFFFCC133),
+                    size: 18,
+                    color: AppColors.primary,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: AppSpacing.lg),
           // Work thumbnails
           Row(
             children: List.generate(3, (index) {
               return Expanded(
                 child: Padding(
-                  padding: EdgeInsets.only(right: index < 2 ? 8 : 0),
+                  padding: EdgeInsets.only(right: index < 2 ? AppSpacing.sm : 0),
                   child: Container(
                     height: 100,
                     decoration: BoxDecoration(
-                      color: Colors.white,
-                      border: Border.all(color: const Color(0xFFE4E4E4)),
-                      borderRadius: BorderRadius.circular(6),
+                      color: AppColors.white,
+                      border: Border.all(color: AppColors.borderDefault),
+                      borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
                     ),
-                    child: const Center(
+                    child: Center(
                       child: Icon(
                         Icons.add,
-                        size: 15,
-                        color: Color(0xFF777676),
+                        size: 24,
+                        color: AppColors.textTertiary,
                       ),
                     ),
                   ),

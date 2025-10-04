@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:taskaway/core/theme/app_colors.dart';
+import 'package:taskaway/core/theme/app_typography.dart';
+import 'package:taskaway/core/theme/app_spacing.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
 import '../models/channel.dart';
@@ -310,17 +312,17 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
 
               // Task info
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                 child: taskAsync.when(
                   data: (task) => Row(
                     children: [
                       // Task image
                       Container(
-                        width: 60,
-                        height: 60,
+                        width: 80,
+                        height: 80,
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(8),
-                          color: AppColors.borderDefault,
+                          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                          color: AppColors.backgroundTertiary,
                           image: task != null && task.images != null && task.images!.isNotEmpty
                               ? DecorationImage(
                                   image: NetworkImage(task.images!.first),
@@ -328,8 +330,11 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                                 )
                               : null,
                         ),
+                        child: task == null || task.images == null || task.images!.isEmpty
+                            ? Icon(Icons.image_outlined, color: AppColors.textTertiary, size: 32)
+                            : null,
                       ),
-                      const SizedBox(width: 12),
+                      SizedBox(width: AppSpacing.md),
                       // Task details
                       Expanded(
                         child: Column(
@@ -337,23 +342,19 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                           children: [
                             Text(
                               task?.title ?? _channel.taskTitle,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w400,
-                                color: AppColors.primaryBlack,
-                                fontFamily: 'Instrument Sans',
+                              style: AppTypography.bodyMedium.copyWith(
+                                fontWeight: AppTypography.semiBold,
+                                color: AppColors.textPrimary,
                               ),
-                              maxLines: 1,
+                              maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
-                            const SizedBox(height: 7),
+                            SizedBox(height: AppSpacing.xs),
                             Text(
                               task != null ? 'RM${task.price.toStringAsFixed(2)}' : 'RM--',
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w400,
-                                color: AppColors.primaryBlack,
-                                fontFamily: 'Instrument Sans',
+                              style: AppTypography.titleMedium.copyWith(
+                                fontWeight: AppTypography.bold,
+                                color: AppColors.textPrimary,
                               ),
                             ),
                           ],
@@ -420,46 +421,56 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
 
               // Action buttons
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                 child: Row(
                   children: [
-                    InkWell(
-                      onTap: () {},
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryYellow,
-                          borderRadius: BorderRadius.circular(20),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {},
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: AppColors.gray900,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: AppSpacing.xl,
+                            vertical: AppSpacing.md,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
+                          ),
+                          elevation: 0,
                         ),
-                        child: const Text(
+                        child: Text(
                           'Make Offer',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w400,
-                            color: AppColors.primaryBlack,
-                            fontFamily: 'Noto Sans',
+                          style: AppTypography.labelMedium.copyWith(
+                            fontWeight: AppTypography.semiBold,
+                            color: AppColors.gray900,
                           ),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    InkWell(
-                      onTap: () {},
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: AppColors.textTertiary,
+                    SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () {},
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.gray900,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: AppSpacing.xl,
+                            vertical: AppSpacing.md,
+                          ),
+                          side: BorderSide(
+                            color: AppColors.borderDark,
+                            width: 1.5,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
                           ),
                         ),
-                        child: const Text(
+                        child: Text(
                           'View Seller',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w400,
-                            color: AppColors.primaryBlack,
-                            fontFamily: 'Noto Sans',
+                          style: AppTypography.labelMedium.copyWith(
+                            fontWeight: AppTypography.semiBold,
+                            color: AppColors.gray900,
                           ),
                         ),
                       ),
@@ -637,39 +648,36 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
               // Message suggestions
               if (_showSuggestions)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 19),
+                  padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         'Select a message or type your own below.',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w400,
-                          color: AppColors.textPrimary.withOpacity(0.34),
-                          fontFamily: 'Noto Sans',
+                        style: AppTypography.bodySmall.copyWith(
+                          color: AppColors.textTertiary,
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      Row(
+                      SizedBox(height: AppSpacing.sm),
+                      Wrap(
+                        spacing: AppSpacing.sm,
+                        runSpacing: AppSpacing.sm,
                         children: [
                           _buildSuggestionChip("I'm interested!"),
-                          const SizedBox(width: 8),
-                          Expanded(child: _buildSuggestionChip("Hello! Could I get this please?")),
-                          const SizedBox(width: 8),
+                          _buildSuggestionChip("Hello! Could I get this please?"),
                           _buildSuggestionChip("Nice!"),
                         ],
                       ),
-                      const SizedBox(height: 18),
+                      SizedBox(height: AppSpacing.lg),
                     ],
                   ),
                 ),
 
               // Input area
               Container(
-                padding: const EdgeInsets.all(16),
-                decoration: const BoxDecoration(
-                  color: AppColors.backgroundWhite,
+                padding: EdgeInsets.all(AppSpacing.lg),
+                decoration: BoxDecoration(
+                  color: AppColors.white,
                   border: Border(
                     top: BorderSide(
                       color: AppColors.borderDefault,
@@ -678,27 +686,25 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                   ),
                 ),
                 child: Container(
-                  height: 44,
                   decoration: BoxDecoration(
-                    color: AppColors.backgroundGray,
-                    borderRadius: BorderRadius.circular(22),
+                    color: AppColors.backgroundSecondary,
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
                     border: Border.all(
                       color: AppColors.borderDefault,
+                      width: 1,
                     ),
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      const SizedBox(width: 16),
+                      SizedBox(width: AppSpacing.lg),
                       Expanded(
                         child: TextField(
                           controller: _messageController,
                           textAlignVertical: TextAlignVertical.center,
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                             hintText: 'Text Message',
-                            hintStyle: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w400,
+                            hintStyle: AppTypography.bodyMedium.copyWith(
                               color: AppColors.textTertiary,
                             ),
                             isDense: true,
@@ -707,13 +713,12 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                             enabledBorder: InputBorder.none,
                             errorBorder: InputBorder.none,
                             disabledBorder: InputBorder.none,
-                            contentPadding: EdgeInsets.symmetric(vertical: 12),
+                            contentPadding: EdgeInsets.symmetric(vertical: AppSpacing.md),
                           ),
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: AppColors.primaryBlack,
+                          style: AppTypography.bodyMedium.copyWith(
+                            color: AppColors.textPrimary,
                           ),
-                          cursorColor: AppColors.primaryBlack,
+                          cursorColor: AppColors.textPrimary,
                           onChanged: (value) {
                             if (value.isNotEmpty && _showSuggestions) {
                               setState(() {
@@ -725,16 +730,16 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(
+                        icon: Icon(
                           Icons.send,
-                          size: 20,
-                          color: AppColors.textTertiary,
+                          size: AppSpacing.iconMd,
+                          color: _isLoading ? AppColors.textTertiary : AppColors.primary,
                         ),
                         onPressed: _isLoading ? null : _sendMessage,
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(),
                       ),
-                      const SizedBox(width: 16),
+                      SizedBox(width: AppSpacing.lg),
                     ],
                   ),
                 ),
@@ -817,31 +822,32 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
         children: [
           if (!isMe) ...[
             CircleAvatar(
-              radius: 16,
-              backgroundColor: AppColors.borderDefault,
+              radius: 18,
+              backgroundColor: AppColors.gray200,
               child: Icon(
                 Icons.person,
-                size: 16,
+                size: 18,
                 color: AppColors.textSecondary,
               ),
             ),
-            const SizedBox(width: 8),
+            SizedBox(width: AppSpacing.sm),
           ],
           Container(
             constraints: BoxConstraints(
               maxWidth: MediaQuery.of(context).size.width * 0.7,
             ),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            padding: EdgeInsets.symmetric(
+              horizontal: AppSpacing.lg,
+              vertical: AppSpacing.md,
+            ),
             decoration: BoxDecoration(
-              color: AppColors.backgroundGray,
-              borderRadius: BorderRadius.circular(16),
+              color: AppColors.backgroundSecondary,
+              borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
             ),
             child: Text(
               text,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w400,
-                color: AppColors.primaryBlack,
+              style: AppTypography.bodyMedium.copyWith(
+                color: AppColors.textPrimary,
               ),
             ),
           ),
@@ -854,19 +860,23 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
     return InkWell(
       onTap: () => _sendSuggestedMessage(text),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: AppSpacing.sm,
+        ),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
           border: Border.all(
-            color: AppColors.borderDark,
+            color: AppColors.borderDefault,
+            width: 1.5,
           ),
         ),
         child: Text(
           text,
-          style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w400,
-            color: AppColors.textSecondary,
+          style: AppTypography.bodySmall.copyWith(
+            fontWeight: AppTypography.medium,
+            color: AppColors.textPrimary,
           ),
           overflow: TextOverflow.ellipsis,
         ),

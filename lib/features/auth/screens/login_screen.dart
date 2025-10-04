@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../controllers/auth_controller.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/app_spacing.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -49,16 +52,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           scaffoldMessenger.showSnackBar(
             SnackBar(
               content: Text(e.message),
-              backgroundColor: Colors.red,
+              backgroundColor: AppColors.error,
             ),
           );
         }
       } catch (e) {
         if (mounted) {
           scaffoldMessenger.showSnackBar(
-            const SnackBar(
-              content: Text('An unexpected error occurred.'),
-              backgroundColor: Colors.red,
+            SnackBar(
+              content: const Text('An unexpected error occurred.'),
+              backgroundColor: AppColors.error,
             ),
           );
         }
@@ -84,27 +87,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.white,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 33),
+            padding: EdgeInsets.symmetric(horizontal: AppSpacing.xxxl),
             child: Form(
               key: _formKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 39),
+                  SizedBox(height: AppSpacing.xxxl * 1.2),
 
                   // Logo
                   Container(
                     width: 62,
                     height: 62,
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.white,
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: const Color(0xFFFDFDFD),
+                        color: AppColors.borderDefault,
                         width: 1,
                       ),
                     ),
@@ -120,104 +123,85 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: 20),
+                  SizedBox(height: AppSpacing.xl),
 
                   // Welcome text
-                  const Text(
+                  Text(
                     'Welcome to Taskaway',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF202020),
-                      letterSpacing: 0.24,
-                    ),
+                    style: AppTypography.headlineMedium,
                   ),
 
-                  const SizedBox(height: 5),
+                  SizedBox(height: AppSpacing.xs),
 
                   // Subtitle
-                  const Text(
+                  Text(
                     'Please enter your registration email and password',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w400,
-                      color: Color(0xFF717680),
-                      letterSpacing: 0.11,
+                    style: AppTypography.captionSmall.copyWith(
+                      color: AppColors.textSecondary,
                     ),
                   ),
 
-                  const SizedBox(height: 21),
+                  SizedBox(height: AppSpacing.xl),
 
                   // Email field
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Email',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: Color(0xFF414651),
-                        ),
+                        style: AppTypography.inputLabel,
                       ),
-                      const SizedBox(height: 6),
+                      SizedBox(height: AppSpacing.xs),
                       TextFormField(
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
+                        style: AppTypography.input,
                         decoration: InputDecoration(
                           hintText: 'Enter your email...',
-                          hintStyle: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: Color(0xFF717680),
-                          ),
-                          prefixIcon: const Icon(
+                          hintStyle: AppTypography.inputHint,
+                          prefixIcon: Icon(
                             Icons.mail_outline,
-                            color: Color(0xFFA4A7AE),
-                            size: 20,
+                            color: AppColors.textTertiary,
+                            size: AppSpacing.iconMd,
                           ),
                           filled: true,
-                          fillColor: Colors.white,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 10,
+                          fillColor: AppColors.white,
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: AppSpacing.md,
+                            vertical: AppSpacing.sm + 2,
                           ),
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(6),
-                            borderSide: const BorderSide(
-                              color: Color(0xFFE4E4E4),
+                            borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                            borderSide: BorderSide(
+                              color: AppColors.borderDefault,
                               width: 1,
                             ),
                           ),
                           enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(6),
-                            borderSide: const BorderSide(
-                              color: Color(0xFFE4E4E4),
+                            borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                            borderSide: BorderSide(
+                              color: AppColors.borderDefault,
                               width: 1,
                             ),
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(6),
-                            borderSide: const BorderSide(
-                              color: Color(0xFFFFC333),
+                            borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                            borderSide: BorderSide(
+                              color: AppColors.primary,
                               width: 1,
                             ),
                           ),
                           errorBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(6),
-                            borderSide: const BorderSide(
-                              color: Colors.red,
+                            borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                            borderSide: BorderSide(
+                              color: AppColors.error,
                               width: 1,
                             ),
                           ),
                           focusedErrorBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(6),
-                            borderSide: const BorderSide(
-                              color: Colors.red,
+                            borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                            borderSide: BorderSide(
+                              color: AppColors.error,
                               width: 1,
                             ),
                           ),
@@ -235,47 +219,36 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ],
                   ),
 
-                  const SizedBox(height: 19),
+                  SizedBox(height: AppSpacing.lg),
 
                   // Password field
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Password',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: Color(0xFF414651),
-                        ),
+                        style: AppTypography.inputLabel,
                       ),
-                      const SizedBox(height: 6),
+                      SizedBox(height: AppSpacing.xs),
                       TextFormField(
                         controller: _passwordController,
                         obscureText: _obscurePassword,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
+                        style: AppTypography.input,
                         decoration: InputDecoration(
                           hintText: 'Enter your password...',
-                          hintStyle: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: Color(0xFF717680),
-                          ),
-                          prefixIcon: const Icon(
+                          hintStyle: AppTypography.inputHint,
+                          prefixIcon: Icon(
                             Icons.lock_outline,
-                            color: Color(0xFF8F9098),
-                            size: 20,
+                            color: AppColors.textTertiary,
+                            size: AppSpacing.iconMd,
                           ),
                           suffixIcon: IconButton(
                             icon: Icon(
                               _obscurePassword
                                   ? Icons.visibility_off_outlined
                                   : Icons.visibility_outlined,
-                              color: const Color(0xFF8F9098),
-                              size: 20,
+                              color: AppColors.textTertiary,
+                              size: AppSpacing.iconMd,
                             ),
                             onPressed: () {
                               setState(() {
@@ -284,43 +257,43 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             },
                           ),
                           filled: true,
-                          fillColor: Colors.white,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 10,
+                          fillColor: AppColors.white,
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: AppSpacing.md,
+                            vertical: AppSpacing.sm + 2,
                           ),
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(6),
-                            borderSide: const BorderSide(
-                              color: Color(0xFFE4E4E4),
+                            borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                            borderSide: BorderSide(
+                              color: AppColors.borderDefault,
                               width: 1,
                             ),
                           ),
                           enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(6),
-                            borderSide: const BorderSide(
-                              color: Color(0xFFE4E4E4),
+                            borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                            borderSide: BorderSide(
+                              color: AppColors.borderDefault,
                               width: 1,
                             ),
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(6),
-                            borderSide: const BorderSide(
-                              color: Color(0xFFFFC333),
+                            borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                            borderSide: BorderSide(
+                              color: AppColors.primary,
                               width: 1,
                             ),
                           ),
                           errorBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(6),
-                            borderSide: const BorderSide(
-                              color: Colors.red,
+                            borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                            borderSide: BorderSide(
+                              color: AppColors.error,
                               width: 1,
                             ),
                           ),
                           focusedErrorBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(6),
-                            borderSide: const BorderSide(
-                              color: Colors.red,
+                            borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                            borderSide: BorderSide(
+                              color: AppColors.error,
                               width: 1,
                             ),
                           ),
@@ -338,7 +311,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ],
                   ),
 
-                  const SizedBox(height: 12),
+                  SizedBox(height: AppSpacing.md),
 
                   // Forgot password link
                   Align(
@@ -347,59 +320,56 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       onTap: () {
                         context.go('/forgot-password');
                       },
-                      child: const Text(
+                      child: Text(
                         'Forgot Password?',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: Color(0xFFFFC333),
+                        style: AppTypography.captionMedium.copyWith(
+                          color: AppColors.primary,
                           decoration: TextDecoration.underline,
+                          fontWeight: AppTypography.medium,
                         ),
                       ),
                     ),
                   ),
 
-                  const SizedBox(height: 16),
+                  SizedBox(height: AppSpacing.lg),
 
                   // Continue button
                   SizedBox(
                     width: double.infinity,
-                    height: 48,
+                    height: AppSpacing.buttonHeightMd,
                     child: ElevatedButton(
                       onPressed: _isLoading ? null : _handleLogin,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFFFDB5B),
-                        foregroundColor: Colors.black,
+                        backgroundColor: AppColors.primaryLight,
+                        foregroundColor: AppColors.gray900,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(6),
-                          side: const BorderSide(
-                            color: Color(0xFFFFC333),
+                          borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                          side: BorderSide(
+                            color: AppColors.primary,
                             width: 1,
                           ),
                         ),
                       ),
                       child: _isLoading
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
+                          ? SizedBox(
+                              height: AppSpacing.iconMd,
+                              width: AppSpacing.iconMd,
                               child: CircularProgressIndicator(
-                                color: Colors.black,
+                                color: AppColors.gray900,
                                 strokeWidth: 2,
                               ),
                             )
-                          : const Text(
+                          : Text(
                               'Continue',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 0.14,
+                              style: AppTypography.labelMedium.copyWith(
+                                fontWeight: AppTypography.semiBold,
                               ),
                             ),
                     ),
                   ),
 
-                  const SizedBox(height: 17),
+                  SizedBox(height: AppSpacing.lg),
 
                   // Or continue with divider
                   Row(
@@ -407,46 +377,45 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       Expanded(
                         child: Container(
                           height: 1,
-                          color: const Color(0xFFE4E4E4),
+                          color: AppColors.borderDefault,
                         ),
                       ),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 12),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
                         child: Text(
                           'Or continue with',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: Color(0xFF6C7280),
+                          style: AppTypography.captionMedium.copyWith(
+                            color: AppColors.textSecondary,
+                            fontWeight: AppTypography.medium,
                           ),
                         ),
                       ),
                       Expanded(
                         child: Container(
                           height: 1,
-                          color: const Color(0xFFE4E4E4),
+                          color: AppColors.borderDefault,
                         ),
                       ),
                     ],
                   ),
 
-                  const SizedBox(height: 14),
+                  SizedBox(height: AppSpacing.md),
 
                   // Google sign in button
                   SizedBox(
                     width: double.infinity,
-                    height: 48,
+                    height: AppSpacing.buttonHeightMd,
                     child: OutlinedButton(
                       onPressed: _handleGoogleSignIn,
                       style: OutlinedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: Colors.black,
-                        side: const BorderSide(
-                          color: Color(0xFFE4E4E4),
+                        backgroundColor: AppColors.white,
+                        foregroundColor: AppColors.gray900,
+                        side: BorderSide(
+                          color: AppColors.borderDefault,
                           width: 1,
                         ),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(6),
+                          borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
                         ),
                       ),
                       child: Row(
@@ -457,12 +426,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             width: 18,
                             height: 18,
                           ),
-                          const SizedBox(width: 12),
-                          const Text(
+                          SizedBox(width: AppSpacing.md),
+                          Text(
                             'Continue with Google',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
+                            style: AppTypography.labelMedium.copyWith(
+                              fontWeight: AppTypography.medium,
                             ),
                           ),
                         ],
@@ -470,31 +438,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: 107),
+                  SizedBox(height: AppSpacing.xxxl * 2.7),
 
                   // Don't have an account? Sign Up
                   Center(
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Text(
+                        Text(
                           "Don't have an account? ",
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w400,
-                            color: Colors.black,
+                          style: AppTypography.bodyMedium.copyWith(
+                            color: AppColors.gray900,
                           ),
                         ),
                         GestureDetector(
                           onTap: () {
                             context.go('/create-account');
                           },
-                          child: const Text(
+                          child: Text(
                             'Sign Up',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w400,
-                              color: Color(0xFFFFC333),
+                            style: AppTypography.bodyMedium.copyWith(
+                              color: AppColors.primary,
                               decoration: TextDecoration.underline,
                             ),
                           ),
@@ -503,7 +467,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: 50),
+                  SizedBox(height: AppSpacing.xxxl * 1.25),
                 ],
               ),
             ),
