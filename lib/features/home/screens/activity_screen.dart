@@ -6,6 +6,9 @@ import 'package:taskaway/features/auth/controllers/auth_controller.dart';
 import 'package:taskaway/features/applications/repositories/application_repository.dart';
 import 'package:taskaway/features/tasks/repositories/task_repository.dart';
 import 'package:taskaway/features/tasks/models/task.dart';
+import 'package:taskaway/core/theme/app_colors.dart';
+import 'package:taskaway/core/theme/app_typography.dart';
+import 'package:taskaway/core/theme/app_spacing.dart';
 
 final userAcceptedTasksProvider = FutureProvider<List<Task>>((ref) async {
   final user = ref.watch(currentUserProvider);
@@ -52,31 +55,25 @@ class ActivityScreen extends ConsumerWidget {
     final tasksAsync = ref.watch(userAcceptedTasksProvider);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.white,
       body: SafeArea(
         child: Column(
           children: [
             Container(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              decoration: const BoxDecoration(
-                color: Colors.white,
+              padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
+              decoration: BoxDecoration(
+                color: AppColors.white,
                 border: Border(
                   bottom: BorderSide(
-                    color: Color(0xFFE8E9F1),
+                    color: AppColors.borderDefault,
                     width: 1,
                   ),
                 ),
               ),
-              child: const Center(
+              child: Center(
                 child: Text(
                   'Activity',
-                  style: TextStyle(
-                    fontFamily: 'Instrument Sans',
-                    fontSize: 24,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.48,
-                    color: Color(0xFF000000),
-                  ),
+                  style: AppTypography.headlineMedium,
                 ),
               ),
             ),
@@ -84,22 +81,19 @@ class ActivityScreen extends ConsumerWidget {
               child: tasksAsync.when(
                 data: (tasks) {
                   if (tasks.isEmpty) {
-                    return const Center(
+                    return Center(
                       child: Text(
                         'No active tasks',
-                        style: TextStyle(
-                          fontFamily: 'Instrument Sans',
-                          fontSize: 16,
-                          color: Color(0xFF788494),
+                        style: AppTypography.bodyLarge.copyWith(
+                          color: AppColors.textSecondary,
                         ),
                       ),
                     );
                   }
 
-                  return ListView.separated(
-                    padding: const EdgeInsets.all(22),
+                  return ListView.builder(
+                    padding: EdgeInsets.zero,
                     itemCount: tasks.length,
-                    separatorBuilder: (context, index) => const SizedBox(height: 26),
                     itemBuilder: (context, index) {
                       return _TaskCard(task: tasks[index]);
                     },
@@ -109,10 +103,8 @@ class ActivityScreen extends ConsumerWidget {
                 error: (error, stack) => Center(
                   child: Text(
                     'Error loading tasks',
-                    style: TextStyle(
-                      fontFamily: 'Instrument Sans',
-                      fontSize: 16,
-                      color: Colors.red[700],
+                    style: AppTypography.bodyLarge.copyWith(
+                      color: AppColors.error,
                     ),
                   ),
                 ),
@@ -178,7 +170,19 @@ class _TaskCard extends StatelessWidget {
         context.push('/home/tasks/${task.id}');
       },
       child: Container(
-        constraints: const BoxConstraints(minHeight: 77),
+        padding: EdgeInsets.symmetric(
+          vertical: AppSpacing.lg,
+          horizontal: AppSpacing.lg,
+        ),
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          border: Border(
+            bottom: BorderSide(
+              color: AppColors.borderDefault,
+              width: 1,
+            ),
+          ),
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -188,68 +192,47 @@ class _TaskCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     task.title,
-                    style: const TextStyle(
-                      fontFamily: 'Instrument Sans',
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      height: 1.22,
-                      color: Color(0xFF000000),
+                    style: AppTypography.titleMedium.copyWith(
+                      color: AppColors.textPrimary,
                     ),
                   ),
                 ),
-                const SizedBox(width: 16),
+                SizedBox(width: AppSpacing.lg),
                 Text(
                   'RM ${task.budget.toStringAsFixed(2)}',
-                  style: const TextStyle(
-                    fontFamily: 'Instrument Sans',
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    height: 1.22,
-                    color: Color(0xFF000000),
+                  style: AppTypography.titleMedium.copyWith(
+                    fontWeight: AppTypography.bold,
+                    color: AppColors.textPrimary,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 6),
+            SizedBox(height: AppSpacing.sm),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
                   child: Text(
                     'By $posterName',
-                    style: const TextStyle(
-                      fontFamily: 'Instrument Sans',
-                      fontSize: 12,
-                      fontWeight: FontWeight.w400,
-                      height: 1.22,
-                      letterSpacing: 0.24,
-                      color: Color(0xFF788494),
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: AppColors.textSecondary,
                     ),
                   ),
                 ),
                 Text(
                   _getStatusLabel(task.status),
-                  style: TextStyle(
-                    fontFamily: 'Instrument Sans',
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    height: 1.22,
-                    letterSpacing: 0.24,
+                  style: AppTypography.bodyMedium.copyWith(
+                    fontWeight: AppTypography.semiBold,
                     color: _getStatusColor(task.status),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 6),
+            SizedBox(height: AppSpacing.sm),
             Text(
               'Due date $dueDate',
-              style: const TextStyle(
-                fontFamily: 'Instrument Sans',
-                fontSize: 10,
-                fontWeight: FontWeight.w400,
-                height: 1.22,
-                letterSpacing: 0.2,
-                color: Color(0xFF788494),
+              style: AppTypography.bodySmall.copyWith(
+                color: AppColors.textSecondary,
               ),
             ),
           ],

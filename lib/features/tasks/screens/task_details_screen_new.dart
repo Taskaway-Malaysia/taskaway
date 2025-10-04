@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:taskaway/core/theme/app_colors.dart';
+import 'package:taskaway/core/theme/app_spacing.dart';
 import '../controllers/task_controller.dart';
 import '../models/task.dart';
 import '../../auth/controllers/auth_controller.dart';
@@ -185,7 +186,7 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
 
               return SingleChildScrollView(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 29, vertical: 24),
+              padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.xxl),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -282,6 +283,8 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 16),
+                  Divider(height: 1, thickness: 1, color: AppColors.borderDefault),
                   const SizedBox(height: 16),
 
                   // Task Images Row - Scrollable
@@ -397,7 +400,9 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
                       ),
                     ),
                   ],
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
+                  Divider(height: 1, thickness: 1, color: AppColors.borderDefault),
+                  const SizedBox(height: 20),
 
                   // Description Section
                   Column(
@@ -469,6 +474,8 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
                     ],
                   ),
                   const SizedBox(height: 20),
+                  Divider(height: 1, thickness: 1, color: AppColors.borderDefault),
+                  const SizedBox(height: 20),
 
                   // Schedule Section
                   Column(
@@ -527,6 +534,8 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 20),
+                  Divider(height: 1, thickness: 1, color: AppColors.borderDefault),
                   const SizedBox(height: 20),
 
                   // Task Budget Section

@@ -4,6 +4,9 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:taskaway/features/tasks/models/task.dart';
+import 'package:taskaway/core/theme/app_colors.dart';
+import 'package:taskaway/core/theme/app_typography.dart';
+import 'package:taskaway/core/theme/app_spacing.dart';
 
 class TaskCard extends StatelessWidget {
   final Task task;
@@ -29,32 +32,31 @@ class TaskCard extends StatelessWidget {
 
     return GestureDetector(
       onTap: () => GoRouter.of(context).go('/home/tasks/${task.id}'),
-      child: Card(
-        elevation: 0,
-        margin: EdgeInsets.zero,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-          side: BorderSide(color: Colors.grey.shade300),
+      child: Container(
+        margin: EdgeInsets.only(bottom: AppSpacing.md),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: AppColors.borderDefault,
+              width: 1,
+            ),
+          ),
         ),
         child: Column(
           children: [
             // Poster information section
             if (task.posterProfile != null) ...[
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: EdgeInsets.all(AppSpacing.md),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade50,
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(12),
-                    topRight: Radius.circular(12),
-                  ),
+                  color: AppColors.backgroundSecondary,
                 ),
                 child: Row(
                   children: [
                     // Poster avatar
                     CircleAvatar(
                       radius: 20,
-                      backgroundColor: Colors.grey.shade300,
+                      backgroundColor: AppColors.backgroundTertiary,
                       backgroundImage: task.posterProfile?['avatar_url'] != null
                           ? CachedNetworkImageProvider(
                               task.posterProfile!['avatar_url'] as String,
@@ -63,14 +65,14 @@ class TaskCard extends StatelessWidget {
                       child: task.posterProfile?['avatar_url'] == null
                           ? Text(
                               (task.posterProfile?['full_name'] as String? ?? 'U')[0].toUpperCase(),
-                              style: const TextStyle(
-                                color: Colors.black54,
-                                fontWeight: FontWeight.bold,
+                              style: AppTypography.labelMedium.copyWith(
+                                color: AppColors.textSecondary,
+                                fontWeight: AppTypography.bold,
                               ),
                             )
                           : null,
                     ),
-                    const SizedBox(width: 8),
+                    SizedBox(width: AppSpacing.sm),
                     // Poster name and badge
                     Expanded(
                       child: Column(
@@ -80,40 +82,36 @@ class TaskCard extends StatelessWidget {
                             children: [
                               Text(
                                 'Posted by ',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey.shade600,
+                                style: AppTypography.captionMedium.copyWith(
+                                  color: AppColors.textSecondary,
                                 ),
                               ),
                               Text(
                                 task.posterProfile?['full_name'] as String? ?? 'Unknown',
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.black87,
+                                style: AppTypography.captionMedium.copyWith(
+                                  fontWeight: AppTypography.semiBold,
+                                  color: AppColors.textPrimary,
                                 ),
                               ),
                             ],
                           ),
                           if (task.posterProfile?['rating'] != null) ...[
-                            const SizedBox(height: 2),
+                            SizedBox(height: AppSpacing.xxs),
                             Row(
                               children: [
-                                Icon(Icons.star, size: 12, color: Colors.amber.shade600),
-                                const SizedBox(width: 2),
+                                Icon(Icons.star, size: AppSpacing.iconSm, color: AppColors.star),
+                                SizedBox(width: AppSpacing.xxs),
                                 Text(
                                   '${(task.posterProfile!['rating'] as num).toStringAsFixed(1)}',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: Colors.grey.shade700,
+                                  style: AppTypography.captionSmall.copyWith(
+                                    color: AppColors.textPrimary,
                                   ),
                                 ),
-                                const SizedBox(width: 4),
+                                SizedBox(width: AppSpacing.xs),
                                 Text(
                                   '(${task.posterProfile!['review_count'] ?? 0} reviews)',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: Colors.grey.shade600,
+                                  style: AppTypography.captionSmall.copyWith(
+                                    color: AppColors.textSecondary,
                                   ),
                                 ),
                               ],
@@ -125,23 +123,25 @@ class TaskCard extends StatelessWidget {
                     // Verified badge if applicable
                     if (task.posterProfile?['is_verified'] == true)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: AppSpacing.sm,
+                          vertical: AppSpacing.xs,
+                        ),
                         decoration: BoxDecoration(
-                          color: Colors.green.shade50,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.green.shade200),
+                          color: AppColors.successExtraLight,
+                          borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
+                          border: Border.all(color: AppColors.successLight),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.verified, size: 12, color: Colors.green.shade700),
-                            const SizedBox(width: 4),
+                            Icon(Icons.verified, size: AppSpacing.iconSm, color: AppColors.success),
+                            SizedBox(width: AppSpacing.xs),
                             Text(
                               'Verified',
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: Colors.green.shade700,
-                                fontWeight: FontWeight.w600,
+                              style: AppTypography.captionSmall.copyWith(
+                                color: AppColors.success,
+                                fontWeight: AppTypography.semiBold,
                               ),
                             ),
                           ],
@@ -154,26 +154,22 @@ class TaskCard extends StatelessWidget {
             ],
             // Top section: Title and Price
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+              padding: EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, AppSpacing.md),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
                     child: Text(
                       task.title,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: AppTypography.titleMedium,
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  SizedBox(width: AppSpacing.lg),
                   Text(
                     currencyFormat.format(task.price),
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
+                    style: AppTypography.titleLarge.copyWith(
+                      fontWeight: AppTypography.bold,
+                      color: AppColors.textPrimary,
                     ),
                   ),
                 ],
@@ -186,32 +182,30 @@ class TaskCard extends StatelessWidget {
                 children: [
                   // Status and Offers
                   SizedBox(
-                    width: 90, // Fixed width for the first column
+                    width: 90,
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      padding: EdgeInsets.symmetric(vertical: AppSpacing.sm),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
                             task.status.toUpperCase(),
-                            style: const TextStyle(
-                              color: Color(0xFF7B61FF),
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
+                            style: AppTypography.captionMedium.copyWith(
+                              color: AppColors.accent,
+                              fontWeight: AppTypography.bold,
                             ),
                           ),
-                          const SizedBox(height: 2),
+                          SizedBox(height: AppSpacing.xxs),
                           Container(
                             height: 2,
                             width: 30,
-                            color: const Color(0xFF7B61FF),
+                            color: AppColors.accent,
                           ),
-                          const SizedBox(height: 4),
+                          SizedBox(height: AppSpacing.xs),
                           Text(
                             '${task.offers?.length ?? 0} Offer${(task.offers?.length ?? 0) != 1 ? 's' : ''}',
-                            style: TextStyle(
-                              color: Colors.grey[600],
-                              fontSize: 12,
+                            style: AppTypography.captionMedium.copyWith(
+                              color: AppColors.textSecondary,
                             ),
                           ),
                         ],
@@ -222,7 +216,7 @@ class TaskCard extends StatelessWidget {
                   // Image, Details, and View button
                   Expanded(
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+                      padding: EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.sm, AppSpacing.md, AppSpacing.sm),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -232,53 +226,57 @@ class TaskCard extends StatelessWidget {
                                 width: 40,
                                 height: 40,
                                 child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
+                                  borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
                                   child: (task.images != null && task.images!.isNotEmpty)
                                       ? CachedNetworkImage(
                                           imageUrl: task.images!.first,
                                           fit: BoxFit.cover,
                                           placeholder: (context, url) => Shimmer.fromColors(
-                                            baseColor: Colors.grey[300]!,
-                                            highlightColor: Colors.grey[100]!,
+                                            baseColor: AppColors.gray300,
+                                            highlightColor: AppColors.gray100,
                                             child: Container(
-                                              color: Colors.white,
+                                              color: AppColors.white,
                                             ),
                                           ),
                                           errorWidget: (context, url, error) =>
-                                              const Icon(Icons.error_outline, color: Colors.red),
+                                              Icon(Icons.error_outline, color: AppColors.error, size: AppSpacing.iconMd),
                                         )
                                       : Container(
                                           decoration: BoxDecoration(
-                                            color: Colors.grey[200],
-                                            borderRadius: BorderRadius.circular(8),
+                                            color: AppColors.backgroundTertiary,
+                                            borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
                                           ),
-                                          child: Icon(Icons.image_outlined, color: Colors.grey[400]),
+                                          child: Icon(Icons.image_outlined, color: AppColors.textTertiary, size: AppSpacing.iconMd),
                                         ),
                                 ),
                               ),
-                              const SizedBox(width: 8),
+                              SizedBox(width: AppSpacing.sm),
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Row(
                                     children: [
-                                      Icon(Icons.calendar_today_outlined, size: 14, color: Colors.grey[600]),
-                                      const SizedBox(width: 4),
+                                      Icon(Icons.calendar_today_outlined, size: AppSpacing.iconSm, color: AppColors.textSecondary),
+                                      SizedBox(width: AppSpacing.xs),
                                       Text(
                                         _getFormattedDate(task.scheduledTime),
-                                        style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+                                        style: AppTypography.captionMedium.copyWith(
+                                          color: AppColors.textPrimary,
+                                        ),
                                       ),
                                     ],
                                   ),
-                                  const SizedBox(height: 4),
+                                  SizedBox(height: AppSpacing.xs),
                                   Row(
                                     children: [
-                                      Icon(Icons.location_on_outlined, size: 14, color: Colors.grey[600]),
-                                      const SizedBox(width: 4),
+                                      Icon(Icons.location_on_outlined, size: AppSpacing.iconSm, color: AppColors.textSecondary),
+                                      SizedBox(width: AppSpacing.xs),
                                       Text(
                                         task.location,
-                                        style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+                                        style: AppTypography.captionMedium.copyWith(
+                                          color: AppColors.textPrimary,
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -286,12 +284,11 @@ class TaskCard extends StatelessWidget {
                               ),
                             ],
                           ),
-                          const Text(
+                          Text(
                             'View',
-                            style: TextStyle(
-                              color: Color(0xFF7B61FF),
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
+                            style: AppTypography.labelMedium.copyWith(
+                              color: AppColors.accent,
+                              fontWeight: AppTypography.bold,
                             ),
                           ),
                         ],
