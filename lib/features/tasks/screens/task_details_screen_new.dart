@@ -245,10 +245,10 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
                                   posterProfile?.fullName ?? 'Unknown User',
                                   style: const TextStyle(
                                     fontFamily: 'Instrument Sans',
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w700,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
                                     color: Colors.black,
-                                    letterSpacing: 0.24,
+                                    letterSpacing: 0.1,
                                   ),
                                 ),
                                 const SizedBox(height: 4),
@@ -274,7 +274,7 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
                         task.title,
                         style: const TextStyle(
                           fontFamily: 'Instrument Sans',
-                          fontSize: 14,
+                          fontSize: 18,
                           fontWeight: FontWeight.w600,
                           color: Colors.black,
                         ),
@@ -396,7 +396,7 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
                       ),
                     ),
                   ],
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 24),
 
                   // Description Section
                   Column(
@@ -406,7 +406,7 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
                         'Description',
                         style: TextStyle(
                           fontFamily: 'Instrument Sans',
-                          fontSize: 14,
+                          fontSize: 16,
                           fontWeight: FontWeight.w600,
                           color: Color(0xFF202020),
                         ),
@@ -416,37 +416,58 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
                         task.description,
                         style: const TextStyle(
                           fontFamily: 'Instrument Sans',
-                          fontSize: 10,
+                          fontSize: 14,
                           fontWeight: FontWeight.w400,
-                          color: Color(0xFF788494),
-                          letterSpacing: 0.2,
+                          color: Color(0xFF6B7280),
+                          height: 1.5,
+                          letterSpacing: 0.1,
                         ),
                       ),
                       const SizedBox(height: 6),
-                      Text(
-                        'Category: ${task.category}',
-                        style: const TextStyle(
-                          fontFamily: 'Instrument Sans',
-                          fontSize: 10,
-                          fontWeight: FontWeight.w400,
-                          color: Color(0xFF788494),
-                          letterSpacing: 0.2,
-                        ),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.category_outlined,
+                            size: 16,
+                            color: Color(0xFF6B7280),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            task.category,
+                            style: const TextStyle(
+                              fontFamily: 'Instrument Sans',
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: Color(0xFF6B7280),
+                              letterSpacing: 0.1,
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 6),
-                      Text(
-                        task.location,
-                        style: const TextStyle(
-                          fontFamily: 'Instrument Sans',
-                          fontSize: 10,
-                          fontWeight: FontWeight.w400,
-                          color: Color(0xFF788494),
-                          letterSpacing: 0.2,
-                        ),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.tag,
+                            size: 16,
+                            color: Color(0xFF6B7280),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            task.location,
+                            style: const TextStyle(
+                              fontFamily: 'Instrument Sans',
+                              fontSize: 13,
+                              fontWeight: FontWeight.w400,
+                              color: Color(0xFF6B7280),
+                              letterSpacing: 0.1,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                  const SizedBox(height: 21),
+                  const SizedBox(height: 20),
 
                   // Schedule Section
                   Column(
@@ -456,36 +477,56 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
                         'Schedule',
                         style: TextStyle(
                           fontFamily: 'Instrument Sans',
-                          fontSize: 14,
+                          fontSize: 16,
                           fontWeight: FontWeight.w600,
                           color: Color(0xFF202020),
                         ),
                       ),
                       const SizedBox(height: 6),
-                      Text(
-                        DateFormat('d MMM yyyy').format(task.scheduledTime),
-                        style: const TextStyle(
-                          fontFamily: 'Instrument Sans',
-                          fontSize: 10,
-                          fontWeight: FontWeight.w400,
-                          color: Color(0xFF788494),
-                          letterSpacing: 0.2,
-                        ),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.calendar_today_outlined,
+                            size: 16,
+                            color: Color(0xFF6B7280),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            DateFormat('d MMM yyyy').format(task.scheduledTime),
+                            style: const TextStyle(
+                              fontFamily: 'Instrument Sans',
+                              fontSize: 14,
+                              fontWeight: FontWeight.w400,
+                              color: Color(0xFF6B7280),
+                              letterSpacing: 0.1,
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 6),
-                      Text(
-                        DateFormat('h:mm a').format(task.scheduledTime),
-                        style: const TextStyle(
-                          fontFamily: 'Instrument Sans',
-                          fontSize: 10,
-                          fontWeight: FontWeight.w400,
-                          color: Color(0xFF788494),
-                          letterSpacing: 0.2,
-                        ),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.access_time,
+                            size: 16,
+                            color: Color(0xFF6B7280),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            DateFormat('h:mm a').format(task.scheduledTime),
+                            style: const TextStyle(
+                              fontFamily: 'Instrument Sans',
+                              fontSize: 14,
+                              fontWeight: FontWeight.w400,
+                              color: Color(0xFF6B7280),
+                              letterSpacing: 0.1,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                  const SizedBox(height: 21),
+                  const SizedBox(height: 20),
 
                   // Task Budget Section
                   Column(
@@ -495,7 +536,7 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
                         'Task Budget',
                         style: TextStyle(
                           fontFamily: 'Instrument Sans',
-                          fontSize: 14,
+                          fontSize: 16,
                           fontWeight: FontWeight.w600,
                           color: Color(0xFF202020),
                         ),
@@ -505,8 +546,8 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
                         'RM ${task.price.toStringAsFixed(2)}',
                         style: const TextStyle(
                           fontFamily: 'Instrument Sans',
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
                           color: Color(0xFF202020),
                         ),
                       ),

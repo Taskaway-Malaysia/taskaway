@@ -110,6 +110,7 @@ class _ApplyTaskScreenState extends ConsumerState<ApplyTaskScreen> {
     final task = ref.watch(taskProvider(widget.taskId));
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text('Apply for Task'),
         elevation: 0,
@@ -132,63 +133,141 @@ class _ApplyTaskScreenState extends ConsumerState<ApplyTaskScreen> {
                   // Task title and details
                   Text(
                     taskData.title,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Budget: RM${taskData.budget.toStringAsFixed(2)}',
-                    style: Theme.of(context).textTheme.bodyMedium,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      color: Color(0xFF6B7280),
+                    ),
                   ),
                   const SizedBox(height: 24),
                   
                   // Amount field
-                  Text(
-                    'Your Offer Amount (RM)',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 8),
-                  TextFormField(
-                    controller: _amountController,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      hintText: 'Enter your offer amount',
-                      prefixText: 'RM ',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                      ),
+                  const Text(
+                    'Your Offer Amount',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
                     ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter an amount';
-                      }
-                      try {
-                        final amount = double.parse(value);
-                        if (amount <= 0) {
-                          return 'Amount must be greater than 0';
-                        }
-                      } catch (e) {
-                        return 'Please enter a valid amount';
-                      }
-                      return null;
-                    },
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF3F4F6),
+                      border: Border.all(color: const Color(0xFFE5E7EB)),
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          child: const Text(
+                            'RM',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.black,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: TextFormField(
+                            controller: _amountController,
+                            keyboardType: TextInputType.number,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Colors.black,
+                            ),
+                            decoration: const InputDecoration(
+                              hintText: 'Enter amount',
+                              hintStyle: TextStyle(
+                                fontSize: 14,
+                                color: Color(0xFF9CA3AF),
+                              ),
+                              filled: true,
+                              fillColor: Color(0xFFF3F4F6),
+                              border: InputBorder.none,
+                              focusedBorder: InputBorder.none,
+                              enabledBorder: InputBorder.none,
+                              errorBorder: InputBorder.none,
+                              focusedErrorBorder: InputBorder.none,
+                              contentPadding: EdgeInsets.only(right: 16, top: 14, bottom: 14),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Please enter an amount';
+                              }
+                              try {
+                                final amount = double.parse(value);
+                                if (amount <= 0) {
+                                  return 'Amount must be greater than 0';
+                                }
+                              } catch (e) {
+                                return 'Please enter a valid amount';
+                              }
+                              return null;
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 24),
                   
                   // Message field
-                  Text(
+                  const Text(
                     'Message to Poster',
-                    style: Theme.of(context).textTheme.titleMedium,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
                   TextFormField(
                     controller: _messageController,
-                    maxLines: 5,
+                    maxLines: 6,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.black,
+                    ),
                     decoration: InputDecoration(
                       hintText: 'Describe why you\'re a good fit for this task',
+                      hintStyle: const TextStyle(
+                        fontSize: 14,
+                        color: Color(0xFF9CA3AF),
+                      ),
+                      filled: true,
+                      fillColor: const Color(0xFFF3F4F6),
+                      contentPadding: const EdgeInsets.all(16),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8.0),
+                        borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8.0),
+                        borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8.0),
+                        borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8.0),
+                        borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                      ),
+                      focusedErrorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8.0),
+                        borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
                       ),
                     ),
                     validator: (value) {
@@ -235,15 +314,26 @@ class _ApplyTaskScreenState extends ConsumerState<ApplyTaskScreen> {
                     child: ElevatedButton(
                       onPressed: _isLoading ? null : _submitOffer,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: StyleConstants.primaryColor,
-                        foregroundColor: Colors.white,
+                        backgroundColor: const Color(0xFFFFDB5B),
+                        foregroundColor: Colors.black,
+                        elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
+                          side: const BorderSide(
+                            color: Color(0xFFFFC333),
+                            width: 1,
+                          ),
                         ),
                       ),
                       child: _isLoading
-                          ? const CircularProgressIndicator(color: Colors.white)
-                          : const Text('Submit Offer'),
+                          ? const CircularProgressIndicator(color: Colors.black)
+                          : const Text(
+                              'Submit Offer',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                     ),
                   ),
                 ],

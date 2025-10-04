@@ -163,11 +163,18 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
     try {
       showModalBottomSheet(
         context: context,
+        isScrollControlled: true,
         builder: (context) {
           print('Building filter bottom sheet in MapHomeScreen');
           return StatefulBuilder(
             builder: (context, setState) => Container(
-              padding: const EdgeInsets.all(16),
+              color: Colors.white,
+              padding: EdgeInsets.only(
+                left: 16,
+                right: 16,
+                top: 16,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 32,
+              ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -202,7 +209,7 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(6),
                       border: Border.all(color: Colors.grey.shade300),
                     ),
                     child: DropdownButton<String>(
@@ -211,6 +218,7 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
                       underline: Container(),
                       icon: const Icon(Icons.arrow_drop_down),
                       isExpanded: true,
+                      dropdownColor: Colors.white,
                       onChanged: (String? newValue) {
                         if (newValue != null) {
                           ref.read(categoryFilterProvider.notifier).state = newValue;
@@ -242,7 +250,7 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(6),
                       border: Border.all(color: Colors.grey.shade300),
                     ),
                     child: DropdownButton<String>(
@@ -251,6 +259,7 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
                       underline: Container(),
                       icon: const Icon(Icons.arrow_drop_down),
                       isExpanded: true,
+                      dropdownColor: Colors.white,
                       onChanged: (String? newValue) {
                         if (newValue != null) {
                           ref.read(sortFilterProvider.notifier).state = newValue;
@@ -684,15 +693,17 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
                           _isMapView = false;
                         });
                       },
-                      icon: const Icon(Icons.view_list, size: 18),
+                      icon: const Icon(Icons.view_list, size: 18, color: Colors.black),
                       label: const Text(
                         'VIEW LIST',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
+                          color: Colors.black,
                         ),
                       ),
                       style: TextButton.styleFrom(
+                        foregroundColor: Colors.black,
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: const RoundedRectangleBorder(),
                       ),
@@ -717,15 +728,17 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
                       _isMapView = true;
                     });
                   },
-                  icon: const Icon(Icons.map_outlined, size: 18),
+                  icon: const Icon(Icons.map_outlined, size: 18, color: Colors.black),
                   label: const Text(
                     'VIEW MAP',
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
+                      color: Colors.black,
                     ),
                   ),
                   style: TextButton.styleFrom(
+                    foregroundColor: Colors.black,
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: const RoundedRectangleBorder(),
                   ),

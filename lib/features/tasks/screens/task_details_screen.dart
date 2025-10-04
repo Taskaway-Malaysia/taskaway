@@ -411,8 +411,8 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
           child: Text(
             task.title,
             style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ),
@@ -428,12 +428,20 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
       children: [
         Text(
           'Description',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+          ),
         ),
         const SizedBox(height: 8),
-        Text(task.description),
+        Text(
+          task.description,
+          style: const TextStyle(
+            fontSize: 18,
+            color: Color(0xFF6B7280),
+            height: 1.5,
+          ),
+        ),
         const SizedBox(height: 16),
         
         // Category
@@ -452,7 +460,15 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
         children: [
           Icon(icon, size: 18, color: Colors.grey[700]),
           const SizedBox(width: 8),
-          Expanded(child: Text(text)),
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(
+                fontSize: 18,
+                color: Color(0xFF6B7280),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -467,9 +483,10 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
       children: [
         Text(
           'Schedule',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+          ),
         ),
         const SizedBox(height: 8),
         _buildDetailItem(
@@ -507,7 +524,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
                 children: [
                   Text(
                     posterProfile?.fullName ?? 'Unknown Poster',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
                   ),
                   const SizedBox(height: 4),
                   const Row(
@@ -541,12 +558,31 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Details', style: Theme.of(context).textTheme.titleLarge),
+        Text(
+          'Details',
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
         const SizedBox(height: 8),
-        Text(task.description),
+        Text(
+          task.description,
+          style: const TextStyle(
+            fontSize: 18,
+            color: Color(0xFF6B7280),
+            height: 1.5,
+          ),
+        ),
         if (task.images != null && task.images!.isNotEmpty) ...[
           const SizedBox(height: 16),
-          Text('Images', style: Theme.of(context).textTheme.titleMedium),
+          const Text(
+            'Images',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
           const SizedBox(height: 8),
           SizedBox(
             height: 100,
@@ -582,12 +618,20 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
         if (task.providesMaterials == true) ...[
           const Text(
             '* Materials are provided by the poster.',
-            style: TextStyle(fontStyle: FontStyle.italic, color: Colors.black54),
+            style: TextStyle(
+              fontSize: 14,
+              fontStyle: FontStyle.italic,
+              color: Color(0xFF6B7280),
+            ),
           ),
         ] else ...[
           const Text(
             '* You are expected to provide your own materials.',
-            style: TextStyle(fontStyle: FontStyle.italic, color: Colors.black54),
+            style: TextStyle(
+              fontSize: 14,
+              fontStyle: FontStyle.italic,
+              color: Color(0xFF6B7280),
+            ),
           ),
         ],
       ],
@@ -606,12 +650,12 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
       children: [
         const Text(
           'Task Budget',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 8),
         Text(
           'RM${task.price.toStringAsFixed(2)}',
-          style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: StyleConstants.primaryColor),
+          style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: Colors.black),
         ),
         const SizedBox(height: 16),
         if (isPoster && task.status == 'open')

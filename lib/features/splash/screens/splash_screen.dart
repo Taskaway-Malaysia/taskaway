@@ -290,6 +290,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     
     // Then show the actual splash screen content for 2.5 seconds
     return const Scaffold(
+      backgroundColor: Colors.white,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

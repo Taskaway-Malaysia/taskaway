@@ -100,134 +100,86 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
     _sendMessage();
   }
 
-  Widget _buildNavItem(dynamic iconData, String label, int index) {
-    final isSelected = _selectedIndex == index;
-    final isTaskaway = label == 'Taskaway';
-
-    // Helper to build icon widget
-    Widget buildIcon() {
-      if (iconData is String) {
-        // Single SVG icon
-        return SvgPicture.asset(
-          iconData,
-          width: isTaskaway ? 16 : 24,
-          height: isTaskaway ? 16 : 24,
-          colorFilter: ColorFilter.mode(
-            isTaskaway ? Colors.black : (isSelected ? const Color(0xFF202020) : const Color(0xFF575656)),
-            BlendMode.srcIn,
-          ),
-        );
-      } else if (iconData is List<String>) {
-        // Composite SVG icon (for message and profile)
-        return SizedBox(
-          width: 24,
-          height: 24,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              if (label == 'Message') ...[
-                // Message body (envelope rectangle)
-                Positioned(
-                  bottom: 2,
-                  child: SvgPicture.asset(
-                    iconData[1], // message_icon_body.svg
-                    width: 22,
-                    height: 18,
-                    colorFilter: ColorFilter.mode(
-                      isSelected ? const Color(0xFF202020) : const Color(0xFF575656),
-                      BlendMode.srcIn,
-                    ),
-                  ),
-                ),
-                // Message top (envelope flap)
-                Positioned(
-                  top: 7,
-                  child: SvgPicture.asset(
-                    iconData[0], // message_icon_top.svg
-                    width: 22,
-                    height: 8,
-                    colorFilter: ColorFilter.mode(
-                      isSelected ? const Color(0xFF202020) : const Color(0xFF575656),
-                      BlendMode.srcIn,
-                    ),
-                  ),
-                ),
-              ] else if (label == 'Profile') ...[
-                // Profile body (shoulders)
-                Positioned(
-                  bottom: 3,
-                  child: SvgPicture.asset(
-                    iconData[1], // profile_icon_body.svg
-                    width: 19,
-                    height: 8,
-                    colorFilter: ColorFilter.mode(
-                      isSelected ? const Color(0xFF202020) : const Color(0xFF575656),
-                      BlendMode.srcIn,
-                    ),
-                  ),
-                ),
-                // Profile head (circle)
-                Positioned(
-                  top: 3,
-                  child: SvgPicture.asset(
-                    iconData[0], // profile_icon_head.svg
-                    width: 11,
-                    height: 11,
-                    colorFilter: ColorFilter.mode(
-                      isSelected ? const Color(0xFF202020) : const Color(0xFF575656),
-                      BlendMode.srcIn,
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ),
-        );
-      } else {
-        // Material icon fallback
-        return Icon(
-          iconData as IconData,
-          size: isTaskaway ? 16 : 24,
-          color: isTaskaway ? Colors.black : (isSelected ? const Color(0xFF202020) : const Color(0xFF575656)),
-        );
-      }
-    }
-
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedIndex = index;
-        });
-        // Navigate to appropriate screen
-        if (index == 0) context.go('/home');
-      },
+  Widget _buildNavItem({
+    required String iconPath,
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      splashColor: Colors.transparent,
+      highlightColor: Colors.transparent,
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          if (isTaskaway)
-            Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFDB5B),
-                borderRadius: BorderRadius.circular(4),
-                border: Border.all(
-                  color: const Color(0xFFFFC333),
-                  width: 0.5,
-                ),
-              ),
-              child: Center(child: buildIcon()),
-            )
-          else
-            buildIcon(),
+          SvgPicture.asset(
+            iconPath,
+            width: 24,
+            height: 24,
+            colorFilter: ColorFilter.mode(
+              isSelected ? const Color(0xFF202020) : const Color(0xFF575656),
+              BlendMode.srcIn,
+            ),
+          ),
           const SizedBox(height: 4),
           Text(
             label,
+            textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
               fontFamily: 'Roboto',
               color: isSelected ? const Color(0xFF202020) : const Color(0xFF575656),
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCenterTaskawayButton({
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      splashColor: Colors.transparent,
+      highlightColor: Colors.transparent,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFDB5B),
+              border: Border.all(
+                color: const Color(0xFFFFC333),
+                width: 1,
+              ),
+              borderRadius: BorderRadius.circular(2),
+            ),
+            child: SvgPicture.asset(
+              'assets/icons/nav_taskaway.svg',
+              width: 15,
+              height: 15,
+              colorFilter: const ColorFilter.mode(
+                Color(0xFF000000),
+                BlendMode.srcIn,
+              ),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Taskaway',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontFamily: 'Roboto',
+              color: Color(0xFF575656),
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ],
@@ -252,27 +204,8 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Stack(
+      body: Column(
         children: [
-          // Purple header curve
-          Positioned(
-            top: 0,
-            left: 662,
-            child: Container(
-              width: 396,
-              height: 171,
-              decoration: const BoxDecoration(
-                color: Color(0xFF525DC0),
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(20),
-                  bottomRight: Radius.circular(20),
-                ),
-              ),
-            ),
-          ),
-
-          Column(
-            children: [
               // Safe area spacer
               SafeArea(
                 bottom: false,
@@ -281,15 +214,14 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
 
               // Navigation bar
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 29, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Row(
                   children: [
                     IconButton(
-                      icon: SvgPicture.asset(
-                        'assets/icons/back_arrow.svg',
-                        width: 24,
-                        height: 24,
-                        colorFilter: const ColorFilter.mode(Colors.black, BlendMode.srcIn),
+                      icon: const Icon(
+                        Icons.arrow_back,
+                        size: 24,
+                        color: Colors.black,
                       ),
                       onPressed: () => context.pop(),
                       padding: EdgeInsets.zero,
@@ -305,10 +237,9 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                                   ? _channel.taskerName
                                   : _channel.posterName,
                               style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF050316),
-                                fontFamily: 'Instrument Sans',
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black,
                               ),
                               textAlign: TextAlign.center,
                             ),
@@ -322,10 +253,9 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                                   return Text(
                                     onlineStatus,
                                     style: const TextStyle(
-                                      fontSize: 10,
+                                      fontSize: 12,
                                       fontWeight: FontWeight.w400,
-                                      color: Color(0xFF009178),
-                                      fontFamily: 'Instrument Sans',
+                                      color: Color(0xFF6B7280),
                                     ),
                                   );
                                 } else {
@@ -338,10 +268,9 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                                       ? Text(
                                           onlineStatus,
                                           style: const TextStyle(
-                                            fontSize: 10,
+                                            fontSize: 12,
                                             fontWeight: FontWeight.w400,
-                                            color: Color(0xFF009178),
-                                            fontFamily: 'Instrument Sans',
+                                            color: Color(0xFF6B7280),
                                           ),
                                         )
                                       : const SizedBox.shrink();
@@ -362,41 +291,10 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                       ),
                     ),
                     IconButton(
-                      icon: SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            Positioned(
-                              top: 4,
-                              child: SvgPicture.asset(
-                                'assets/icons/more_menu_dot1.svg',
-                                width: 4,
-                                height: 4,
-                                colorFilter: const ColorFilter.mode(Colors.black, BlendMode.srcIn),
-                              ),
-                            ),
-                            Positioned(
-                              top: 10,
-                              child: SvgPicture.asset(
-                                'assets/icons/more_menu_dot2.svg',
-                                width: 4,
-                                height: 4,
-                                colorFilter: const ColorFilter.mode(Colors.black, BlendMode.srcIn),
-                              ),
-                            ),
-                            Positioned(
-                              top: 16,
-                              child: SvgPicture.asset(
-                                'assets/icons/more_menu_dot3.svg',
-                                width: 4,
-                                height: 4,
-                                colorFilter: const ColorFilter.mode(Colors.black, BlendMode.srcIn),
-                              ),
-                            ),
-                          ],
-                        ),
+                      icon: const Icon(
+                        Icons.more_vert,
+                        size: 24,
+                        color: Colors.black,
                       ),
                       onPressed: () {},
                       padding: EdgeInsets.zero,
@@ -406,7 +304,8 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                 ),
               ),
 
-              const SizedBox(height: 16),
+              const Divider(color: Color(0xFFE5E7EB), height: 1),
+              const SizedBox(height: 12),
 
               // Task info
               Container(
@@ -416,10 +315,10 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                     children: [
                       // Task image
                       Container(
-                        width: 49,
-                        height: 52,
+                        width: 60,
+                        height: 60,
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(6),
+                          borderRadius: BorderRadius.circular(8),
                           color: Colors.grey.shade300,
                           image: task != null && task.images != null && task.images!.isNotEmpty
                               ? DecorationImage(
@@ -429,7 +328,7 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                               : null,
                         ),
                       ),
-                      const SizedBox(width: 7),
+                      const SizedBox(width: 12),
                       // Task details
                       Expanded(
                         child: Column(
@@ -474,15 +373,15 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                   error: (_, __) => Row(
                     children: [
                       Container(
-                        width: 49,
-                        height: 52,
+                        width: 60,
+                        height: 60,
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(6),
+                          borderRadius: BorderRadius.circular(8),
                           color: Colors.grey.shade300,
                         ),
                         child: const Icon(Icons.error_outline, color: Colors.grey),
                       ),
-                      const SizedBox(width: 7),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -516,7 +415,7 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                 ),
               ),
 
-              const SizedBox(height: 19),
+              const SizedBox(height: 12),
 
               // Action buttons
               Container(
@@ -526,10 +425,10 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                     InkWell(
                       onTap: () {},
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFFDB5B),
-                          borderRadius: BorderRadius.circular(6),
+                          color: const Color(0xFFFFC107),
+                          borderRadius: BorderRadius.circular(20),
                         ),
                         child: const Text(
                           'Make Offer',
@@ -542,15 +441,15 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 9),
+                    const SizedBox(width: 8),
                     InkWell(
                       onTap: () {},
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(6),
+                          borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: const Color(0xFF606163),
+                            color: const Color(0xFF9CA3AF),
                           ),
                         ),
                         child: const Text(
@@ -568,7 +467,7 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                 ),
               ),
 
-              const SizedBox(height: 48),
+              const SizedBox(height: 24),
 
               // Date time header
               messagesAsync.when(
@@ -584,20 +483,18 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                         Text(
                           date,
                           style: const TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w500,
-                            color: Color(0xFF8F9098),
-                            fontFamily: 'Instrument Sans',
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                            color: Color(0xFF9CA3AF),
                           ),
                         ),
-                        const SizedBox(width: 10),
+                        const SizedBox(width: 12),
                         Text(
                           time,
                           style: const TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w500,
-                            color: Color(0xFF8F9098),
-                            fontFamily: 'Instrument Sans',
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                            color: Color(0xFF9CA3AF),
                           ),
                         ),
                       ],
@@ -609,7 +506,7 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                 error: (_, __) => const SizedBox.shrink(),
               ),
 
-              const SizedBox(height: 42),
+              const SizedBox(height: 16),
 
               // Chat messages
               Expanded(
@@ -652,7 +549,7 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                       controller: _scrollController,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       itemCount: messages.length,
-                      separatorBuilder: (context, index) => const SizedBox(height: 30),
+                      separatorBuilder: (context, index) => const SizedBox(height: 8),
                       itemBuilder: (context, index) {
                         final message = messages[index];
                         final isMe = message.senderId == currentUserId;
@@ -704,25 +601,25 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                   // Only show seen status if there are messages and last message is from current user
                   if (messages.isNotEmpty && messages.last.senderId == currentUserId) {
                     return Padding(
-                      padding: const EdgeInsets.only(right: 21, top: 10, bottom: 10),
+                      padding: const EdgeInsets.only(right: 16, top: 2, bottom: 8),
                       child: Align(
                         alignment: Alignment.centerRight,
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.end,
+                          mainAxisSize: MainAxisSize.min,
                           children: const [
                             Icon(
                               Icons.done_all,
-                              size: 12,
-                              color: Color(0xFF009178),
+                              size: 14,
+                              color: Color(0xFF10B981),
                             ),
                             SizedBox(width: 4),
                             Text(
                               'Delivered',
                               style: TextStyle(
-                                fontSize: 7,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.black,
-                                fontFamily: 'Instrument Sans',
+                                fontSize: 11,
+                                fontWeight: FontWeight.w400,
+                                color: Color(0xFF9CA3AF),
                               ),
                             ),
                           ],
@@ -756,8 +653,10 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                       Row(
                         children: [
                           _buildSuggestionChip("I'm interested!"),
-                          const SizedBox(width: 14),
-                          _buildSuggestionChip("Hello! Could I get this please?"),
+                          const SizedBox(width: 8),
+                          Expanded(child: _buildSuggestionChip("Hello! Could I get this please?")),
+                          const SizedBox(width: 8),
+                          _buildSuggestionChip("Nice!"),
                         ],
                       ),
                       const SizedBox(height: 18),
@@ -767,64 +666,53 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
 
               // Input area
               Container(
-                padding: const EdgeInsets.all(19),
-                decoration: BoxDecoration(
+                padding: const EdgeInsets.all(16),
+                decoration: const BoxDecoration(
                   color: Colors.white,
                   border: Border(
                     top: BorderSide(
-                      color: const Color(0xFFE8E8E8),
+                      color: Color(0xFFE5E7EB),
                       width: 1,
                     ),
                   ),
                 ),
                 child: Container(
-                  height: 52,
+                  height: 44,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
+                    color: const Color(0xFFF3F4F6),
+                    borderRadius: BorderRadius.circular(22),
                     border: Border.all(
-                      color: const Color(0xFF606163),
+                      color: const Color(0xFFE5E7EB),
                     ),
                   ),
                   child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      const SizedBox(width: 13),
-                      GestureDetector(
-                        onTap: () {},
-                        child: Container(
-                          width: 24,
-                          height: 24,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: const Color(0xFFC5C6CC),
-                            ),
-                          ),
-                          child: const Icon(
-                            Icons.emoji_emotions_outlined,
-                            size: 16,
-                            color: Color(0xFFC5C6CC),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 15),
+                      const SizedBox(width: 16),
                       Expanded(
                         child: TextField(
                           controller: _messageController,
+                          textAlignVertical: TextAlignVertical.center,
                           decoration: const InputDecoration(
                             hintText: 'Text Message',
                             hintStyle: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w400,
-                              color: Color(0xFF575656),
-                              fontFamily: 'Noto Sans',
+                              color: Color(0xFF9CA3AF),
                             ),
+                            isDense: true,
                             border: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            errorBorder: InputBorder.none,
+                            disabledBorder: InputBorder.none,
+                            contentPadding: EdgeInsets.symmetric(vertical: 12),
                           ),
                           style: const TextStyle(
                             fontSize: 14,
-                            fontFamily: 'Noto Sans',
                             color: Colors.black,
                           ),
+                          cursorColor: Colors.black,
                           onChanged: (value) {
                             if (value.isNotEmpty && _showSuggestions) {
                               setState(() {
@@ -838,49 +726,79 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                       IconButton(
                         icon: const Icon(
                           Icons.send,
-                          size: 17,
-                          color: Color(0xFFC5C6CC),
+                          size: 20,
+                          color: Color(0xFF9CA3AF),
                         ),
                         onPressed: _isLoading ? null : _sendMessage,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 16),
                     ],
                   ),
                 ),
               ),
             ],
           ),
-        ],
-      ),
       bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              offset: const Offset(0, -1),
-              blurRadius: 4,
-              color: Colors.black.withOpacity(0.1),
-            ),
-          ],
-        ),
+        color: Colors.white,
         child: SafeArea(
           child: Container(
             height: 64,
-            padding: const EdgeInsets.symmetric(horizontal: 30),
+            color: Colors.white,
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _buildNavItem('assets/icons/home_icon_outline.svg', 'Home', 0),
-                _buildNavItem('assets/icons/activity_icon_outline.svg', 'Activity', 1),
-                _buildNavItem('assets/icons/taskaway_icon_outline.svg', 'Taskaway', 2),
-                _buildNavItem([
-                  'assets/icons/message_icon_top.svg',
-                  'assets/icons/message_icon_body.svg',
-                ], 'Message', 3),
-                _buildNavItem([
-                  'assets/icons/profile_icon_head.svg',
-                  'assets/icons/profile_icon_body.svg',
-                ], 'Profile', 4),
+                _buildNavItem(
+                  iconPath: 'assets/icons/nav_home.svg',
+                  label: 'Home',
+                  isSelected: _selectedIndex == 0,
+                  onTap: () {
+                    setState(() {
+                      _selectedIndex = 0;
+                    });
+                    context.go('/home');
+                  },
+                ),
+                _buildNavItem(
+                  iconPath: 'assets/icons/nav_activity.svg',
+                  label: 'Activity',
+                  isSelected: _selectedIndex == 1,
+                  onTap: () {
+                    setState(() {
+                      _selectedIndex = 1;
+                    });
+                    // Navigate to activity
+                  },
+                ),
+                _buildCenterTaskawayButton(
+                  isSelected: _selectedIndex == 2,
+                  onTap: () {
+                    setState(() {
+                      _selectedIndex = 2;
+                    });
+                    context.go('/create-task');
+                  },
+                ),
+                _buildNavItem(
+                  iconPath: 'assets/icons/nav_message.svg',
+                  label: 'Message',
+                  isSelected: _selectedIndex == 3,
+                  onTap: () {
+                    // Already on message screen
+                  },
+                ),
+                _buildNavItem(
+                  iconPath: 'assets/icons/nav_profile.svg',
+                  label: 'Profile',
+                  isSelected: _selectedIndex == 4,
+                  onTap: () {
+                    setState(() {
+                      _selectedIndex = 4;
+                    });
+                    context.go('/home/profile');
+                  },
+                ),
               ],
             ),
           ),
@@ -890,40 +808,44 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
   }
 
   Widget _buildMessageBubble(String text, bool isMe) {
-    return Row(
-      mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
-      children: [
-        if (!isMe) ...[
-          CircleAvatar(
-            radius: 16,
-            backgroundColor: Colors.grey.shade300,
-            child: Icon(
-              Icons.person,
-              size: 16,
-              color: Colors.grey.shade600,
+    return Align(
+      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (!isMe) ...[
+            CircleAvatar(
+              radius: 16,
+              backgroundColor: Colors.grey.shade300,
+              child: Icon(
+                Icons.person,
+                size: 16,
+                color: Colors.grey.shade600,
+              ),
             ),
-          ),
-          const SizedBox(width: 8),
-        ],
-        Flexible(
-          child: Container(
-            padding: const EdgeInsets.all(10),
+            const SizedBox(width: 8),
+          ],
+          Container(
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.of(context).size.width * 0.7,
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
               color: const Color(0xFFF0F1F1),
-              borderRadius: BorderRadius.circular(6),
+              borderRadius: BorderRadius.circular(16),
             ),
             child: Text(
               text,
               style: const TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w500,
+                fontSize: 14,
+                fontWeight: FontWeight.w400,
                 color: Color(0xFF2C2C2D),
-                fontFamily: 'Instrument Sans',
               ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -931,21 +853,21 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
     return InkWell(
       onTap: () => _sendSuggestedMessage(text),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: const Color(0xFF606163),
+            color: const Color(0xFFD1D5DB),
           ),
         ),
         child: Text(
           text,
           style: const TextStyle(
-            fontSize: 14,
+            fontSize: 12,
             fontWeight: FontWeight.w400,
-            color: Colors.black,
-            fontFamily: 'Noto Sans',
+            color: Color(0xFF6B7280),
           ),
+          overflow: TextOverflow.ellipsis,
         ),
       ),
     );
