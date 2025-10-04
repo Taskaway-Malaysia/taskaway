@@ -95,6 +95,9 @@ class AppColors {
   
   /// Overlay color
   static Color overlayColor = Colors.black.withOpacity(0.5);
+  
+  /// Black with 87% opacity (equivalent to Colors.black87)
+  static const Color primaryBlack87 = Color(0xDD000000);
 
   // ============= Navigation Colors =============
   /// Active navigation item
