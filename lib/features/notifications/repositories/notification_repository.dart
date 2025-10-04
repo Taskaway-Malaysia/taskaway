@@ -120,15 +120,15 @@ class NotificationRepository {
     required String posterName,
   }) async {
     try {
-      // Get all taskers (users with role 'tasker')
-      final taskers = await supabase
+      // Get all available users (anyone can accept tasks now)
+      final availableUsers = await supabase
           .from('taskaway_profiles')
           .select('id')
-          .eq('role', 'tasker');
+          .eq('is_available', true);
 
-      // Create notifications for all taskers
-      final notifications = taskers.map((tasker) => {
-        'user_id': tasker['id'],
+      // Create notifications for all available users
+      final notifications = availableUsers.map((user) => {
+        'user_id': user['id'],
         'title': 'New Task Available',
         'message': '$posterName posted a new task: $taskTitle',
         'type': 'task_posted',

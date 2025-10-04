@@ -9,6 +9,10 @@ import '../../tasks/controllers/task_controller.dart';
 import '../widgets/map_search_bar.dart';
 import '../widgets/service_card.dart';
 import 'tasker_home_screen.dart'; // Import to use filter providers
+import '../../auth/controllers/auth_controller.dart';
+import '../../profile/controllers/profile_controller.dart';
+import '../../../core/services/location_service.dart';
+import 'dart:developer' as dev;
 
 class MapHomeScreen extends ConsumerStatefulWidget {
   const MapHomeScreen({super.key});
@@ -24,6 +28,8 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
   bool _isMapView = true; // Toggle between map and list view
   final PageController _cardPageController = PageController(viewportFraction: 0.85);
   int _currentCardIndex = 0;
+  final _locationService = LocationService();
+  bool _isLoadingLocation = false;
 
   // Helper function to generate random coordinates near KL
   LatLng _generateRandomKLCoordinate(int index) {
@@ -53,24 +59,102 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
   @override
   void initState() {
     super.initState();
+    dev.log('[MapHomeScreen] initState - Initial _currentLocation: $_currentLocation');
     _getCurrentLocation();
+
+    // Start location tracking if user is already available
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final profile = ref.read(currentProfileProvider).value;
+      final user = ref.read(currentUserProvider);
+      if (profile?.isAvailable == true && user != null) {
+        dev.log('[MapHomeScreen] User is available, starting location tracking');
+        _locationService.startTracking(user.id);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _locationService.stopTracking();
+    super.dispose();
   }
 
   Future<void> _getCurrentLocation() async {
     try {
-      final permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        await Geolocator.requestPermission();
+      dev.log('[MapHomeScreen] Checking location permission...');
+
+      // Check if location services are enabled
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        dev.log('[MapHomeScreen] Location services are disabled');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Please enable location services'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+        return;
       }
-      
-      final position = await Geolocator.getCurrentPosition();
+
+      // Check permission
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        dev.log('[MapHomeScreen] Requesting location permission...');
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          dev.log('[MapHomeScreen] Location permission denied');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Location permission is required to show nearby tasks'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        dev.log('[MapHomeScreen] Location permission permanently denied');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Please enable location permission in app settings'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+
+      dev.log('[MapHomeScreen] Getting current position...');
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+        timeLimit: const Duration(seconds: 10),
+      );
+
+      dev.log('[MapHomeScreen] Got position: ${position.latitude}, ${position.longitude}');
+
       setState(() {
         _currentLocation = LatLng(position.latitude, position.longitude);
       });
-      
+
+      dev.log('[MapHomeScreen] Updated _currentLocation to: $_currentLocation');
+      dev.log('[MapHomeScreen] Moving map to: $_currentLocation');
       _mapController.move(_currentLocation, 15);
     } catch (e) {
-      debugPrint('Error getting location: $e');
+      dev.log('[MapHomeScreen] Error getting location: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not get your location: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -255,11 +339,68 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
 
     return Scaffold(
       backgroundColor: _isMapView ? Colors.white : const Color(0xFFF5F5F5),
+      floatingActionButton: _isMapView && _isTaskerMode
+          ? Padding(
+              padding: const EdgeInsets.only(bottom: 200), // Above the task cards
+              child: FloatingActionButton(
+                onPressed: _isLoadingLocation ? null : () async {
+                  setState(() => _isLoadingLocation = true);
+
+                  try {
+                    await _getCurrentLocation();
+                    // Animate map to current location
+                    _mapController.move(_currentLocation, 15);
+                  } catch (e) {
+                    dev.log('[MapHomeScreen] Error getting location: $e');
+                  } finally {
+                    if (mounted) {
+                      setState(() => _isLoadingLocation = false);
+                    }
+                  }
+                },
+                backgroundColor: Colors.white,
+                foregroundColor: Colors.blue,
+                elevation: 4,
+                child: _isLoadingLocation
+                    ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.blue,
+                        ),
+                      )
+                    : const Icon(Icons.my_location),
+              ),
+            )
+          : null,
       body: tasksAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stack) => Center(child: Text('Error loading tasks: $error')),
-        data: (tasks) => Stack(
-          children: [
+        data: (tasks) {
+          // Sort tasks by distance from current location (closest first)
+          final sortedTasks = List<Task>.from(tasks);
+          sortedTasks.sort((a, b) {
+            // Only sort tasks that have valid coordinates
+            if (a.latitude == null || a.longitude == null) return 1;
+            if (b.latitude == null || b.longitude == null) return -1;
+
+            final distanceA = const Distance().as(
+              LengthUnit.Meter,
+              _currentLocation,
+              LatLng(a.latitude!, a.longitude!),
+            );
+            final distanceB = const Distance().as(
+              LengthUnit.Meter,
+              _currentLocation,
+              LatLng(b.latitude!, b.longitude!),
+            );
+
+            return distanceA.compareTo(distanceB);
+          });
+
+          return Stack(
+            children: [
             // Show either map or list view (map only available in Tasker mode)
             if (_isMapView && _isTaskerMode)
               FlutterMap(
@@ -275,59 +416,92 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
                     urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                     userAgentPackageName: 'com.taskawayasia.taskaway',
                   ),
+                  // Task markers layer (drawn first, below current location)
+                  MarkerLayer(
+                    markers: sortedTasks.asMap().entries.where((entry) {
+                      // Only show tasks that have valid coordinates
+                      final task = entry.value;
+                      return task.latitude != null && task.longitude != null;
+                    }).map((entry) {
+                      final index = entry.key;
+                      final task = entry.value;
+                      // Use actual task location from database
+                      final position = LatLng(task.latitude!, task.longitude!);
+
+                      return Marker(
+                        point: position,
+                        width: 40,
+                        height: 40,
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _currentCardIndex = index;
+                            });
+                            _cardPageController.animateToPage(
+                              index,
+                              duration: const Duration(milliseconds: 300),
+                              curve: Curves.easeInOut,
+                            );
+                          },
+                          child: Container(
+                            decoration: const BoxDecoration(
+                              color: Colors.amber,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.location_on,
+                              color: Colors.black87,
+                              size: 24,
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  // Current location marker layer (drawn on top)
                   MarkerLayer(
                     markers: [
                       Marker(
                         point: _currentLocation,
-                        width: 40,
-                        height: 40,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.blue.withOpacity(0.3),
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.blue, width: 2),
-                          ),
-                          child: const Icon(
-                            Icons.my_location,
-                            color: Colors.blue,
-                            size: 20,
-                          ),
-                        ),
-                      ),
-                      ...tasks.asMap().entries.map((entry) {
-                        final index = entry.key;
-                        final task = entry.value;
-                        final position = _generateRandomKLCoordinate(index);
-
-                        return Marker(
-                          point: position,
-                          width: 40,
-                          height: 40,
-                          child: GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                _currentCardIndex = index;
-                              });
-                              _cardPageController.animateToPage(
-                                index,
-                                duration: const Duration(milliseconds: 300),
-                                curve: Curves.easeInOut,
-                              );
-                            },
-                            child: Container(
-                              decoration: const BoxDecoration(
-                                color: Colors.amber,
+                        width: 50,
+                        height: 50,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            // Outer pulse circle for visibility
+                            Container(
+                              width: 50,
+                              height: 50,
+                              decoration: BoxDecoration(
+                                color: Colors.blue.withOpacity(0.2),
                                 shape: BoxShape.circle,
                               ),
+                            ),
+                            // Inner circle with border
+                            Container(
+                              width: 36,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.blue, width: 3),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.3),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
                               child: const Icon(
-                                Icons.location_on,
-                                color: Colors.black87,
-                                size: 24,
+                                Icons.my_location,
+                                color: Colors.blue,
+                                size: 20,
                               ),
                             ),
-                          ),
-                        );
-                      }),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
                 ],
@@ -341,10 +515,10 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
                   color: const Color(0xFFF8F8F8), // Light gray background
                   child: ListView.builder(
                     padding: const EdgeInsets.only(top: 24), // Increased padding to prevent overlap with tabs
-                    itemCount: tasks.length,
+                    itemCount: sortedTasks.length,
                     itemBuilder: (context, index) {
                       return _TaskListItem(
-                        task: tasks[index],
+                        task: sortedTasks[index],
                         index: index,
                       );
                     },
@@ -413,33 +587,39 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
                       ),
                     ] else
                       // Show only tabs in Poster mode
-                      Container(
-                        color: Colors.white,
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: _TabButton(
-                                label: 'TASKER',
-                                isSelected: _isTaskerMode,
-                                onTap: () => setState(() {
-                                  _isTaskerMode = true;
-                                  _isMapView = true; // Switch to map view when going to Tasker
-                                }),
-                              ),
+                      Column(
+                        children: [
+                          Container(
+                            color: Colors.white,
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: _TabButton(
+                                    label: 'TASKER',
+                                    isSelected: _isTaskerMode,
+                                    onTap: () => setState(() {
+                                      _isTaskerMode = true;
+                                      _isMapView = true; // Switch to map view when going to Tasker
+                                    }),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: _TabButton(
+                                    label: 'POSTER',
+                                    isSelected: !_isTaskerMode,
+                                    onTap: () => setState(() {
+                                      _isTaskerMode = false;
+                                      _isMapView = false; // Switch to list view when going to Poster
+                                    }),
+                                  ),
+                                ),
+                              ],
                             ),
-                            Expanded(
-                              child: _TabButton(
-                                label: 'POSTER',
-                                isSelected: !_isTaskerMode,
-                                onTap: () => setState(() {
-                                  _isTaskerMode = false;
-                                  _isMapView = false; // Switch to list view when going to Poster
-                                }),
-                              ),
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
+                    // Availability Switch - Show for all users
+                    _buildAvailabilitySwitch(),
                   ],
                 ),
               ),
@@ -459,17 +639,24 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
                       margin: const EdgeInsets.only(bottom: 8),
                       child: PageView.builder(
                         controller: _cardPageController,
-                        itemCount: tasks.length,
+                        itemCount: sortedTasks.length,
                         onPageChanged: (index) {
                           setState(() {
                             _currentCardIndex = index;
                           });
-                          final position = _generateRandomKLCoordinate(index);
-                          _mapController.move(position, 16);
+                          final task = sortedTasks[index];
+                          // Move map to actual task location if available
+                          if (task.latitude != null && task.longitude != null) {
+                            final position = LatLng(task.latitude!, task.longitude!);
+                            _mapController.move(position, 16);
+                          }
                         },
                         itemBuilder: (context, index) {
-                          final task = tasks[index];
-                          final position = _generateRandomKLCoordinate(index);
+                          final task = sortedTasks[index];
+                          // Use actual task location if available, fallback to user location
+                          final position = (task.latitude != null && task.longitude != null)
+                              ? LatLng(task.latitude!, task.longitude!)
+                              : _currentLocation;
                           final distance = _calculateDistance(_currentLocation, position);
 
                           return Container(
@@ -546,8 +733,141 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
               ),
             ),
           ],
-        ),
+        );
+      },
       ),
+    );
+  }
+
+  /// Build availability switch widget
+  Widget _buildAvailabilitySwitch() {
+    final currentUser = ref.watch(currentUserProvider);
+    final profileAsync = ref.watch(currentProfileProvider);
+
+    return profileAsync.when(
+      data: (profile) {
+        final isAvailable = profile?.isAvailable ?? false;
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: isAvailable ? const Color(0xFFE8F5E9) : const Color(0xFFFFF3E0),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: isAvailable ? const Color(0xFF4CAF50) : const Color(0xFFFF9800),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  isAvailable ? 'Available' : 'Offline',
+                  style: TextStyle(
+                    fontFamily: 'Instrument Sans',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: isAvailable ? const Color(0xFF2E7D32) : const Color(0xFFE65100),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                SizedBox(
+                  width: 40,
+                  height: 20,
+                  child: Switch(
+                    value: isAvailable,
+                    onChanged: (value) async {
+                      if (currentUser == null) return;
+
+                      if (value) {
+                        // Turning availability ON - request location permission and start tracking
+                        dev.log('[MapHomeScreen] Enabling availability, requesting location permission');
+
+                        final hasPermission = await _locationService.requestPermissions();
+                        if (!hasPermission) {
+                          // Show permission denied message
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Location permission is required to be available for tasks',
+                                  style: TextStyle(fontFamily: 'Instrument Sans'),
+                                ),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                          return;
+                        }
+
+                        // Update availability in database
+                        await ref.read(profileControllerProvider).updateAvailability(
+                          userId: currentUser.id,
+                          isAvailable: true,
+                        );
+
+                        // Start location tracking
+                        dev.log('[MapHomeScreen] Starting location tracking');
+                        await _locationService.startTracking(currentUser.id);
+
+                        // Refresh profile to update UI
+                        ref.invalidate(currentProfileProvider);
+
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'You are now available! Your location will update every 30 minutes',
+                                style: TextStyle(fontFamily: 'Instrument Sans'),
+                              ),
+                              backgroundColor: Color(0xFF4CAF50),
+                              duration: Duration(seconds: 3),
+                            ),
+                          );
+                        }
+                      } else {
+                        // Turning availability OFF - stop tracking
+                        dev.log('[MapHomeScreen] Disabling availability, stopping location tracking');
+
+                        await ref.read(profileControllerProvider).updateAvailability(
+                          userId: currentUser.id,
+                          isAvailable: false,
+                        );
+
+                        // Stop location tracking
+                        _locationService.stopTracking();
+
+                        // Refresh profile to update UI
+                        ref.invalidate(currentProfileProvider);
+
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'You are now offline',
+                                style: TextStyle(fontFamily: 'Instrument Sans'),
+                              ),
+                              backgroundColor: Color(0xFFFF9800),
+                            ),
+                          );
+                        }
+                      }
+                    },
+                    activeColor: const Color(0xFF4CAF50),
+                    activeTrackColor: const Color(0xFFC8E6C9),
+                    inactiveThumbColor: const Color(0xFFFF9800),
+                    inactiveTrackColor: const Color(0xFFFFE0B2),
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
     );
   }
 }

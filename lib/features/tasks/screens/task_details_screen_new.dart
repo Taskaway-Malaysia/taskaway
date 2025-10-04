@@ -575,63 +575,82 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
 
                   // Make Offer and Message Buttons for non-poster users
                   if (!isPoster && currentUser != null) ...[
-                    Row(
-                      children: [
-                        // Make an Offer Button (only show if task is open and user is not assigned)
-                        if (task.status == 'open' && currentUser.id != task.taskerId)
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: () {
-                                // Handle make offer
-                                context.push('/tasks/${widget.taskId}/offer');
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFFFDB5B),
-                                side: const BorderSide(color: Color(0xFFFFC333)),
-                                padding: const EdgeInsets.symmetric(vertical: 14),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(2),
+                    FutureBuilder<Map<String, dynamic>?>(
+                      future: ref.read(taskControllerProvider).checkExistingApplication(
+                        widget.taskId,
+                        currentUser.id,
+                      ),
+                      builder: (context, snapshot) {
+                        final hasExistingOffer = snapshot.data != null;
+
+                        return Row(
+                          children: [
+                            // Make an Offer Button or Submitted Offer Button
+                            if (task.status == 'open' && currentUser.id != task.taskerId)
+                              Expanded(
+                                child: ElevatedButton(
+                                  onPressed: hasExistingOffer ? null : () {
+                                    // Navigate to apply/offer screen
+                                    context.push('/home/browse/${widget.taskId}/apply');
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: hasExistingOffer
+                                        ? Colors.grey.shade300
+                                        : const Color(0xFFFFDB5B),
+                                    side: BorderSide(
+                                      color: hasExistingOffer
+                                          ? Colors.grey.shade400
+                                          : const Color(0xFFFFC333),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(vertical: 14),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(2),
+                                    ),
+                                    elevation: 0,
+                                    disabledBackgroundColor: Colors.grey.shade300,
+                                  ),
+                                  child: Text(
+                                    hasExistingOffer ? 'Submitted Offer' : 'Make an Offer',
+                                    style: TextStyle(
+                                      fontFamily: 'Instrument Sans',
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: hasExistingOffer
+                                          ? Colors.grey.shade600
+                                          : Colors.black,
+                                      letterSpacing: 0.7,
+                                    ),
+                                  ),
                                 ),
-                                elevation: 0,
                               ),
-                              child: const Text(
-                                'Make an Offer',
-                                style: TextStyle(
-                                  fontFamily: 'Instrument Sans',
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
+
+                            // Add spacing only if Make an Offer button is shown
+                            if (task.status == 'open' && currentUser.id != task.taskerId)
+                              const SizedBox(width: 11),
+
+                            // Message Button (Icon only)
+                            SizedBox(
+                              width: 44,
+                              height: 46,
+                              child: OutlinedButton(
+                                onPressed: () => _navigateToChat(context),
+                                style: OutlinedButton.styleFrom(
+                                  side: const BorderSide(color: Color(0xFFE4E4E4)),
+                                  padding: EdgeInsets.zero,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(2),
+                                  ),
+                                ),
+                                child: const Icon(
+                                  Icons.message_outlined,
+                                  size: 20,
                                   color: Colors.black,
-                                  letterSpacing: 0.7,
                                 ),
                               ),
                             ),
-                          ),
-
-                        // Add spacing only if Make an Offer button is shown
-                        if (task.status == 'open' && currentUser.id != task.taskerId)
-                          const SizedBox(width: 11),
-
-                        // Message Button (Icon only)
-                        SizedBox(
-                          width: 44,
-                          height: 46,
-                          child: OutlinedButton(
-                            onPressed: () => _navigateToChat(context),
-                            style: OutlinedButton.styleFrom(
-                              side: const BorderSide(color: Color(0xFFE4E4E4)),
-                              padding: EdgeInsets.zero,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(2),
-                              ),
-                            ),
-                            child: const Icon(
-                              Icons.message_outlined,
-                              size: 20,
-                              color: Colors.black,
-                            ),
-                          ),
-                        ),
-                      ],
+                          ],
+                        );
+                      },
                     ),
                   ],
 

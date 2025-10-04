@@ -463,10 +463,50 @@ class ApplicationController extends _$ApplicationController {
 Future<Application?> userApplicationForTask(Ref ref, String taskId) async {
   final currentUser = ref.watch(currentUserProvider);
   final repo = ref.watch(applicationRepositoryProvider);
-  
+
   if (currentUser == null) {
     return null;
   }
-  
+
   return await repo.getUserApplicationForTask(taskId, currentUser.id);
+}
+
+/// Stream provider for real-time applications for a specific task
+@riverpod
+Stream<List<Application>> taskApplicationsStream(Ref ref, String taskId) {
+  final supabase = SupabaseService.client;
+
+  // Note: Supabase realtime streams don't support joins, so we need to
+  // fetch the stream data and then enrich it with tasker profiles
+  return supabase
+      .from('taskaway_applications')
+      .stream(primaryKey: ['id'])
+      .eq('task_id', taskId)
+      .order('created_at', ascending: false)
+      .asyncMap((data) async {
+        // For each application, fetch the tasker profile
+        final applicationsWithProfiles = await Future.wait(
+          data.map((appJson) async {
+            final taskerId = appJson['tasker_id'];
+            if (taskerId != null) {
+              try {
+                // Fetch the tasker profile
+                final profileResponse = await supabase
+                    .from('taskaway_profiles')
+                    .select()
+                    .eq('id', taskerId)
+                    .single();
+
+                // Add the tasker profile to the application data
+                appJson['tasker_profile'] = profileResponse;
+              } catch (e) {
+                print('Error fetching tasker profile for $taskerId: $e');
+              }
+            }
+            return appJson;
+          }).toList(),
+        );
+
+        return applicationsWithProfiles.map((json) => Application.fromJson(json)).toList();
+      });
 }

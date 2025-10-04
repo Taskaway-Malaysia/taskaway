@@ -160,8 +160,156 @@ class _UserApplicationForTaskProviderElement
   String get taskId => (origin as UserApplicationForTaskProvider).taskId;
 }
 
+String _$taskApplicationsStreamHash() =>
+    r'284f11828c3251584e2583c91342a8e8fab4d095';
+
+/// Stream provider for real-time applications for a specific task
+///
+/// Copied from [taskApplicationsStream].
+@ProviderFor(taskApplicationsStream)
+const taskApplicationsStreamProvider = TaskApplicationsStreamFamily();
+
+/// Stream provider for real-time applications for a specific task
+///
+/// Copied from [taskApplicationsStream].
+class TaskApplicationsStreamFamily
+    extends Family<AsyncValue<List<Application>>> {
+  /// Stream provider for real-time applications for a specific task
+  ///
+  /// Copied from [taskApplicationsStream].
+  const TaskApplicationsStreamFamily();
+
+  /// Stream provider for real-time applications for a specific task
+  ///
+  /// Copied from [taskApplicationsStream].
+  TaskApplicationsStreamProvider call(
+    String taskId,
+  ) {
+    return TaskApplicationsStreamProvider(
+      taskId,
+    );
+  }
+
+  @override
+  TaskApplicationsStreamProvider getProviderOverride(
+    covariant TaskApplicationsStreamProvider provider,
+  ) {
+    return call(
+      provider.taskId,
+    );
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'taskApplicationsStreamProvider';
+}
+
+/// Stream provider for real-time applications for a specific task
+///
+/// Copied from [taskApplicationsStream].
+class TaskApplicationsStreamProvider
+    extends AutoDisposeStreamProvider<List<Application>> {
+  /// Stream provider for real-time applications for a specific task
+  ///
+  /// Copied from [taskApplicationsStream].
+  TaskApplicationsStreamProvider(
+    String taskId,
+  ) : this._internal(
+          (ref) => taskApplicationsStream(
+            ref as TaskApplicationsStreamRef,
+            taskId,
+          ),
+          from: taskApplicationsStreamProvider,
+          name: r'taskApplicationsStreamProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$taskApplicationsStreamHash,
+          dependencies: TaskApplicationsStreamFamily._dependencies,
+          allTransitiveDependencies:
+              TaskApplicationsStreamFamily._allTransitiveDependencies,
+          taskId: taskId,
+        );
+
+  TaskApplicationsStreamProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.taskId,
+  }) : super.internal();
+
+  final String taskId;
+
+  @override
+  Override overrideWith(
+    Stream<List<Application>> Function(TaskApplicationsStreamRef provider)
+        create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: TaskApplicationsStreamProvider._internal(
+        (ref) => create(ref as TaskApplicationsStreamRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        taskId: taskId,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeStreamProviderElement<List<Application>> createElement() {
+    return _TaskApplicationsStreamProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is TaskApplicationsStreamProvider && other.taskId == taskId;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, taskId.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin TaskApplicationsStreamRef
+    on AutoDisposeStreamProviderRef<List<Application>> {
+  /// The parameter `taskId` of this provider.
+  String get taskId;
+}
+
+class _TaskApplicationsStreamProviderElement
+    extends AutoDisposeStreamProviderElement<List<Application>>
+    with TaskApplicationsStreamRef {
+  _TaskApplicationsStreamProviderElement(super.provider);
+
+  @override
+  String get taskId => (origin as TaskApplicationsStreamProvider).taskId;
+}
+
 String _$applicationControllerHash() =>
-    r'274d43469f07e74dea2c75297884aa9d02d82464';
+    r'd805aa8e12d164d462afc7ceba3969671786138c';
 
 /// See also [ApplicationController].
 @ProviderFor(ApplicationController)

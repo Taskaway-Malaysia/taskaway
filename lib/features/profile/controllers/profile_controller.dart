@@ -70,7 +70,7 @@ class ProfileController {
     try {
       // Convert UI role format to database format
       final String dbRole = role == 'As Poster' ? 'poster' : 'tasker';
-      
+
       // Update only the role field
       await supabase
           .from('taskaway_profiles')
@@ -79,11 +79,34 @@ class ProfileController {
             'updated_at': DateTime.now().toIso8601String(),
           })
           .eq('id', userId);
-      
+
       print('User role updated successfully to: $dbRole');
       return true;
     } catch (e) {
       print('Error updating user role - Error: $e');
+      return false;
+    }
+  }
+
+  /// Updates the tasker's availability status
+  Future<bool> updateAvailability({
+    required String userId,
+    required bool isAvailable,
+  }) async {
+    try {
+      // Update only the is_available field
+      await supabase
+          .from('taskaway_profiles')
+          .update({
+            'is_available': isAvailable,
+            'updated_at': DateTime.now().toIso8601String(),
+          })
+          .eq('id', userId);
+
+      print('Tasker availability updated successfully to: $isAvailable');
+      return true;
+    } catch (e) {
+      print('Error updating tasker availability - Error: $e');
       return false;
     }
   }

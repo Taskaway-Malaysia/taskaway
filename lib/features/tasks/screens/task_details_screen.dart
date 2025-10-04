@@ -190,7 +190,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
         data: (taskData) {
           // Set role flags based on data
           isPoster = currentUser?.id == taskData.posterId;
-          isTasker = currentProfile?.role == 'tasker';
+          isTasker = true; // Everyone can be a tasker now
           hasOffers = taskData.offers != null && taskData.offers!.isNotEmpty;
 
           // Debug logs

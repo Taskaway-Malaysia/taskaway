@@ -14,10 +14,9 @@ class TaskerRepository {
 
   TaskerRepository(this._supabase);
 
-  /// Get available taskers near a specific location
+  /// Get available users near a specific location
   ///
-  /// Filters taskers by:
-  /// - role = 'tasker'
+  /// Filters users by:
   /// - isAvailable = true
   /// - Skills matching task category
   /// - Within specified radius (using Haversine formula)
@@ -28,13 +27,12 @@ class TaskerRepository {
     double radiusKm = 10.0,
   }) async {
     try {
-      dev.log('[TaskerRepository] Fetching taskers for category: $category near ($latitude, $longitude)');
+      dev.log('[TaskerRepository] Fetching available users for category: $category near ($latitude, $longitude)');
 
-      // Query taskers with location data
+      // Query all available users with location data (anyone can accept tasks)
       final response = await _supabase
           .from('taskaway_profiles')
           .select()
-          .eq('role', 'tasker')
           .eq('is_available', true)
           .not('latitude', 'is', null)
           .not('longitude', 'is', null);

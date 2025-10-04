@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:go_router/go_router.dart';
 import '../../auth/controllers/auth_controller.dart';
 
 class ProfileScreenNew extends ConsumerWidget {
@@ -31,7 +32,14 @@ class ProfileScreenNew extends ConsumerWidget {
                 children: [
                   const SizedBox(width: 16),
                   InkWell(
-                    onTap: () => Navigator.pop(context),
+                    onTap: () {
+                      // Check if we can pop, otherwise navigate to home
+                      if (context.canPop()) {
+                        context.pop();
+                      } else {
+                        context.go('/home');
+                      }
+                    },
                     child: const Icon(
                       Icons.arrow_back_ios,
                       size: 20,
@@ -111,6 +119,98 @@ class ProfileScreenNew extends ConsumerWidget {
                       const SizedBox(height: 14),
                       // My Works Card
                       _MyWorksCard(),
+                      const SizedBox(height: 24),
+                      // Logout Button
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton(
+                          onPressed: () async {
+                            // Show confirmation dialog
+                            final shouldLogout = await showDialog<bool>(
+                              context: context,
+                              builder: (dialogContext) => AlertDialog(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                title: const Text(
+                                  'Logout',
+                                  style: TextStyle(
+                                    fontFamily: 'Instrument Sans',
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                content: const Text(
+                                  'Are you sure you want to logout?',
+                                  style: TextStyle(
+                                    fontFamily: 'Instrument Sans',
+                                    fontSize: 14,
+                                    color: Color(0xFF788494),
+                                  ),
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.of(dialogContext).pop(false),
+                                    child: const Text(
+                                      'Cancel',
+                                      style: TextStyle(
+                                        fontFamily: 'Instrument Sans',
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF788494),
+                                      ),
+                                    ),
+                                  ),
+                                  ElevatedButton(
+                                    onPressed: () => Navigator.of(dialogContext).pop(true),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.red,
+                                      foregroundColor: Colors.white,
+                                      elevation: 0,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                    ),
+                                    child: const Text(
+                                      'Logout',
+                                      style: TextStyle(
+                                        fontFamily: 'Instrument Sans',
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+
+                            if (shouldLogout == true) {
+                              await ref.read(authControllerProvider.notifier).signOut();
+                              if (context.mounted) {
+                                context.go('/auth/login');
+                              }
+                            }
+                          },
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            side: const BorderSide(color: Colors.red, width: 1.5),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: const Text(
+                            'Logout',
+                            style: TextStyle(
+                              fontFamily: 'Instrument Sans',
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.red,
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
                     ],
                   ),
                   loading: () => const Center(
@@ -440,21 +540,22 @@ class _MyWorksCard extends StatelessWidget {
           // Work thumbnails
           Row(
             children: List.generate(3, (index) {
-              return Padding(
-                padding: EdgeInsets.only(right: index < 2 ? 8 : 0),
-                child: Container(
-                  width: 107,
-                  height: 100,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    border: Border.all(color: const Color(0xFFE4E4E4)),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: const Center(
-                    child: Icon(
-                      Icons.add,
-                      size: 15,
-                      color: Color(0xFF777676),
+              return Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(right: index < 2 ? 8 : 0),
+                  child: Container(
+                    height: 100,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      border: Border.all(color: const Color(0xFFE4E4E4)),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Center(
+                      child: Icon(
+                        Icons.add,
+                        size: 15,
+                        color: Color(0xFF777676),
+                      ),
                     ),
                   ),
                 ),

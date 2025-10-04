@@ -262,21 +262,28 @@ class TaskController {
     await _repository.updateTask(id, dbData);
   }
 
+  // Check if user has already submitted an application for this task
+  Future<Map<String, dynamic>?> checkExistingApplication(String taskId, String taskerId) async {
+    final response = await _supabase
+        .from('taskaway_applications')
+        .select()
+        .eq('task_id', taskId)
+        .eq('tasker_id', taskerId)
+        .maybeSingle();
+
+    return response;
+  }
+
   // Add an offer to a task
   Future<void> addOffer(String taskId, Map<String, dynamic> offer) async {
-    // Get the current task first
-    final task = await _repository.getTaskById(taskId);
-    
-    // Get the current offers or initialize an empty list
-    final List<Map<String, dynamic>> currentOffers = 
-        (task.offers ?? []).map((o) => Map<String, dynamic>.from(o)).toList();
-    
-    // Add the new offer
-    currentOffers.add(offer);
-    
-    // Update the task with the new offers list
-    await _repository.updateTask(taskId, {
-      'offers': currentOffers,
+    // Insert into taskaway_applications table
+    await _supabase.from('taskaway_applications').insert({
+      'task_id': taskId,
+      'tasker_id': offer['tasker_id'],
+      'offer_price': offer['amount'],
+      'message': offer['message'],
+      'status': 'pending',
+      'created_at': DateTime.now().toIso8601String(),
       'updated_at': DateTime.now().toIso8601String(),
     });
   }

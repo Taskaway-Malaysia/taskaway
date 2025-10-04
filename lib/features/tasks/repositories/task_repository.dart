@@ -24,6 +24,7 @@ class TaskRepository {
       return supabase
           .from(_tableName)
           .stream(primaryKey: ['id'])
+          .neq('status', 'cancelled') // Filter out cancelled tasks
           .order('created_at', ascending: false)
           .asyncMap((data) async {
             // For each task, fetch the poster profile
@@ -184,6 +185,7 @@ class TaskRepository {
       final response = await supabase
           .from(_tableName)
           .select('*, poster_profile:taskaway_profiles!poster_id(*)')
+          .neq('status', 'cancelled') // Filter out cancelled tasks
           .order('created_at', ascending: false);
 
       return response.map((json) => Task.fromJson(json)).toList().cast<Task>();
@@ -204,9 +206,12 @@ class TaskRepository {
           .eq('status', 'open') // Only show open tasks
           .order('created_at', ascending: false)
           .asyncMap((data) async {
+            // Filter out tasks that already have a tasker assigned
+            final unassignedTasks = data.where((taskJson) => taskJson['tasker_id'] == null).toList();
+
             // For each task, fetch its offers and poster profile
             final tasksWithOffersAndProfiles = await Future.wait(
-              data.map((taskJson) async {
+              unassignedTasks.map((taskJson) async {
                 final taskId = taskJson['id'] as String;
                 final posterId = taskJson['poster_id'];
 
@@ -273,9 +278,12 @@ class TaskRepository {
           .eq('status', 'open')
           .order('created_at', ascending: false);
 
+      // Filter out tasks that already have a tasker assigned
+      final unassignedTasks = response.where((taskJson) => taskJson['tasker_id'] == null).toList();
+
       // For each task, fetch its offers and poster profile
       final tasksWithOffersAndProfiles = await Future.wait(
-        response.map((taskJson) async {
+        unassignedTasks.map((taskJson) async {
           final taskId = taskJson['id'] as String;
           final posterId = taskJson['poster_id'];
 

@@ -48,7 +48,7 @@ class _ApplyTaskScreenState extends ConsumerState<ApplyTaskScreen> {
 
       // Get the task to check if the user is the poster
       final task = await taskController.getTaskById(widget.taskId);
-      
+
       // Prevent users from applying to their own tasks
       if (task.posterId == currentUser?.id) {
         setState(() {
@@ -58,10 +58,24 @@ class _ApplyTaskScreenState extends ConsumerState<ApplyTaskScreen> {
         return;
       }
 
+      // Check if user has already submitted an offer
+      final existingApplication = await taskController.checkExistingApplication(
+        widget.taskId,
+        currentUser!.id,
+      );
+
+      if (existingApplication != null) {
+        setState(() {
+          _errorMessage = 'You have already submitted an offer for this task.';
+          _isLoading = false;
+        });
+        return;
+      }
+
       // Create the offer object
       final offer = {
         'id': offerId,
-        'tasker_id': currentUser?.id,
+        'tasker_id': currentUser.id,
         'amount': amount,
         'message': message,
         'status': 'pending',

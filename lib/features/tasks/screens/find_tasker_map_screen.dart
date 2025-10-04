@@ -7,6 +7,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:taskaway/features/tasks/controllers/task_controller.dart';
 import 'package:taskaway/features/tasks/controllers/tasker_controller.dart';
 import 'package:taskaway/features/auth/models/profile.dart';
+import 'package:taskaway/features/applications/controllers/application_controller.dart';
+import 'package:taskaway/features/applications/models/application.dart';
 import 'dart:developer' as dev;
 
 /// FindTaskerMapScreen
@@ -62,7 +64,14 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
+          onPressed: () {
+            // Check if we can pop, otherwise navigate to my tasks
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/home/tasks');
+            }
+          },
         ),
       ),
       body: taskAsync.when(
@@ -274,6 +283,9 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
                 loading: () => const SizedBox.shrink(),
                 error: (_, __) => const SizedBox.shrink(),
               ),
+
+              // Applications bottom sheet
+              _buildApplicationsBottomSheet(),
             ],
           );
         },
@@ -542,6 +554,582 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
         ],
       ),
     );
+  }
+
+  /// Build applications bottom sheet showing received offers
+  Widget _buildApplicationsBottomSheet() {
+    final applicationsAsync = ref.watch(taskApplicationsStreamProvider(widget.taskId));
+
+    return applicationsAsync.when(
+      data: (applications) {
+        // Only show if there are applications
+        if (applications.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        return Align(
+          alignment: Alignment.bottomCenter,
+          child: Container(
+            width: double.infinity,
+            constraints: const BoxConstraints(maxHeight: 280),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 20,
+                  offset: const Offset(0, -4),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Drag handle
+                Container(
+                  margin: const EdgeInsets.only(top: 12, bottom: 8),
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+
+                // Header
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.person_outline, size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Received Offers (${applications.length})',
+                        style: const TextStyle(
+                          fontFamily: 'Instrument Sans',
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const Divider(height: 1),
+
+                // Applications list
+                Expanded(
+                  child: ListView.separated(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    itemCount: applications.length,
+                    separatorBuilder: (context, index) => const Divider(height: 1),
+                    itemBuilder: (context, index) {
+                      final application = applications[index];
+                      return _buildApplicationItem(application);
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+    );
+  }
+
+  /// Build individual application item
+  Widget _buildApplicationItem(Application application) {
+    // Get tasker profile from the application model
+    final taskerProfile = application.taskerProfile;
+    final taskerName = taskerProfile?['full_name'] ?? 'Unknown';
+    final avatarUrl = taskerProfile?['avatar_url'];
+    final rating = (taskerProfile?['rating'] as num?)?.toDouble() ?? 0.0;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          // Avatar
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.grey.shade200,
+              border: Border.all(color: const Color(0xFFFFDB5B), width: 2),
+            ),
+            child: ClipOval(
+              child: avatarUrl != null
+                  ? Image.network(avatarUrl, fit: BoxFit.cover)
+                  : Center(
+                      child: Text(
+                        taskerName.substring(0, 1).toUpperCase(),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+            ),
+          ),
+          const SizedBox(width: 12),
+
+          // Tasker info
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  taskerName,
+                  style: const TextStyle(
+                    fontFamily: 'Instrument Sans',
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    const Icon(Icons.star, size: 12, color: Color(0xFFFFDB5B)),
+                    const SizedBox(width: 4),
+                    Text(
+                      rating.toStringAsFixed(1),
+                      style: const TextStyle(
+                        fontFamily: 'Instrument Sans',
+                        fontSize: 12,
+                        color: Color(0xFF788494),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      'RM ${application.offerPrice.toStringAsFixed(2)}',
+                      style: const TextStyle(
+                        fontFamily: 'Instrument Sans',
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF000000),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          // Accept button
+          if (application.status == ApplicationStatus.pending)
+            SizedBox(
+              width: 60,
+              child: ElevatedButton(
+                onPressed: () {
+                  _showOfferDetailsSheet(application);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFFDB5B),
+                  foregroundColor: Colors.black,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+                child: const Text(
+                  'View',
+                  style: TextStyle(
+                    fontFamily: 'Instrument Sans',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            )
+          else
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: application.status == ApplicationStatus.accepted
+                    ? Colors.green.shade50
+                    : Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                application.status.name.toUpperCase(),
+                style: TextStyle(
+                  fontFamily: 'Instrument Sans',
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: application.status == ApplicationStatus.accepted
+                      ? Colors.green.shade700
+                      : Colors.grey.shade600,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// Show offer details bottom sheet
+  void _showOfferDetailsSheet(Application application) {
+    final taskerProfile = application.taskerProfile;
+    final taskerName = taskerProfile?['full_name'] ?? 'Unknown';
+    final avatarUrl = taskerProfile?['avatar_url'];
+    final rating = (taskerProfile?['rating'] as num?)?.toDouble() ?? 0.0;
+    final totalTasks = taskerProfile?['total_tasks'] ?? 0;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.75,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
+        ),
+        child: Column(
+          children: [
+            // Drag handle
+            Container(
+              margin: const EdgeInsets.only(top: 12, bottom: 16),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+
+            // Tasker profile section
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                children: [
+                  // Avatar
+                  Container(
+                    width: 60,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.grey.shade200,
+                      border: Border.all(color: const Color(0xFFFFDB5B), width: 2),
+                    ),
+                    child: ClipOval(
+                      child: avatarUrl != null
+                          ? Image.network(avatarUrl, fit: BoxFit.cover)
+                          : Center(
+                              child: Text(
+                                taskerName.substring(0, 1).toUpperCase(),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 24,
+                                ),
+                              ),
+                            ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+
+                  // Tasker info
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          taskerName,
+                          style: const TextStyle(
+                            fontFamily: 'Instrument Sans',
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            const Icon(Icons.star, size: 16, color: Color(0xFFFFDB5B)),
+                            const SizedBox(width: 4),
+                            Text(
+                              rating.toStringAsFixed(1),
+                              style: const TextStyle(
+                                fontFamily: 'Instrument Sans',
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              '$totalTasks tasks completed',
+                              style: TextStyle(
+                                fontFamily: 'Instrument Sans',
+                                fontSize: 14,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 24),
+            const Divider(height: 1),
+            const SizedBox(height: 24),
+
+            // Offer details section
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Offer price
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Offer Price',
+                          style: TextStyle(
+                            fontFamily: 'Instrument Sans',
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        Text(
+                          'RM ${application.offerPrice.toStringAsFixed(2)}',
+                          style: const TextStyle(
+                            fontFamily: 'Instrument Sans',
+                            fontSize: 24,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFFFFDB5B),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Message/Description
+                    const Text(
+                      'Message',
+                      style: TextStyle(
+                        fontFamily: 'Instrument Sans',
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade50,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey.shade200),
+                      ),
+                      child: Text(
+                        application.message ?? 'No message provided',
+                        style: TextStyle(
+                          fontFamily: 'Instrument Sans',
+                          fontSize: 14,
+                          color: application.message != null ? Colors.black87 : Colors.grey.shade500,
+                          height: 1.5,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Application date
+                    Row(
+                      children: [
+                        Icon(Icons.calendar_today, size: 16, color: Colors.grey.shade600),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Applied ${_formatDate(application.createdAt)}',
+                          style: TextStyle(
+                            fontFamily: 'Instrument Sans',
+                            fontSize: 14,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // Action buttons
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, -4),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  // Message button
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        // TODO: Navigate to chat with tasker
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Chat feature coming soon')),
+                        );
+                      },
+                      icon: const Icon(Icons.chat_bubble_outline, size: 20),
+                      label: const Text('Message'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.black,
+                        side: BorderSide(color: Colors.grey.shade300),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+
+                  // Accept button
+                  Expanded(
+                    flex: 2,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        _handleAcceptOffer(application, context);
+                      },
+                      icon: const Icon(Icons.check_circle_outline, size: 20),
+                      label: const Text('Accept Offer'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFFFDB5B),
+                        foregroundColor: Colors.black,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Format date for display
+  String _formatDate(DateTime? date) {
+    if (date == null) return 'Unknown';
+
+    final now = DateTime.now();
+    final difference = now.difference(date);
+
+    if (difference.inMinutes < 1) {
+      return 'just now';
+    } else if (difference.inHours < 1) {
+      return '${difference.inMinutes}m ago';
+    } else if (difference.inDays < 1) {
+      return '${difference.inHours}h ago';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays}d ago';
+    } else {
+      return '${date.day}/${date.month}/${date.year}';
+    }
+  }
+
+  /// Handle accepting an offer
+  Future<void> _handleAcceptOffer(Application application, BuildContext sheetContext) async {
+    try {
+      // Show loading indicator in the button
+      showDialog(
+        context: sheetContext,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(
+            color: Color(0xFFFFDB5B),
+          ),
+        ),
+      );
+
+      // Call the acceptOffer method from the application controller
+      final applicationController = ref.read(applicationControllerProvider.notifier);
+      final success = await applicationController.acceptOffer(
+        applicationId: application.id!,
+        taskId: widget.taskId,
+        taskerId: application.taskerId,
+      );
+
+      if (!mounted) return;
+
+      // Close loading dialog
+      Navigator.of(sheetContext).pop();
+
+      // Close the bottom sheet
+      Navigator.of(sheetContext).pop();
+
+      if (success) {
+        // Navigate to the tracking screen immediately
+        // The tracking screen will show its own success state
+        context.goNamed(
+          'waiting-for-tasker',
+          pathParameters: {'taskId': widget.taskId},
+        );
+      } else {
+        // Show error message (only if we're staying on this screen)
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Failed to accept offer. Please try again.'),
+              backgroundColor: Colors.red,
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (!mounted) return;
+
+      // Try to close dialogs safely
+      try {
+        Navigator.of(sheetContext).pop(); // Close loading
+        Navigator.of(sheetContext).pop(); // Close sheet
+      } catch (_) {
+        // Ignore if already closed
+      }
+
+      // Show error message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    }
   }
 
   /// Show dialog when tasker accepts the task

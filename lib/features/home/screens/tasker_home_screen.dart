@@ -10,6 +10,10 @@ import 'package:taskaway/features/home/widgets/map_widget.dart';
 import 'package:taskaway/features/home/widgets/tasker_poster_toggle.dart';
 import 'package:taskaway/features/home/widgets/search_overlay.dart';
 import 'package:taskaway/features/home/widgets/view_list_toggle.dart';
+import 'package:taskaway/features/auth/controllers/auth_controller.dart';
+import 'package:taskaway/features/profile/controllers/profile_controller.dart';
+import 'package:taskaway/core/services/location_service.dart';
+import 'dart:developer' as dev;
 
 // Provider for browse page region filter
 final regionFilterProvider = StateProvider<String>((ref) => 'All Regions');
@@ -112,6 +116,7 @@ class TaskerHomeScreen extends ConsumerStatefulWidget {
 class _TaskerHomeScreenState extends ConsumerState<TaskerHomeScreen> {
   late final TextEditingController _searchController;
   late final FocusNode _searchFocusNode;
+  final _locationService = LocationService();
 
   @override
   void initState() {
@@ -122,12 +127,23 @@ class _TaskerHomeScreenState extends ConsumerState<TaskerHomeScreen> {
     _searchController.addListener(() {
       ref.read(searchQueryProvider.notifier).state = _searchController.text;
     });
+
+    // Start location tracking if user is already available
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final profile = ref.read(currentProfileProvider).value;
+      final user = ref.read(currentUserProvider);
+      if (profile?.isAvailable == true && user != null) {
+        dev.log('[TaskerHome] User is available, starting location tracking');
+        _locationService.startTracking(user.id);
+      }
+    });
   }
 
   @override
   void dispose() {
     _searchController.dispose();
     _searchFocusNode.dispose();
+    _locationService.stopTracking();
     super.dispose();
   }
 
@@ -490,6 +506,8 @@ class _TaskerHomeScreenState extends ConsumerState<TaskerHomeScreen> {
   Widget _buildTopSection(BuildContext context, WidgetRef ref) {
     final userMode = ref.watch(userModeProvider);
     final hasActiveFilters = _getActiveFilterCount(ref) > 0;
+    final currentUser = ref.watch(currentUserProvider);
+    final profileAsync = ref.watch(currentProfileProvider);
 
     return Positioned(
       top: 0,
@@ -694,6 +712,135 @@ class _TaskerHomeScreenState extends ConsumerState<TaskerHomeScreen> {
                     ),
                   ),
                 ),
+
+                // Availability Switch - positioned on the right side
+                if (userMode == UserMode.tasker)
+                  Positioned(
+                    right: 16,
+                    top: 16,
+                    child: profileAsync.when(
+                      data: (profile) {
+                        final isAvailable = profile?.isAvailable ?? false;
+                        return Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: isAvailable ? const Color(0xFFE8F5E9) : const Color(0xFFFFF3E0),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: isAvailable ? const Color(0xFF4CAF50) : const Color(0xFFFF9800),
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                isAvailable ? 'Available' : 'Offline',
+                                style: TextStyle(
+                                  fontFamily: 'Instrument Sans',
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: isAvailable ? const Color(0xFF2E7D32) : const Color(0xFFE65100),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              SizedBox(
+                                width: 40,
+                                height: 20,
+                                child: Switch(
+                                  value: isAvailable,
+                                  onChanged: (value) async {
+                                    if (currentUser == null) return;
+
+                                    if (value) {
+                                      // Turning availability ON - request location permission and start tracking
+                                      dev.log('[TaskerHome] Enabling availability, requesting location permission');
+
+                                      final hasPermission = await _locationService.requestPermissions();
+                                      if (!hasPermission) {
+                                        // Show permission denied message
+                                        if (mounted) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Location permission is required to be available for tasks',
+                                                style: TextStyle(fontFamily: 'Instrument Sans'),
+                                              ),
+                                              backgroundColor: Colors.red,
+                                            ),
+                                          );
+                                        }
+                                        return;
+                                      }
+
+                                      // Update availability in database
+                                      await ref.read(profileControllerProvider).updateAvailability(
+                                        userId: currentUser.id,
+                                        isAvailable: true,
+                                      );
+
+                                      // Start location tracking
+                                      dev.log('[TaskerHome] Starting location tracking');
+                                      await _locationService.startTracking(currentUser.id);
+
+                                      // Refresh profile to update UI
+                                      ref.invalidate(currentProfileProvider);
+
+                                      if (mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(
+                                            content: Text(
+                                              'You are now available! Your location will update every 30 minutes',
+                                              style: TextStyle(fontFamily: 'Instrument Sans'),
+                                            ),
+                                            backgroundColor: Color(0xFF4CAF50),
+                                            duration: Duration(seconds: 3),
+                                          ),
+                                        );
+                                      }
+                                    } else {
+                                      // Turning availability OFF - stop tracking
+                                      dev.log('[TaskerHome] Disabling availability, stopping location tracking');
+
+                                      await ref.read(profileControllerProvider).updateAvailability(
+                                        userId: currentUser.id,
+                                        isAvailable: false,
+                                      );
+
+                                      // Stop location tracking
+                                      _locationService.stopTracking();
+
+                                      // Refresh profile to update UI
+                                      ref.invalidate(currentProfileProvider);
+
+                                      if (mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(
+                                            content: Text(
+                                              'You are now offline',
+                                              style: TextStyle(fontFamily: 'Instrument Sans'),
+                                            ),
+                                            backgroundColor: Color(0xFFFF9800),
+                                          ),
+                                        );
+                                      }
+                                    }
+                                  },
+                                  activeColor: const Color(0xFF4CAF50),
+                                  activeTrackColor: const Color(0xFFC8E6C9),
+                                  inactiveThumbColor: const Color(0xFFFF9800),
+                                  inactiveTrackColor: const Color(0xFFFFE0B2),
+                                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                      loading: () => const SizedBox.shrink(),
+                      error: (_, __) => const SizedBox.shrink(),
+                    ),
+                  ),
               ],
             ),
           ),
