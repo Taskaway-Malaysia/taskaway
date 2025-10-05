@@ -358,7 +358,7 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
         : ref.watch(currentUserPostedTasksProvider);    // Show only user's posted tasks for posters
 
     return Scaffold(
-      backgroundColor: _isMapView ? AppColors.backgroundPrimary : AppColors.backgroundDisabled,
+      backgroundColor: _isMapView ? AppColors.backgroundPrimary : AppColors.white,
       floatingActionButton: _isMapView && _isTaskerMode
           ? Padding(
               padding: const EdgeInsets.only(bottom: 200), // Above the task cards
@@ -539,14 +539,14 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
             else if (!_isMapView || !_isTaskerMode)
               // List view (shown when not in map view or when in Poster mode)
               Positioned.fill(
-                top: 260, // Adjusted space for profile and search bar with tabs
+                top: 410, // Adjusted to start right below tabs
                 bottom: _isTaskerMode ? 48 : 0, // Space for VIEW MAP button only in Tasker mode
                 child: Container(
                   color: AppColors.white, // White background
                   child: ListView.separated(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                     itemCount: sortedTasks.length,
-                    separatorBuilder: (context, index) => SizedBox(height: 12),
+                    separatorBuilder: (context, index) => const SizedBox(height: 12),
                     itemBuilder: (context, index) {
                       return _TaskListItem(
                         task: sortedTasks[index],
@@ -602,32 +602,75 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
                               data: (profile) => Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
+                                  const Text(
+                                    'Welcome back,',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w400,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
                                   Text(
                                     profile?.fullName ?? 'User',
-                                    style: AppTypography.titleMedium,
+                                    style: const TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.textPrimary,
+                                    ),
                                   ),
-                                  SizedBox(height: 4),
-                                  _buildAvailabilitySwitchCompact(),
                                 ],
                               ),
                               loading: () => Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text('User', style: AppTypography.titleMedium),
-                                  SizedBox(height: 4),
-                                  _buildAvailabilitySwitchCompact(),
+                                  const Text(
+                                    'Welcome back,',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w400,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  const Text(
+                                    'User',
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
                                 ],
                               ),
                               error: (_, __) => Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text('User', style: AppTypography.titleMedium),
+                                  const Text(
+                                    'Welcome back,',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w400,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  const Text(
+                                    'User',
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
                                   SizedBox(height: 4),
                                   _buildAvailabilitySwitchCompact(),
                                 ],
                               ),
                             ),
                           ),
+                          // Availability badge on the right
+                          _buildAvailabilityBadge(),
                         ],
                       ),
                     ),
@@ -688,7 +731,7 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
                 child: Column(
                   children: [
                     Container(
-                      height: 245,
+                      height: 180,
                       margin: const EdgeInsets.only(bottom: 8),
                       child: PageView.builder(
                         controller: _cardPageController,
@@ -717,7 +760,7 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
                           final distance = _calculateDistance(_currentLocation, position);
 
                           return Container(
-                            width: MediaQuery.of(context).size.width * 0.8,
+                            width: MediaQuery.of(context).size.width * 0.55,
                             padding: const EdgeInsets.symmetric(horizontal: 8),
                             child: ServiceCard(
                               task: task,
@@ -1026,6 +1069,106 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
                 ),
               ),
             ],
+          ),
+        );
+      },
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+    );
+  }
+
+  /// Build availability badge (Offline/Online with dot)
+  Widget _buildAvailabilityBadge() {
+    final currentUser = ref.watch(currentUserProvider);
+    final profileAsync = ref.watch(currentProfileProvider);
+
+    return profileAsync.when(
+      data: (profile) {
+        final isAvailable = profile?.isAvailable ?? false;
+        return GestureDetector(
+          onTap: () async {
+            if (currentUser == null) return;
+
+            final newValue = !isAvailable;
+
+            if (newValue) {
+              // Turning availability ON
+              final hasPermission = await _locationService.requestPermissions();
+              if (!hasPermission) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Location permission is required to enable availability'),
+                      backgroundColor: Color(0xFFFF9800),
+                    ),
+                  );
+                }
+                return;
+              }
+              _locationService.startTracking(currentUser.id);
+            } else {
+              // Turning availability OFF
+              _locationService.stopTracking();
+            }
+
+            // Update availability in database
+            try {
+              await ref.read(profileControllerProvider).updateAvailability(
+                userId: currentUser.id,
+                isAvailable: newValue,
+              );
+              ref.invalidate(currentProfileProvider);
+            } catch (e) {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Failed to update availability: $e'),
+                    backgroundColor: const Color(0xFFFF9800),
+                  ),
+                );
+              }
+            }
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: isAvailable
+                  ? const Color(0xFFE8F5E9)
+                  : const Color(0xFFFFF3E0),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: isAvailable
+                    ? const Color(0xFF4CAF50)
+                    : const Color(0xFFFFB74D),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  isAvailable ? 'Online' : 'Offline',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: isAvailable
+                        ? const Color(0xFF2E7D32)
+                        : const Color(0xFFE65100),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: isAvailable
+                        ? const Color(0xFF4CAF50)
+                        : const Color(0xFFFFB74D),
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },

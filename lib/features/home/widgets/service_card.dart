@@ -32,7 +32,7 @@ class ServiceCard extends StatelessWidget {
         ),
       ),
       child: Padding(
-        padding: EdgeInsets.all(AppSpacing.xl),
+        padding: EdgeInsets.all(AppSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
@@ -40,63 +40,63 @@ class ServiceCard extends StatelessWidget {
             // Title
             Text(
               task.title,
-              style: AppTypography.headlineSmall.copyWith(
+              style: AppTypography.titleMedium.copyWith(
                 color: AppColors.gray900,
                 fontWeight: AppTypography.bold,
               ),
-              maxLines: 2,
+              maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
-            SizedBox(height: AppSpacing.sm),
+            SizedBox(height: AppSpacing.xs),
 
             // Distance
             Text(
               distance,
-              style: AppTypography.bodyMedium.copyWith(
+              style: AppTypography.bodySmall.copyWith(
                 color: AppColors.gray900,
               ),
             ),
-            SizedBox(height: AppSpacing.xs),
+            SizedBox(height: 2),
 
             // Posted by (without "By" prefix)
             Text(
               'By $posterName',
-              style: AppTypography.bodyMedium.copyWith(
+              style: AppTypography.bodySmall.copyWith(
                 color: AppColors.gray900,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
-            SizedBox(height: AppSpacing.md),
+            SizedBox(height: AppSpacing.sm),
 
             // Price
             Text(
               'RM ${task.price.toStringAsFixed(2)}',
-              style: AppTypography.headlineMedium.copyWith(
+              style: AppTypography.titleLarge.copyWith(
                 fontWeight: AppTypography.bold,
                 color: AppColors.gray900,
               ),
             ),
-            SizedBox(height: AppSpacing.lg),
+            SizedBox(height: AppSpacing.md),
 
             // View Details Button
             SizedBox(
-              width: double.infinity,
-              height: AppSpacing.buttonHeightLg,
+              height: 32,
               child: ElevatedButton(
                 onPressed: onViewDetails,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.gray900,
                   foregroundColor: AppColors.white,
-                  padding: EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+                  padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 0),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
                   ),
                   elevation: 0,
+                  minimumSize: Size(0, 32),
                 ),
                 child: Text(
                   'View Details',
-                  style: AppTypography.titleMedium.copyWith(
+                  style: AppTypography.labelSmall.copyWith(
                     color: AppColors.white,
                     fontWeight: AppTypography.bold,
                   ),
