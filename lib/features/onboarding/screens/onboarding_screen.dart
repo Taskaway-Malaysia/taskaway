@@ -5,6 +5,10 @@ import 'package:taskaway/core/constants/style_constants.dart';
 import 'package:taskaway/features/onboarding/controllers/onboarding_controller.dart';
 import 'package:taskaway/features/onboarding/models/onboarding_page_model.dart';
 import 'package:taskaway/core/utils/debug_logger.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_radius.dart';
 
 class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
@@ -79,7 +83,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             ),
             // White container for bottom content
             Container(
-              color: Colors.white,
+              color: AppColors.white,
               padding: const EdgeInsets.only(top: 30, bottom: 20, left: 24, right: 24),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -91,17 +95,17 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     style: const TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                      color: AppColors.textPrimary,
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: AppSpacing.lg),
                   // Description
                   Text(
                     onboardingPages[_currentPage].description,
                     textAlign: TextAlign.center,
                     style: const TextStyle(
                       fontSize: 15,
-                      color: Colors.black54,
+                      color: AppColors.textSecondary,
                       height: 1.4,
                     ),
                   ),
@@ -125,7 +129,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                                     ? StyleConstants.taskerColorPrimary // Orange for second page
                                     : StyleConstants.posterColorPrimary // Purple for first and third pages
                                 : Colors.grey.shade300,
-                            borderRadius: BorderRadius.circular(4),
+                            borderRadius: AppRadius.sm,
                           ),
                         ),
                       ),
@@ -141,7 +145,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         // Skip button
                         TextButton(
                           onPressed: _skipOnboarding,
-                          child: const Text(
+                          child: Text(
                             'Skip',
                             style: TextStyle(
                               color: Colors.grey,
@@ -156,7 +160,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                             backgroundColor: _currentPage == 1
                                 ? StyleConstants.taskerColorPrimary // Orange for second page
                                 : StyleConstants.posterColorPrimary, // Purple for first and third pages
-                            foregroundColor: Colors.white,
+                            foregroundColor: AppColors.white,
                             padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(StyleConstants.defaultRadius),
@@ -165,10 +169,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                           ),
                           child: Text(
                             _currentPage == onboardingPages.length - 1 ? 'Get Started' : 'Next',
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
+                            style: AppTypography.labelLarge,
                           ),
                         ),
                       ],

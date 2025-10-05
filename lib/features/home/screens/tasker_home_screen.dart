@@ -13,6 +13,10 @@ import 'package:taskaway/features/home/widgets/view_list_toggle.dart';
 import 'package:taskaway/features/auth/controllers/auth_controller.dart';
 import 'package:taskaway/features/profile/controllers/profile_controller.dart';
 import 'package:taskaway/core/services/location_service.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_radius.dart';
 import 'dart:developer' as dev;
 
 // Provider for browse page region filter
@@ -194,7 +198,7 @@ class _TaskerHomeScreenState extends ConsumerState<TaskerHomeScreen> {
                         child: Text('No available tasks found'),
                       )
                     : ListView.builder(
-                        padding: const EdgeInsets.all(16),
+                        padding: EdgeInsets.all(AppSpacing.lg),
                         itemCount: tasks.length,
                         itemBuilder: (context, index) {
                           final task = tasks[index];
@@ -225,14 +229,14 @@ class _TaskerHomeScreenState extends ConsumerState<TaskerHomeScreen> {
           print('Building filter bottom sheet');
           return StatefulBuilder(
             builder: (context, setState) => Container(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.all(AppSpacing.lg),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'Filters',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
@@ -254,7 +258,7 @@ class _TaskerHomeScreenState extends ConsumerState<TaskerHomeScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: AppSpacing.lg),
               // Add filter options here
               Row(
                 children: [
@@ -262,7 +266,7 @@ class _TaskerHomeScreenState extends ConsumerState<TaskerHomeScreen> {
                     child: _buildDropdownContainer(
                       child: DropdownButton<String>(
                         value: ref.watch(regionFilterProvider),
-                        hint: const Text('Region'),
+                        hint: Text('Region'),
                         underline: Container(),
                         icon: const Icon(Icons.arrow_drop_down),
                         isExpanded: true,
@@ -281,12 +285,12 @@ class _TaskerHomeScreenState extends ConsumerState<TaskerHomeScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: AppSpacing.sm),
                   Expanded(
                     child: _buildDropdownContainer(
                       child: DropdownButton<String>(
                         value: ref.watch(categoryFilterProvider),
-                        hint: const Text('Category'),
+                        hint: Text('Category'),
                         underline: Container(),
                         icon: const Icon(Icons.arrow_drop_down),
                         isExpanded: true,
@@ -318,11 +322,11 @@ class _TaskerHomeScreenState extends ConsumerState<TaskerHomeScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: AppSpacing.lg),
               _buildDropdownContainer(
                 child: DropdownButton<String>(
                   value: ref.watch(sortFilterProvider),
-                  hint: const Text('Sort by'),
+                  hint: Text('Sort by'),
                   underline: Container(),
                   icon: const Icon(Icons.arrow_drop_down),
                   isExpanded: true,
@@ -341,7 +345,7 @@ class _TaskerHomeScreenState extends ConsumerState<TaskerHomeScreen> {
                   }).toList(),
                 ),
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: AppSpacing.xxl),
               // Clear All Filters button
               if (_getActiveFilterCount(ref) > 0)
                 Padding(
@@ -357,10 +361,10 @@ class _TaskerHomeScreenState extends ConsumerState<TaskerHomeScreen> {
                       minimumSize: const Size(double.infinity, 44),
                       side: const BorderSide(color: Color(0xFFE4E4E4)),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(6),
+                        borderRadius: AppRadius.smMd,
                       ),
                     ),
-                    child: const Text(
+                    child: Text(
                       'Clear All Filters',
                       style: TextStyle(
                         color: Color(0xFF788494),
@@ -379,19 +383,16 @@ class _TaskerHomeScreenState extends ConsumerState<TaskerHomeScreen> {
                   foregroundColor: Colors.black,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(6),
+                    borderRadius: AppRadius.smMd,
                     side: const BorderSide(
                       color: Color(0xFFFFC333),
                       width: 1,
                     ),
                   ),
                 ),
-                child: const Text(
+                child: Text(
                   'Apply Filters',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: AppTypography.labelMedium,
                 ),
               ),
             ],
@@ -481,7 +482,7 @@ class _TaskerHomeScreenState extends ConsumerState<TaskerHomeScreen> {
             ref.read(categoryFilterProvider.notifier).state = 'All Categories';
             ref.read(sortFilterProvider.notifier).state = 'Latest';
           },
-          child: const Text(
+          child: Text(
             'Clear all',
             style: TextStyle(
               fontSize: 12,
@@ -519,11 +520,11 @@ class _TaskerHomeScreenState extends ConsumerState<TaskerHomeScreen> {
             width: 394,
             height: 151,
             decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border.all(color: Colors.white, width: 1),
+              color: AppColors.white,
+              border: Border.all(color: AppColors.white, width: 1),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.25),
+                  color: AppColors.textPrimary.withOpacity(0.25),
                   blurRadius: 4,
                   offset: const Offset(0, 4),
                 ),
@@ -554,9 +555,9 @@ class _TaskerHomeScreenState extends ConsumerState<TaskerHomeScreen> {
                         height: 44, // Match filter button height
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppColors.white,
                           border: Border.all(color: const Color(0xFFE4E4E4), width: 1),
-                          borderRadius: BorderRadius.circular(6),
+                          borderRadius: AppRadius.smMd,
                         ),
                         child: Row(
                           children: [
@@ -571,7 +572,7 @@ class _TaskerHomeScreenState extends ConsumerState<TaskerHomeScreen> {
                                 color: Color(0xFF202020),
                               ),
                             ),
-                            const SizedBox(width: 8),
+                            SizedBox(width: AppSpacing.sm),
                             // Search text
                             Expanded(
                               child: TextField(
@@ -584,7 +585,6 @@ class _TaskerHomeScreenState extends ConsumerState<TaskerHomeScreen> {
                                   focusedBorder: InputBorder.none,
                                   filled: false,
                                   hintStyle: TextStyle(
-                                    fontFamily: 'Instrument Sans',
                                     fontSize: 14,
                                     fontWeight: FontWeight.w500,
                                     color: Color(0xFF202020),
@@ -592,7 +592,6 @@ class _TaskerHomeScreenState extends ConsumerState<TaskerHomeScreen> {
                                   contentPadding: EdgeInsets.zero,
                                 ),
                                 style: const TextStyle(
-                                  fontFamily: 'Instrument Sans',
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500,
                                   color: Color(0xFF202020),
@@ -603,7 +602,7 @@ class _TaskerHomeScreenState extends ConsumerState<TaskerHomeScreen> {
                         ),
                       ),
 
-                      const SizedBox(width: 8), // 8px gap
+                      SizedBox(width: AppSpacing.sm), // 8px gap
 
                       // Filter button - Simplified implementation
                       Material(
@@ -614,14 +613,14 @@ class _TaskerHomeScreenState extends ConsumerState<TaskerHomeScreen> {
                             print('Current context: $context');
                             _showFilterBottomSheet(context, ref);
                           },
-                          borderRadius: BorderRadius.circular(6),
+                          borderRadius: AppRadius.smMd,
                           child: Container(
                             width: 44,
                             height: 44,
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: AppColors.white,
                               border: Border.all(color: const Color(0xFFD9D9D9), width: 1),
-                              borderRadius: BorderRadius.circular(6),
+                              borderRadius: AppRadius.smMd,
                             ),
                             child: Stack(
                               children: [
@@ -629,7 +628,7 @@ class _TaskerHomeScreenState extends ConsumerState<TaskerHomeScreen> {
                                   child: Icon(
                                     Icons.tune,
                                     size: 20,
-                                    color: Colors.black,
+                                    color: AppColors.textPrimary,
                                   ),
                                 ),
                                 // Filter count badge
@@ -650,7 +649,7 @@ class _TaskerHomeScreenState extends ConsumerState<TaskerHomeScreen> {
                                       child: Text(
                                         '${_getActiveFilterCount(ref)}',
                                         style: const TextStyle(
-                                          color: Colors.black,
+                                          color: AppColors.textPrimary,
                                           fontSize: 10,
                                           fontWeight: FontWeight.bold,
                                         ),
@@ -678,7 +677,6 @@ class _TaskerHomeScreenState extends ConsumerState<TaskerHomeScreen> {
                     child: Text(
                       'TASKER',
                       style: TextStyle(
-                        fontFamily: 'Instrument Sans',
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 0.1,
@@ -701,7 +699,6 @@ class _TaskerHomeScreenState extends ConsumerState<TaskerHomeScreen> {
                     child: Text(
                       'POSTER',
                       style: TextStyle(
-                        fontFamily: 'Instrument Sans',
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 0.1,
@@ -725,7 +722,7 @@ class _TaskerHomeScreenState extends ConsumerState<TaskerHomeScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
                             color: isAvailable ? const Color(0xFFE8F5E9) : const Color(0xFFFFF3E0),
-                            borderRadius: BorderRadius.circular(20),
+                            borderRadius: AppRadius.xxl,
                             border: Border.all(
                               color: isAvailable ? const Color(0xFF4CAF50) : const Color(0xFFFF9800),
                               width: 1,
@@ -737,13 +734,12 @@ class _TaskerHomeScreenState extends ConsumerState<TaskerHomeScreen> {
                               Text(
                                 isAvailable ? 'Available' : 'Offline',
                                 style: TextStyle(
-                                  fontFamily: 'Instrument Sans',
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
                                   color: isAvailable ? const Color(0xFF2E7D32) : const Color(0xFFE65100),
                                 ),
                               ),
-                              const SizedBox(width: 8),
+                              SizedBox(width: AppSpacing.sm),
                               SizedBox(
                                 width: 40,
                                 height: 20,
@@ -764,7 +760,6 @@ class _TaskerHomeScreenState extends ConsumerState<TaskerHomeScreen> {
                                             const SnackBar(
                                               content: Text(
                                                 'Location permission is required to be available for tasks',
-                                                style: TextStyle(fontFamily: 'Instrument Sans'),
                                               ),
                                               backgroundColor: Colors.red,
                                             ),
@@ -791,7 +786,6 @@ class _TaskerHomeScreenState extends ConsumerState<TaskerHomeScreen> {
                                           const SnackBar(
                                             content: Text(
                                               'You are now available! Your location will update every 30 minutes',
-                                              style: TextStyle(fontFamily: 'Instrument Sans'),
                                             ),
                                             backgroundColor: Color(0xFF4CAF50),
                                             duration: Duration(seconds: 3),
@@ -818,7 +812,6 @@ class _TaskerHomeScreenState extends ConsumerState<TaskerHomeScreen> {
                                           const SnackBar(
                                             content: Text(
                                               'You are now offline',
-                                              style: TextStyle(fontFamily: 'Instrument Sans'),
                                             ),
                                             backgroundColor: Color(0xFFFF9800),
                                           ),
@@ -856,8 +849,8 @@ class _TaskerHomeScreenState extends ConsumerState<TaskerHomeScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        color: AppColors.white,
+        borderRadius: AppRadius.xxl,
       ),
       child: child,
     );

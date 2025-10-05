@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../auth/controllers/auth_controller.dart';
 import 'payment_options_screen.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -22,13 +25,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           // Purple header
           Container(
             padding: const EdgeInsets.fromLTRB(16, 48, 16, 16),
-            decoration: const BoxDecoration(
-              color: Color(0xFF6C5CE7), // Purple color
+            decoration: BoxDecoration(
+              color: AppColors.posterPrimary,
             ),
             child: Row(
               children: [
                 IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Colors.white),
+                  icon: Icon(Icons.arrow_back_ios, color: AppColors.white),
                   onPressed: () {
                     if (context.canPop()) {
                       context.pop();
@@ -38,13 +41,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   },
                 ),
                 const Spacer(),
-                const Text(
+                Text(
                   'Settings',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: AppTypography.headlineSmall.copyWith(color: AppColors.white),
                 ),
                 const Spacer(),
                 const SizedBox(width: 48), // Balance the back button
@@ -55,13 +54,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           // Content area
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(AppSpacing.lg),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Account section
                   _buildSectionHeader('Account'),
-                  const SizedBox(height: 16),
+                  SizedBox(height: AppSpacing.lg),
                   _buildMenuItem(
                     icon: Icons.payment_outlined,
                     title: 'Payment options',
@@ -89,11 +88,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     },
                   ),
 
-                  const SizedBox(height: 32),
+                  SizedBox(height: AppSpacing.xxxl),
 
                   // Notifications settings section
                   _buildSectionHeader('Notifications settings'),
-                  const SizedBox(height: 16),
+                  SizedBox(height: AppSpacing.lg),
                   _buildSwitchMenuItem(
                     icon: Icons.notifications_outlined,
                     title: 'Push notification',
@@ -106,11 +105,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     },
                   ),
 
-                  const SizedBox(height: 32),
+                  SizedBox(height: AppSpacing.xxxl),
 
                   // General section
                   _buildSectionHeader('General'),
-                  const SizedBox(height: 16),
+                  SizedBox(height: AppSpacing.lg),
                   _buildMenuItem(
                     icon: Icons.security_outlined,
                     title: 'Settings & Authentication',
@@ -133,7 +132,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     },
                   ),
 
-                  const SizedBox(height: 32),
+                  SizedBox(height: AppSpacing.xxxl),
 
                   // Sign out
                   _buildMenuItem(
@@ -146,16 +145,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       final shouldLogout = await showDialog<bool>(
                         context: context,
                         builder: (context) => AlertDialog(
-                          title: const Text('Sign out'),
-                          content: const Text('Are you sure you want to sign out?'),
+                          title: Text('Sign out'),
+                          content: Text('Are you sure you want to sign out?'),
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.pop(context, false),
-                              child: const Text('Cancel'),
+                              child: Text('Cancel'),
                             ),
                             TextButton(
                               onPressed: () => Navigator.pop(context, true),
-                              child: const Text('Sign out'),
+                              child: Text('Sign out'),
                             ),
                           ],
                         ),
@@ -187,16 +186,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               : title == 'Notifications settings' 
                   ? Icons.notifications_outlined 
                   : Icons.settings_outlined,
-          color: Colors.black87,
+          color: AppColors.textPrimary,
           size: 20,
         ),
-        const SizedBox(width: 8),
+        SizedBox(width: AppSpacing.sm),
         Text(
           title,
           style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: Colors.black87,
+            color: AppColors.textPrimary,
           ),
         ),
       ],
@@ -223,7 +222,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 title,
                 style: TextStyle(
                   fontSize: 16,
-                  color: titleColor ?? Colors.black87,
+                  color: titleColor ?? AppColors.textPrimary,
                 ),
               ),
             ),
@@ -258,7 +257,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   title,
                   style: const TextStyle(
                     fontSize: 16,
-                    color: Colors.black87,
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 Text(
@@ -274,7 +273,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           Switch(
             value: value,
             onChanged: onChanged,
-            activeColor: const Color(0xFF6C5CE7),
+            activeColor: AppColors.posterPrimary,
           ),
         ],
       ),

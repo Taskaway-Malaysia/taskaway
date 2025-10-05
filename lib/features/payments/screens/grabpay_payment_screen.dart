@@ -10,6 +10,10 @@ import '../../../core/services/supabase_service.dart';
 import '../services/stripe_service.dart';
 import '../../applications/controllers/application_controller.dart';
 import '../../auth/controllers/auth_controller.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_radius.dart';
 
 class GrabPayPaymentScreen extends ConsumerStatefulWidget {
   final String paymentId;
@@ -103,32 +107,32 @@ class _GrabPayPaymentScreenState extends ConsumerState<GrabPayPaymentScreen> wit
                     height: 40,
                     decoration: BoxDecoration(
                       color: Colors.green[600],
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: AppRadius.md,
                     ),
                     child: const Icon(
                       Icons.account_balance_wallet,
-                      color: Colors.white,
+                      color: AppColors.white,
                       size: 24,
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  const Text('GrabPay'),
+                  SizedBox(width: AppSpacing.md),
+                  Text('GrabPay'),
                 ],
               ),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'You would be redirected to GrabPay app to complete the payment.',
                     style: TextStyle(fontSize: 14),
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: AppSpacing.lg),
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: Colors.grey[100],
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: AppRadius.md,
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -143,18 +147,15 @@ class _GrabPayPaymentScreenState extends ConsumerState<GrabPayPaymentScreen> wit
                         const SizedBox(height: 4),
                         Text(
                           'RM ${widget.amount.toStringAsFixed(2)}',
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: AppTypography.headlineSmall.copyWith(color: AppColors.white),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: AppSpacing.lg),
                   const LinearProgressIndicator(),
-                  const SizedBox(height: 8),
-                  const Text(
+                  SizedBox(height: AppSpacing.sm),
+                  Text(
                     'Simulating GrabPay payment...',
                     style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
                   ),
@@ -336,14 +337,14 @@ class _GrabPayPaymentScreenState extends ConsumerState<GrabPayPaymentScreen> wit
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('GrabPay Payment'),
+        title: Text('GrabPay Payment'),
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
       body: SafeArea(
         child: Center(
           child: Padding(
-            padding: const EdgeInsets.all(24),
+            padding: EdgeInsets.all(AppSpacing.xxl),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -353,15 +354,15 @@ class _GrabPayPaymentScreenState extends ConsumerState<GrabPayPaymentScreen> wit
                   height: 120,
                   decoration: BoxDecoration(
                     color: Colors.green[600],
-                    borderRadius: BorderRadius.circular(24),
+                    borderRadius: AppRadius.xxxl,
                   ),
                   child: const Icon(
                     Icons.account_balance_wallet,
-                    color: Colors.white,
+                    color: AppColors.white,
                     size: 60,
                   ),
                 ),
-                const SizedBox(height: 32),
+                SizedBox(height: AppSpacing.xxxl),
                 
                 // Amount display
                 Text(
@@ -370,7 +371,7 @@ class _GrabPayPaymentScreenState extends ConsumerState<GrabPayPaymentScreen> wit
                     color: Colors.grey[600],
                   ),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: AppSpacing.sm),
                 Text(
                   'RM ${widget.amount.toStringAsFixed(2)}',
                   style: theme.textTheme.headlineLarge?.copyWith(
@@ -378,26 +379,26 @@ class _GrabPayPaymentScreenState extends ConsumerState<GrabPayPaymentScreen> wit
                     color: theme.colorScheme.primary,
                   ),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: AppSpacing.sm),
                 Text(
                   widget.taskTitle,
                   style: theme.textTheme.bodyMedium,
                   textAlign: TextAlign.center,
                 ),
                 
-                const SizedBox(height: 48),
+                SizedBox(height: AppSpacing.xhuge),
                 
                 // Loading or error state
                 if (_isProcessing) ...[
                   const CircularProgressIndicator(),
-                  const SizedBox(height: 16),
-                  const Text('Processing GrabPay payment...'),
+                  SizedBox(height: AppSpacing.lg),
+                  Text('Processing GrabPay payment...'),
                 ] else if (_errorMessage != null) ...[
                   Container(
-                    padding: const EdgeInsets.all(16),
+                    padding: EdgeInsets.all(AppSpacing.lg),
                     decoration: BoxDecoration(
                       color: Colors.red.shade50,
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: AppRadius.md,
                       border: Border.all(color: Colors.red.shade200),
                     ),
                     child: Column(
@@ -407,7 +408,7 @@ class _GrabPayPaymentScreenState extends ConsumerState<GrabPayPaymentScreen> wit
                           color: Colors.red.shade700,
                           size: 48,
                         ),
-                        const SizedBox(height: 8),
+                        SizedBox(height: AppSpacing.sm),
                         Text(
                           _errorMessage!,
                           style: TextStyle(
@@ -418,21 +419,21 @@ class _GrabPayPaymentScreenState extends ConsumerState<GrabPayPaymentScreen> wit
                       ],
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  SizedBox(height: AppSpacing.xxl),
                   ElevatedButton(
                     onPressed: _processPayment,
-                    child: const Text('Retry Payment'),
+                    child: Text('Retry Payment'),
                   ),
                 ],
                 
-                const SizedBox(height: 48),
+                SizedBox(height: AppSpacing.xhuge),
                 
                 // Information text
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: Colors.blue.shade50,
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: AppRadius.md,
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -442,7 +443,7 @@ class _GrabPayPaymentScreenState extends ConsumerState<GrabPayPaymentScreen> wit
                         color: Colors.blue.shade700,
                         size: 20,
                       ),
-                      const SizedBox(width: 8),
+                      SizedBox(width: AppSpacing.sm),
                       Expanded(
                         child: Text(
                           'GrabPay is an immediate payment method. Funds will be transferred instantly and held by the platform until task completion.',

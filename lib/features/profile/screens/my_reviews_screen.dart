@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_radius.dart';
 
 class MyReviewsScreen extends ConsumerStatefulWidget {
   const MyReviewsScreen({super.key});
@@ -34,12 +38,12 @@ class _MyReviewsScreenState extends ConsumerState<MyReviewsScreen>
           Container(
             padding: const EdgeInsets.fromLTRB(16, 48, 16, 16),
             decoration: const BoxDecoration(
-              color: Color(0xFF6C5CE7),
+              color: AppColors.posterPrimary,
             ),
             child: Row(
               children: [
                 IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Colors.white),
+                  icon: Icon(Icons.arrow_back_ios, color: AppColors.white),
                   onPressed: () {
                     if (context.canPop()) {
                       context.pop();
@@ -49,13 +53,9 @@ class _MyReviewsScreenState extends ConsumerState<MyReviewsScreen>
                   },
                 ),
                 const Spacer(),
-                const Text(
+                Text(
                   'My Reviews',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: AppTypography.headlineSmall.copyWith(color: AppColors.white),
                 ),
                 const Spacer(),
                 const SizedBox(width: 48), // Balance the back button
@@ -65,12 +65,12 @@ class _MyReviewsScreenState extends ConsumerState<MyReviewsScreen>
 
           // Tab bar
           Container(
-            padding: const EdgeInsets.all(16),
-            color: Colors.white,
+            padding: EdgeInsets.all(AppSpacing.lg),
+            color: AppColors.white,
             child: Container(
               decoration: BoxDecoration(
                 color: Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: AppRadius.md,
               ),
               child: TabBar(
                 controller: _tabController,
@@ -78,12 +78,12 @@ class _MyReviewsScreenState extends ConsumerState<MyReviewsScreen>
                   Tab(text: 'As Poster'),
                   Tab(text: 'As Tasker'),
                 ],
-                labelColor: Colors.white,
+                labelColor: AppColors.white,
                 unselectedLabelColor: Colors.grey.shade600,
                 indicatorSize: TabBarIndicatorSize.tab,
                 indicator: BoxDecoration(
-                  color: const Color(0xFF6C5CE7),
-                  borderRadius: BorderRadius.circular(8),
+                  color: AppColors.posterPrimary,
+                  borderRadius: AppRadius.md,
                 ),
                 labelStyle: const TextStyle(
                   fontWeight: FontWeight.w600,
@@ -115,7 +115,7 @@ class _MyReviewsScreenState extends ConsumerState<MyReviewsScreen>
 
   Widget _buildReviewsTab({required bool isPoster}) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -124,7 +124,7 @@ class _MyReviewsScreenState extends ConsumerState<MyReviewsScreen>
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               color: Colors.grey[50],
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: AppRadius.lg,
               border: Border.all(color: Colors.grey[200]!),
             ),
             child: Row(
@@ -134,7 +134,7 @@ class _MyReviewsScreenState extends ConsumerState<MyReviewsScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Overall rating',
                         style: TextStyle(
                           fontSize: 14,
@@ -142,7 +142,7 @@ class _MyReviewsScreenState extends ConsumerState<MyReviewsScreen>
                           fontWeight: FontWeight.w500,
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      SizedBox(height: AppSpacing.sm),
                       Row(
                         children: [
                           const Icon(
@@ -151,12 +151,12 @@ class _MyReviewsScreenState extends ConsumerState<MyReviewsScreen>
                             size: 20,
                           ),
                           const SizedBox(width: 4),
-                          const Text(
+                          Text(
                             '4.8',
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              color: Colors.black87,
+                              color: AppColors.textPrimary,
                             ),
                           ),
                           const SizedBox(width: 4),
@@ -201,7 +201,7 @@ class _MyReviewsScreenState extends ConsumerState<MyReviewsScreen>
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: Colors.black87,
+                            color: AppColors.textPrimary,
                           ),
                         ),
                       ],
@@ -212,19 +212,19 @@ class _MyReviewsScreenState extends ConsumerState<MyReviewsScreen>
             ),
           ),
 
-          const SizedBox(height: 24),
+          SizedBox(height: AppSpacing.xxl),
 
           // Completed tasks section
-          const Text(
+          Text(
             'Completed tasks',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Colors.black87,
+              color: AppColors.textPrimary,
             ),
           ),
 
-          const SizedBox(height: 16),
+          SizedBox(height: AppSpacing.lg),
 
           // Reviews list
           ...mockReviews.map((review) => _buildReviewCard(review)),
@@ -236,10 +236,10 @@ class _MyReviewsScreenState extends ConsumerState<MyReviewsScreen>
   Widget _buildReviewCard(ReviewItem review) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        color: AppColors.white,
+        borderRadius: AppRadius.lg,
         border: Border.all(color: Colors.grey[400]!, width: 1),
       ),
       child: Row(
@@ -255,21 +255,21 @@ class _MyReviewsScreenState extends ConsumerState<MyReviewsScreen>
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: review.isOrange ? Colors.orange : const Color(0xFF6C5CE7),
+                    color: review.isOrange ? Colors.orange : AppColors.posterPrimary,
                   ),
                 ),
                 Text(
                   review.month,
                   style: TextStyle(
                     fontSize: 14,
-                    color: review.isOrange ? Colors.orange : const Color(0xFF6C5CE7),
+                    color: review.isOrange ? Colors.orange : AppColors.posterPrimary,
                   ),
                 ),
               ],
             ),
           ),
 
-          const SizedBox(width: 16),
+          SizedBox(width: AppSpacing.lg),
 
           // Content
           Expanded(
@@ -281,10 +281,10 @@ class _MyReviewsScreenState extends ConsumerState<MyReviewsScreen>
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                    color: AppColors.textPrimary,
                   ),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: AppSpacing.sm),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -296,7 +296,7 @@ class _MyReviewsScreenState extends ConsumerState<MyReviewsScreen>
                         color: Colors.grey[600],
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    SizedBox(width: AppSpacing.sm),
                     Expanded(
                       child: Text(
                         review.reviewText,

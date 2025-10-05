@@ -49,7 +49,7 @@ class GuestPromptOverlay extends ConsumerWidget {
                         side: const BorderSide(color: StyleConstants.taskerColorPrimary),
                         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                       ),
-                      child: const Text('Sign Up'),
+                      child: Text('Sign Up'),
                     ),
                     ),
                     const SizedBox(width: StyleConstants.defaultPadding),
@@ -62,7 +62,7 @@ class GuestPromptOverlay extends ConsumerWidget {
                        style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                       ),
-                      child: const Text('Login'),
+                      child: Text('Login'),
                     ),
                     ),
                   ],

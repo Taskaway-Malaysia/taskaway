@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_radius.dart';
 
 class MapSearchBar extends StatelessWidget {
   final bool isTaskerMode;
@@ -32,7 +33,7 @@ class MapSearchBar extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: Colors.white,
                       border: Border.all(color: Colors.grey.shade300),
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: AppRadius.md,
                     ),
                     child: Row(
                       children: [
@@ -77,7 +78,7 @@ class MapSearchBar extends StatelessWidget {
                   width: 44,
                   decoration: BoxDecoration(
                     border: Border.all(color: Colors.grey.shade300),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: AppRadius.md,
                   ),
                   child: IconButton(
                     onPressed: () {

@@ -12,6 +12,10 @@ import '../services/stripe_service.dart';
 import '../controllers/payment_controller.dart';
 import '../../applications/controllers/application_controller.dart';
 import '../../auth/controllers/auth_controller.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_radius.dart';
 
 class FPXBankSelectionScreen extends ConsumerStatefulWidget {
   final String paymentId;
@@ -289,7 +293,7 @@ class _FPXBankSelectionScreenState
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Select Your Bank'),
+        title: Text('Select Your Bank'),
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
@@ -298,7 +302,7 @@ class _FPXBankSelectionScreenState
           children: [
             // Payment amount header
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(AppSpacing.lg),
               color: theme.colorScheme.primary.withOpacity(0.1),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -330,12 +334,12 @@ class _FPXBankSelectionScreenState
                         ),
                         decoration: BoxDecoration(
                           color: Colors.blue[900],
-                          borderRadius: BorderRadius.circular(4),
+                          borderRadius: AppRadius.sm,
                         ),
-                        child: const Text(
+                        child: Text(
                           'FPX',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: AppColors.white,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -348,14 +352,14 @@ class _FPXBankSelectionScreenState
 
             // Search bar
             Padding(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(AppSpacing.lg),
               child: TextField(
                 controller: _searchController,
                 decoration: InputDecoration(
                   hintText: 'Search bank name',
                   prefixIcon: const Icon(Icons.search),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: AppRadius.md,
                   ),
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 16,
@@ -382,7 +386,7 @@ class _FPXBankSelectionScreenState
                           _selectedBank = bank;
                         });
                       },
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: AppRadius.md,
                       child: Container(
                         decoration: BoxDecoration(
                           border: Border.all(
@@ -391,12 +395,12 @@ class _FPXBankSelectionScreenState
                                 : Colors.grey[300]!,
                             width: isSelected ? 2 : 1,
                           ),
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: AppRadius.md,
                           color: isSelected
                               ? theme.colorScheme.primary.withOpacity(0.05)
-                              : Colors.white,
+                              : AppColors.white,
                         ),
-                        padding: const EdgeInsets.all(16),
+                        padding: EdgeInsets.all(AppSpacing.lg),
                         child: Row(
                           children: [
                             Radio<FPXBank>(
@@ -409,7 +413,7 @@ class _FPXBankSelectionScreenState
                               },
                               activeColor: theme.colorScheme.primary,
                             ),
-                            const SizedBox(width: 12),
+                            SizedBox(width: AppSpacing.md),
                             Expanded(
                               child: Text(
                                 bank.name,
@@ -437,11 +441,11 @@ class _FPXBankSelectionScreenState
             // Error message
             if (_errorMessage != null)
               Container(
-                margin: const EdgeInsets.all(16),
+                margin: EdgeInsets.all(AppSpacing.lg),
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: Colors.red.shade50,
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: AppRadius.md,
                   border: Border.all(color: Colors.red.shade200),
                 ),
                 child: Row(
@@ -451,7 +455,7 @@ class _FPXBankSelectionScreenState
                       color: Colors.red.shade700,
                       size: 20,
                     ),
-                    const SizedBox(width: 8),
+                    SizedBox(width: AppSpacing.sm),
                     Expanded(
                       child: Text(
                         _errorMessage!,
@@ -467,7 +471,7 @@ class _FPXBankSelectionScreenState
 
             // Continue button
             Padding(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(AppSpacing.lg),
               child: SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -483,10 +487,10 @@ class _FPXBankSelectionScreenState
                           width: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: Colors.white,
+                            color: AppColors.white,
                           ),
                         )
-                      : const Text(
+                      : Text(
                           'Continue with FPX',
                           style: TextStyle(
                             fontSize: 16,

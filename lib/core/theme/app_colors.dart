@@ -115,6 +115,9 @@ class AppColors {
   /// Success text - Success messages (Success)
   static const Color textSuccess = Color(0xFF059669);
 
+  /// Text primary with 87% opacity - High emphasis text
+  static const Color textPrimary87 = Color(0xDE202020);
+
   // ============= SEMANTIC BACKGROUND COLORS =============
 
   /// Primary background - Main screen background (White)
@@ -226,6 +229,38 @@ class AppColors {
 
   /// Navigation indicator - Active tab indicator (Primary)
   static const Color navIndicator = primary;
+
+  // ============= ROLE-BASED COLORS =============
+
+  /// Poster primary color - Purple for poster-related UI
+  static const Color posterPrimary = Color(0xFF6C5CE7);
+
+  /// Poster primary light - Light purple for backgrounds
+  static const Color posterLight = Color(0xFFEFEEFC);
+
+  /// Poster primary extra light - Extra light purple
+  static const Color posterExtraLight = Color(0xFFF8F7FE);
+
+  /// Tasker primary color - Orange for tasker-related UI
+  static const Color taskerPrimary = Color(0xFFF39C12);
+
+  /// Tasker primary light - Light orange for backgrounds
+  static const Color taskerLight = Color(0xFFFEF9E7);
+
+  /// Tasker primary extra light - Extra light orange
+  static const Color taskerExtraLight = Color(0xFFFFFCF5);
+
+  /// General purple - Used for various UI elements
+  static const Color purple = Color(0xFF7B61FF);
+
+  /// Purple light - Light variant
+  static const Color purpleLight = Color(0xFFE7E1FF);
+
+  /// Orange - For highlights and accents
+  static const Color orange = Color(0xFFFDAB2F);
+
+  /// Orange light - Light variant
+  static const Color orangeLight = Color(0xFFFFF3D9);
 
   // ============= LEGACY SUPPORT (Deprecated) =============
   // These are kept for backward compatibility and will be removed in future versions

@@ -9,6 +9,9 @@ import 'package:taskaway/core/theme/app_colors.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../controllers/task_controller.dart';
 import '../../../core/services/analytics_service.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_radius.dart';
 
 // Provider to track current step in task creation process
 final createTaskStepProvider = StateProvider<int>((ref) => 0);
@@ -241,9 +244,9 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor:
-            const Color(0xFF6C5CE7), // Purple color from other screens
+            AppColors.posterPrimary, // Purple color from other screens
         foregroundColor: AppColors.textWhite,
-        title: const Text(
+        title: Text(
           'Post a Task',
           style: TextStyle(
             color: AppColors.textWhite,
@@ -285,7 +288,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                           : AppColors.backgroundDisabled,
                       border: index == currentStep
                           ? Border.all(
-                              color: const Color(0xFF6C5CE7),
+                              color: AppColors.posterPrimary,
                               width: 2) // Purple color from other screens
                           : null,
                     ),
@@ -297,14 +300,14 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
           // Step content
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(AppSpacing.lg),
               child: _buildStepContent(currentStep, theme),
             ),
           ),
 
           // Continue button or Go to My Tasks button
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: EdgeInsets.all(AppSpacing.lg),
             child: SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -365,14 +368,14 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
       mainAxisAlignment: MainAxisAlignment.center,
       mainAxisSize: MainAxisSize.min, // Set to min to prevent unbounded height issues
       children: [
-        const SizedBox(height: 40),
+        SizedBox(height: AppSpacing.huge),
         // Success checkmark icon
         Container(
           width: 80,
           height: 80,
           decoration: const BoxDecoration(
             shape: BoxShape.circle,
-            color: Color(0xFF6C5CE7),
+            color: AppColors.posterPrimary,
           ),
           child: const Icon(
             Icons.check,
@@ -380,21 +383,21 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
             size: 40,
           ),
         ),
-        const SizedBox(height: 24),
-        const Text(
+        SizedBox(height: AppSpacing.xxl),
+        Text(
           'Your task is posted',
           style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
         ),
-        const SizedBox(height: 40),
-        const Text(
+        SizedBox(height: AppSpacing.huge),
+        Text(
           'Here\'s what\'s next:',
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
         ),
-        const SizedBox(height: 24),
+        SizedBox(height: AppSpacing.xxl),
         _buildNextStep(1, 'Taskers will make offers'),
-        const SizedBox(height: 16),
+        SizedBox(height: AppSpacing.lg),
         _buildNextStep(2, 'Accept an offer'),
-        const SizedBox(height: 16),
+        SizedBox(height: AppSpacing.lg),
         _buildNextStep(3, 'Chat and get your task done!'),
         const SizedBox(height: 60), // Fixed height instead of Spacer
       ],
@@ -422,7 +425,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
             ),
           ),
         ),
-        const SizedBox(width: 16),
+        SizedBox(width: AppSpacing.lg),
         Text(
           text,
           style: const TextStyle(fontSize: 16),
@@ -441,30 +444,30 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Category',
             style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: AppSpacing.lg),
           // Display selected category only
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(AppSpacing.lg),
             decoration: BoxDecoration(
-              color: const Color(0xFF6C5CE7).withValues(alpha: 0.1),
+              color: AppColors.posterPrimary.withValues(alpha: 0.1),
               border: Border.all(
-                color: const Color(0xFF6C5CE7),
+                color: AppColors.posterPrimary,
                 width: 2,
               ),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: AppRadius.lg,
             ),
             child: Row(
               children: [
                 Icon(
                   _getCategoryIcon(selectedCategory ?? 'others'),
-                  color: const Color(0xFF6C5CE7),
+                  color: AppColors.posterPrimary,
                   size: 28,
                 ),
-                const SizedBox(width: 16),
+                SizedBox(width: AppSpacing.lg),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -474,11 +477,11 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF6C5CE7),
+                          color: AppColors.posterPrimary,
                         ),
                       ),
                       const SizedBox(height: 4),
-                      const Text(
+                      Text(
                         'Selected category',
                         style: TextStyle(
                           fontSize: 14,
@@ -490,7 +493,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                 ),
                 IconButton(
                   icon: const Icon(Icons.edit_outlined),
-                  color: const Color(0xFF6C5CE7),
+                  color: AppColors.posterPrimary,
                   onPressed: () {
                     // Navigate back to poster home screen to change category
                     context.go('/home/post-task');
@@ -499,25 +502,25 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: AppSpacing.xxl),
 
           // Title field
-          const Text(
+          Text(
             'Start with a title',
             style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
-          const SizedBox(height: 8),
-          const Text(
+          SizedBox(height: AppSpacing.sm),
+          Text(
             'In a few words, what do you need done?',
             style: TextStyle(color: AppColors.textTertiary),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: AppSpacing.lg),
           TextFormField(
             controller: _titleController,
             decoration: InputDecoration(
               hintText: 'Paint my gate',
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: AppRadius.md,
               ),
             ),
             validator: (value) {
@@ -527,25 +530,25 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
               return null;
             },
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: AppSpacing.xxl),
 
           // Description field
-          const Text(
+          Text(
             'Describe the task',
             style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
-          const SizedBox(height: 8),
-          const Text(
+          SizedBox(height: AppSpacing.sm),
+          Text(
             'Summarize the key details',
             style: TextStyle(color: AppColors.textTertiary),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: AppSpacing.lg),
           TextFormField(
             controller: _descriptionController,
             decoration: InputDecoration(
               hintText: 'I am looking to hire a professional painter',
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: AppRadius.md,
               ),
             ),
             maxLines: 5,
@@ -569,16 +572,16 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Ready to post your task?',
           style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
         ),
-        const SizedBox(height: 8),
-        const Text(
+        SizedBox(height: AppSpacing.sm),
+        Text(
           'Post the task when you\'re ready',
           style: TextStyle(color: AppColors.textTertiary),
         ),
-        const SizedBox(height: 24),
+        SizedBox(height: AppSpacing.xxl),
 
         // Task details list
         _buildTaskDetailItem(
@@ -630,7 +633,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
       child: Row(
         children: [
           Icon(icon, size: 20, color: AppColors.textTertiary),
-          const SizedBox(width: 16),
+          SizedBox(width: AppSpacing.lg),
           Expanded(
             child: Text(
               text,
@@ -640,7 +643,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
           IconButton(
             icon: const Icon(Icons.edit, size: 20),
             onPressed: onEdit,
-            color: const Color(0xFF6C5CE7),
+            color: AppColors.posterPrimary,
           ),
         ],
       ),
@@ -704,30 +707,30 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Choose a date & time',
           style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
         ),
-        const SizedBox(height: 8),
-        const Text(
+        SizedBox(height: AppSpacing.sm),
+        Text(
           'When do you need this task to be done?',
           style: TextStyle(color: AppColors.textTertiary),
         ),
-        const SizedBox(height: 24),
+        SizedBox(height: AppSpacing.xxl),
 
         // Date options
         _buildDateOption('on_date', 'On date', theme,
             dateText: taskData['dateOption'] == 'on_date'
                 ? 'On ${dateFormat.format(scheduledTime)}'
                 : null),
-        const SizedBox(height: 12),
+        SizedBox(height: AppSpacing.md),
         _buildDateOption('before_date', 'Before date', theme,
             dateText: taskData['beforeDateText'] ??
                 'Before ${dateFormat.format(scheduledTime)}'),
-        const SizedBox(height: 12),
+        SizedBox(height: AppSpacing.md),
         _buildDateOption('any_day', 'Any day', theme),
 
-        const SizedBox(height: 24),
+        SizedBox(height: AppSpacing.xxl),
 
         // Time of day checkbox
         Row(
@@ -744,17 +747,17 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                 ref.read(createTaskDataProvider.notifier).state = updatedData;
               },
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: AppRadius.sm,
               ),
-              activeColor: const Color(0xFF6C5CE7),
+              activeColor: AppColors.posterPrimary,
             ),
-            const Text('I need a certain time of the day'),
+            Text('I need a certain time of the day'),
           ],
         ),
 
         // Time selection grid - only show when checkbox is checked
         if (taskData['needsSpecificTime'] == true) ...[
-          const SizedBox(height: 24),
+          SizedBox(height: AppSpacing.xxl),
           GridView.count(
             crossAxisCount: 2,
             shrinkWrap: true,
@@ -790,15 +793,15 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
         updatedData['timeOfDay'] = value;
         ref.read(createTaskDataProvider.notifier).state = updatedData;
       },
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: AppRadius.md,
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           border: Border.all(
-            color: isSelected ? const Color(0xFF6C5CE7) : AppColors.backgroundDisabled,
+            color: isSelected ? AppColors.posterPrimary : AppColors.backgroundDisabled,
             width: isSelected ? 2 : 1,
           ),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: AppRadius.md,
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -809,9 +812,9 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                 Icon(
                   icon,
                   size: 20,
-                  color: const Color(0xFF6C5CE7),
+                  color: AppColors.posterPrimary,
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: AppSpacing.sm),
                 Text(
                   label,
                   style: const TextStyle(
@@ -825,7 +828,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
               timeRange,
               style: TextStyle(
                 fontSize: 12,
-                color: AppColors.textLight,
+                color: AppColors.textSecondary,
               ),
             ),
           ],
@@ -851,17 +854,17 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
           _showDatePicker(context, value == 'before_date');
         }
       },
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: AppRadius.md,
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
         decoration: BoxDecoration(
           color: isSelected
-              ? const Color(0xFF6C5CE7).withValues(alpha: 0.1)
-              : AppColors.backgroundGray,
-          borderRadius: BorderRadius.circular(8),
+              ? AppColors.posterPrimary.withValues(alpha: 0.1)
+              : AppColors.backgroundTertiary,
+          borderRadius: AppRadius.md,
           border: isSelected
-              ? Border.all(color: const Color(0xFF6C5CE7), width: 2)
+              ? Border.all(color: AppColors.posterPrimary, width: 2)
               : null,
         ),
         child: Text(
@@ -869,7 +872,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
           textAlign: TextAlign.center,
           style: TextStyle(
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-            color: isSelected ? const Color(0xFF6C5CE7) : AppColors.primaryBlack,
+            color: isSelected ? AppColors.posterPrimary : AppColors.textPrimary,
           ),
         ),
       ),
@@ -891,9 +894,9 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.light(
-              primary: Color(0xFF6C5CE7),
+              primary: AppColors.posterPrimary,
               onPrimary: AppColors.textWhite,
-              onSurface: AppColors.primaryBlack,
+              onSurface: AppColors.textPrimary,
             ),
           ),
           child: child!,
@@ -925,16 +928,16 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Set your location',
             style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
-          const SizedBox(height: 8),
-          const Text(
+          SizedBox(height: AppSpacing.sm),
+          Text(
             'Where do you need this task to be done?',
             style: TextStyle(color: AppColors.textTertiary),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: AppSpacing.lg),
 
           // Location type selection (Physical or Online)
           Row(
@@ -943,7 +946,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                 child: _buildLocationType('physical', 'Physical',
                     'This task requires in-person help', Icons.place_outlined),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: AppSpacing.md),
               Expanded(
                 child: _buildLocationType(
                     'online', 'Online', 'Can be done remotely', Icons.language),
@@ -953,19 +956,19 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
 
           // Postcode input - only show for physical tasks
           if (taskData['locationType'] == 'physical') ...[
-            const SizedBox(height: 24),
-            const Text(
+            SizedBox(height: AppSpacing.xxl),
+            Text(
               'Postcode',
               style: TextStyle(fontWeight: FontWeight.w500),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: AppSpacing.sm),
             TextFormField(
               controller: _locationController,
               decoration: InputDecoration(
                 hintText: 'Please enter your postcode',
                 prefixIcon: const Icon(Icons.location_on_outlined),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: AppRadius.md,
                 ),
               ),
               validator: (value) {
@@ -978,17 +981,17 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
             ),
           ],
 
-          const SizedBox(height: 24),
-          const Text(
+          SizedBox(height: AppSpacing.xxl),
+          Text(
             'Snap a photo',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
-          const SizedBox(height: 8),
-          const Text(
+          SizedBox(height: AppSpacing.sm),
+          Text(
             'Help taskers understand of what needs to be done.\nAdd up to 5 photos.',
             style: TextStyle(color: AppColors.textTertiary),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: AppSpacing.lg),
           Row(
             children: [
               InkWell(
@@ -998,12 +1001,12 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                   height: 80,
                   decoration: BoxDecoration(
                     border: Border.all(color: AppColors.backgroundDisabled),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: AppRadius.md,
                   ),
                   child: const Icon(Icons.add, color: AppColors.textTertiary),
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: AppSpacing.md),
               if (taskData['images'] != null &&
                   (taskData['images'] as List).isNotEmpty)
                 Wrap(
@@ -1019,13 +1022,13 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                             height: 80,
                             width: 80,
                             decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: AppRadius.md,
                               border: Border.all(
                                 color: AppColors.backgroundDisabled,
                               ),
                             ),
                             child: ClipRRect(
-                              borderRadius: BorderRadius.circular(7),
+                              borderRadius: AppRadius.md,
                               child: _buildImagePreview(image),
                             ),
                           ),
@@ -1037,7 +1040,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                               child: Container(
                                 padding: const EdgeInsets.all(2),
                                 decoration: const BoxDecoration(
-                                  color: AppColors.errorRed,
+                                  color: AppColors.error,
                                   shape: BoxShape.circle,
                                 ),
                                 child: const Icon(
@@ -1056,24 +1059,24 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
             ],
           ),
 
-          const SizedBox(height: 24),
-          const Text(
+          SizedBox(height: AppSpacing.xxl),
+          Text(
             'Enter your budget',
             style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
-          const SizedBox(height: 8),
-          const Text(
+          SizedBox(height: AppSpacing.sm),
+          Text(
             "Don't worry, you can always negotiate the final price later.",
             style: TextStyle(color: AppColors.textTertiary),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: AppSpacing.lg),
           TextFormField(
             controller: _priceController,
             decoration: InputDecoration(
               hintText: '1000',
               prefixText: 'MYR ',
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: AppRadius.md,
               ),
             ),
             keyboardType: TextInputType.number,
@@ -1091,7 +1094,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
               return null;
             },
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: AppSpacing.sm),
           Row(
             mainAxisSize: MainAxisSize.min, // Prevent unbounded constraints
             children: [
@@ -1103,9 +1106,9 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                   ref.read(createTaskDataProvider.notifier).state = updatedData;
                 },
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: AppRadius.sm,
                 ),
-                activeColor: const Color(0xFF6C5CE7),
+                activeColor: AppColors.posterPrimary,
               ),
               const Flexible(child: Text('I will provide the required material(s)')),
             ],
@@ -1137,15 +1140,15 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
         // Update state with the preserved values
         ref.read(createTaskDataProvider.notifier).state = updatedData;
       },
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: AppRadius.md,
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           border: Border.all(
-            color: isSelected ? const Color(0xFF6C5CE7) : AppColors.backgroundDisabled,
+            color: isSelected ? AppColors.posterPrimary : AppColors.backgroundDisabled,
             width: isSelected ? 2 : 1,
           ),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: AppRadius.md,
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -1153,9 +1156,9 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
             Icon(
               icon,
               size: 24,
-              color: const Color(0xFF6C5CE7),
+              color: AppColors.posterPrimary,
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: AppSpacing.sm),
             Text(
               label,
               style: const TextStyle(
@@ -1168,7 +1171,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 12,
-                color: AppColors.textLight,
+                color: AppColors.textSecondary,
               ),
             ),
           ],
@@ -1239,7 +1242,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
           imageObj.path,
           fit: BoxFit.cover,
           errorBuilder: (context, error, stackTrace) {
-            return const Center(child: Icon(Icons.broken_image, color: AppColors.errorRed));
+            return const Center(child: Icon(Icons.broken_image, color: AppColors.error));
           },
         );
       }

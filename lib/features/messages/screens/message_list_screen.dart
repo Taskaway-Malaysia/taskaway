@@ -5,6 +5,9 @@ import 'package:go_router/go_router.dart';
 import '../controllers/message_controller.dart';
 import '../models/channel.dart';
 import '../../auth/controllers/auth_controller.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 
 class MessageListScreen extends ConsumerWidget {
   const MessageListScreen({super.key});
@@ -34,27 +37,32 @@ class MessageListScreen extends ConsumerWidget {
     };
 
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        toolbarHeight: 80,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, size: 20, color: Colors.black),
-          onPressed: () => context.go('/home'),
-        ),
-        title: const Text(
-          'Message',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.w700,
-            color: Color(0xFF202020),
-            letterSpacing: 0.48, // 2% of 24px
+      backgroundColor: AppColors.white,
+      body: Column(
+        children: [
+          SafeArea(
+            bottom: false,
+            child: Container(
+              padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
+              decoration: BoxDecoration(
+                color: AppColors.white,
+                border: Border(
+                  bottom: BorderSide(
+                    color: AppColors.borderDefault,
+                    width: 1,
+                  ),
+                ),
+              ),
+              child: Center(
+                child: Text(
+                  'Message',
+                  style: AppTypography.headlineMedium,
+                ),
+              ),
+            ),
           ),
-        ),
-        centerTitle: true,
-      ),
-      body: channelsList.isEmpty
+          Expanded(
+            child: channelsList.isEmpty
           ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -64,14 +72,14 @@ class MessageListScreen extends ConsumerWidget {
                     size: 64,
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.2),
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: AppSpacing.lg),
                   Text(
                     'No conversations yet',
                     style: theme.textTheme.bodyLarge?.copyWith(
                       color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: AppSpacing.sm),
                   Text(
                     'Start by accepting a task offer',
                     style: theme.textTheme.bodyMedium?.copyWith(
@@ -136,7 +144,7 @@ class MessageListScreen extends ConsumerWidget {
                                         ? otherPersonName[0].toUpperCase()
                                         : '?',
                                     style: const TextStyle(
-                                      color: Colors.black54,
+                                      color: AppColors.textSecondary,
                                       fontWeight: FontWeight.bold,
                                       fontSize: 20,
                                     ),
@@ -225,7 +233,7 @@ class MessageListScreen extends ConsumerWidget {
                                         child: Text(
                                           channel.unreadCount.toString(),
                                           style: const TextStyle(
-                                            color: Colors.white,
+                                            color: AppColors.white,
                                             fontSize: 12,
                                             fontWeight: FontWeight.w500,
                                           ),
@@ -243,6 +251,9 @@ class MessageListScreen extends ConsumerWidget {
                 );
               },
             ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -283,77 +294,86 @@ class MessageListScreen extends ConsumerWidget {
 
   Widget _buildLoadingScaffold(ThemeData theme) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        toolbarHeight: 80,
-        leading: Builder(
-          builder: (context) => IconButton(
-            icon: const Icon(Icons.arrow_back, size: 20, color: Colors.black),
-            onPressed: () => context.go('/home'),
+      backgroundColor: AppColors.white,
+      body: Column(
+        children: [
+          SafeArea(
+            bottom: false,
+            child: Container(
+              padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
+              decoration: BoxDecoration(
+                color: AppColors.white,
+                border: Border(
+                  bottom: BorderSide(
+                    color: AppColors.borderDefault,
+                    width: 1,
+                  ),
+                ),
+              ),
+              child: Center(
+                child: Text(
+                  'Message',
+                  style: AppTypography.headlineMedium,
+                ),
+              ),
+            ),
           ),
-        ),
-        title: const Text(
-          'Message',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.w700,
-            color: Color(0xFF202020),
-            letterSpacing: 0.48,
+          Expanded(
+            child: Center(
+              child: CircularProgressIndicator(
+                color: Color(0xFFFDAB2F),
+              ),
+            ),
           ),
-        ),
-        centerTitle: true,
-      ),
-      body: const Center(
-        child: CircularProgressIndicator(
-          color: Color(0xFFFDAB2F),
-        ),
+        ],
       ),
     );
   }
 
   Widget _buildErrorScaffold(ThemeData theme, Object error) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        toolbarHeight: 80,
-        leading: Builder(
-          builder: (context) => IconButton(
-            icon: const Icon(Icons.arrow_back, size: 20, color: Colors.black),
-            onPressed: () => context.go('/home'),
+      backgroundColor: AppColors.white,
+      body: Column(
+        children: [
+          SafeArea(
+            bottom: false,
+            child: Container(
+              padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
+              decoration: BoxDecoration(
+                color: AppColors.white,
+                border: Border(
+                  bottom: BorderSide(
+                    color: AppColors.borderDefault,
+                    width: 1,
+                  ),
+                ),
+              ),
+              child: Center(
+                child: Text(
+                  'Message',
+                  style: AppTypography.headlineMedium,
+                ),
+              ),
+            ),
           ),
-        ),
-        title: const Text(
-          'Message',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.w700,
-            color: Color(0xFF202020),
-            letterSpacing: 0.48,
-          ),
-        ),
-        centerTitle: true,
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
+          Expanded(
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
             Icon(
               Icons.error_outline,
               size: 64,
               color: theme.colorScheme.error.withValues(alpha: 0.6),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: AppSpacing.lg),
             Text(
               'Failed to load messages',
               style: theme.textTheme.bodyLarge?.copyWith(
                 color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
               ),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: AppSpacing.sm),
             Text(
               error.toString(),
               style: theme.textTheme.bodySmall?.copyWith(
@@ -361,8 +381,11 @@ class MessageListScreen extends ConsumerWidget {
               ),
               textAlign: TextAlign.center,
             ),
-          ],
-        ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

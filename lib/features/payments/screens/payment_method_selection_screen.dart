@@ -8,6 +8,10 @@ import '../services/stripe_service.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/services/supabase_service.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_radius.dart';
 
 class PaymentMethodSelectionScreen extends ConsumerStatefulWidget {
   final String paymentId;
@@ -185,7 +189,7 @@ class _PaymentMethodSelectionScreenState
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Select Payment Method'),
+        title: Text('Select Payment Method'),
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
@@ -198,7 +202,7 @@ class _PaymentMethodSelectionScreenState
               // Payment amount display
               Card(
                 child: Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: EdgeInsets.all(AppSpacing.lg),
                   child: Column(
                     children: [
                       Text(
@@ -207,7 +211,7 @@ class _PaymentMethodSelectionScreenState
                           color: Colors.grey[600],
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      SizedBox(height: AppSpacing.sm),
                       Text(
                         'RM ${widget.amount.toStringAsFixed(2)}',
                         style: theme.textTheme.headlineMedium?.copyWith(
@@ -228,7 +232,7 @@ class _PaymentMethodSelectionScreenState
                 ),
               ),
 
-              const SizedBox(height: 24),
+              SizedBox(height: AppSpacing.xxl),
 
               Text(
                 'Choose how you want to pay',
@@ -237,7 +241,7 @@ class _PaymentMethodSelectionScreenState
                 ),
               ),
 
-              const SizedBox(height: 16),
+              SizedBox(height: AppSpacing.lg),
 
               // Payment method options
               Expanded(
@@ -253,7 +257,7 @@ class _PaymentMethodSelectionScreenState
                             _selectedMethod = method;
                           });
                         },
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: AppRadius.lg,
                         child: Container(
                           decoration: BoxDecoration(
                             border: Border.all(
@@ -262,12 +266,12 @@ class _PaymentMethodSelectionScreenState
                                   : Colors.grey[300]!,
                               width: isSelected ? 2 : 1,
                             ),
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: AppRadius.lg,
                             color: isSelected
                                 ? theme.colorScheme.primary.withOpacity(0.05)
-                                : Colors.white,
+                                : AppColors.white,
                           ),
-                          padding: const EdgeInsets.all(16),
+                          padding: EdgeInsets.all(AppSpacing.lg),
                           child: Row(
                             children: [
                               // Radio button
@@ -281,7 +285,7 @@ class _PaymentMethodSelectionScreenState
                                 },
                                 activeColor: theme.colorScheme.primary,
                               ),
-                              const SizedBox(width: 12),
+                              SizedBox(width: AppSpacing.md),
                               // Method details
                               Expanded(
                                 child: Column(
@@ -327,7 +331,7 @@ class _PaymentMethodSelectionScreenState
                                 height: 48,
                                 decoration: BoxDecoration(
                                   color: Colors.grey[100],
-                                  borderRadius: BorderRadius.circular(8),
+                                  borderRadius: AppRadius.md,
                                 ),
                                 child: Icon(
                                   method == PaymentMethodType.card
@@ -352,7 +356,7 @@ class _PaymentMethodSelectionScreenState
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: Colors.green.shade50,
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: AppRadius.md,
                   border: Border.all(color: Colors.green.shade200),
                 ),
                 child: Row(
@@ -362,7 +366,7 @@ class _PaymentMethodSelectionScreenState
                       color: Colors.green.shade700,
                       size: 20,
                     ),
-                    const SizedBox(width: 8),
+                    SizedBox(width: AppSpacing.sm),
                     Expanded(
                       child: Text(
                         'Your payment information is encrypted and secure',
@@ -376,7 +380,7 @@ class _PaymentMethodSelectionScreenState
                 ),
               ),
 
-              const SizedBox(height: 24),
+              SizedBox(height: AppSpacing.xxl),
 
               // Continue button
               ElevatedButton(
@@ -392,10 +396,10 @@ class _PaymentMethodSelectionScreenState
                         width: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          valueColor: AlwaysStoppedAnimation<Color>(AppColors.white),
                         ),
                       )
-                    : const Text(
+                    : Text(
                         'Continue',
                         style: TextStyle(
                           fontSize: 16,
@@ -415,7 +419,7 @@ class _PaymentMethodSelectionScreenState
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
         color: Colors.grey[200],
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: AppRadius.sm,
       ),
       child: Text(
         bankName,

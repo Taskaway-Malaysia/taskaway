@@ -3,6 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:taskaway/core/constants/style_constants.dart';
 import 'package:taskaway/features/auth/models/profile.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_radius.dart';
 import 'package:taskaway/features/tasks/screens/create_task_screen.dart'; // For createTaskDataProvider
 
 class PosterHomeScreen extends ConsumerWidget {
@@ -31,8 +35,8 @@ class PosterHomeScreen extends ConsumerWidget {
         Container(
           height: headerHeight,
           padding: const EdgeInsets.fromLTRB(16, 48, 16, 16),
-          decoration: const BoxDecoration(
-            color: Color(0xFF6C5CE7), // Purple color from the image
+          decoration: BoxDecoration(
+            color: AppColors.posterPrimary,
             borderRadius: BorderRadius.only(
               bottomLeft: Radius.circular(30),
               bottomRight: Radius.circular(30),
@@ -52,26 +56,26 @@ class PosterHomeScreen extends ConsumerWidget {
                       children: [
                         CircleAvatar(
                           radius: 24,
-                          backgroundColor: Colors.white,
+                          backgroundColor: AppColors.white,
                           child: Text(
                             avatarText,
-                            style: const TextStyle(
-                                color: Color(0xFF6C5CE7), fontSize: 18),
+                            style: TextStyle(
+                                color: AppColors.posterPrimary, fontSize: 18),
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        SizedBox(width: AppSpacing.md),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
+                            Text(
                               'Hello there,',
                               style: TextStyle(
-                                  color: Colors.white70, fontSize: 14),
+                                  color: AppColors.white.withOpacity(0.7), fontSize: 14),
                             ),
                             Text(
                               displayName,
                               style: const TextStyle(
-                                  color: Colors.white,
+                                  color: AppColors.white,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 18),
                             ),
@@ -83,7 +87,7 @@ class PosterHomeScreen extends ConsumerWidget {
                     // Notification bell
                     IconButton(
                       icon: const Icon(Icons.notifications_outlined,
-                          color: Colors.white),
+                          color: AppColors.white),
                       onPressed: () {
                         context.push('/notifications');
                       },
@@ -100,7 +104,7 @@ class PosterHomeScreen extends ConsumerWidget {
                   child: Text(
                     'Post a Task. Give it Away.',
                     style: TextStyle(
-                        color: Colors.white,
+                        color: AppColors.white,
                         fontSize: 16,
                         fontWeight: FontWeight.w500),
                   ),
@@ -114,14 +118,14 @@ class PosterHomeScreen extends ConsumerWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.white,
                     borderRadius:
                         BorderRadius.circular(StyleConstants.defaultRadius),
                   ),
                   child: Row(
                     children: [
                       const Icon(Icons.search, color: Colors.grey),
-                      const SizedBox(width: 8),
+                      SizedBox(width: AppSpacing.sm),
                       Expanded(
                         child: TextField(
                           decoration: const InputDecoration(
@@ -167,7 +171,7 @@ class PosterHomeScreen extends ConsumerWidget {
                       style: TextStyle(color: Colors.grey),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: AppSpacing.lg),
                   GridView.count(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
@@ -228,15 +232,15 @@ class PosterHomeScreen extends ConsumerWidget {
           // Navigate to the create task screen
           context.go('/create-task');
         },
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: AppRadius.lg,
         child: Column(
           children: [
             CircleAvatar(
-              backgroundColor: const Color(0xFF6C5CE7),
+              backgroundColor: AppColors.posterPrimary,
               radius: 30,
-              child: Icon(icon, color: Colors.white, size: 24),
+              child: Icon(icon, color: AppColors.white, size: 24),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: AppSpacing.sm),
             Text(
               title,
               textAlign: TextAlign.center,

@@ -13,6 +13,7 @@ import '../../auth/controllers/auth_controller.dart';
 import '../../auth/models/profile.dart';
 import '../../tasks/controllers/task_controller.dart';
 import '../../../core/utils/time_formatter.dart';
+import '../../../core/theme/app_radius.dart';
 
 class MessageScreen extends ConsumerStatefulWidget {
   final Channel channel;
@@ -131,7 +132,6 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
             label,
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontFamily: 'Roboto',
               color: isSelected ? AppColors.navActive : AppColors.navInactive,
               fontSize: 12,
               fontWeight: FontWeight.w500,
@@ -157,19 +157,19 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppColors.primaryYellow,
+              color: AppColors.primary,
               border: Border.all(
-                color: AppColors.primaryYellowDark,
+                color: AppColors.primaryDark,
                 width: 1,
               ),
-              borderRadius: BorderRadius.circular(2),
+              borderRadius: AppRadius.xs,
             ),
             child: SvgPicture.asset(
               'assets/icons/nav_taskaway.svg',
               width: 15,
               height: 15,
               colorFilter: const ColorFilter.mode(
-                AppColors.primaryBlack,
+                AppColors.textPrimary,
                 BlendMode.srcIn,
               ),
             ),
@@ -179,7 +179,6 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
             'Taskaway',
             textAlign: TextAlign.center,
             style: const TextStyle(
-              fontFamily: 'Roboto',
               color: AppColors.navInactive,
               fontSize: 12,
               fontWeight: FontWeight.w500,
@@ -206,7 +205,7 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
     final otherUserProfileAsync = ref.watch(profileProvider(otherUserId));
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundWhite,
+      backgroundColor: AppColors.backgroundPrimary,
       body: Column(
         children: [
               // Safe area spacer
@@ -217,98 +216,92 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
 
               // Navigation bar
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
+                decoration: BoxDecoration(
+                  color: AppColors.white,
+                  border: Border(
+                    bottom: BorderSide(
+                      color: AppColors.borderDefault,
+                      width: 1,
+                    ),
+                  ),
+                ),
                 child: Row(
                   children: [
-                    IconButton(
-                      icon: const Icon(
-                        Icons.arrow_back,
-                        size: 24,
-                        color: AppColors.primaryBlack,
+                    SizedBox(width: AppSpacing.lg),
+                    InkWell(
+                      onTap: () => context.pop(),
+                      child: Icon(
+                        Icons.arrow_back_ios,
+                        size: 20,
+                        color: AppColors.textPrimary,
                       ),
-                      onPressed: () => context.pop(),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
                     ),
                     Expanded(
-                      child: Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              currentUserId == _channel.posterId
-                                  ? _channel.taskerName
-                                  : _channel.posterName,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.primaryBlack,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            currentUserId == _channel.posterId
+                                ? _channel.taskerName
+                                : _channel.posterName,
+                            style: AppTypography.headlineMedium,
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 4),
+                          // Online status
+                          otherUserProfileAsync.when(
+                            data: (profile) {
+                              // Check if we have last sign-in info from profile
+                              if (profile?.lastSignInAt != null) {
+                                final onlineStatus = TimeFormatter.formatOnlineStatus(profile!.lastSignInAt);
+                                return Text(
+                                  onlineStatus,
+                                  style: AppTypography.bodyMedium.copyWith(
+                                    color: AppColors.textSecondary,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                );
+                              } else {
+                                // Fallback to using updatedAt if available
+                                final lastActivity = profile?.updatedAt;
+                                final onlineStatus = lastActivity != null
+                                    ? TimeFormatter.formatOnlineStatus(lastActivity)
+                                    : '';
+                                return onlineStatus.isNotEmpty
+                                    ? Text(
+                                        onlineStatus,
+                                        style: AppTypography.bodyMedium.copyWith(
+                                          color: AppColors.textSecondary,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      )
+                                    : const SizedBox.shrink();
+                              }
+                            },
+                            loading: () => const SizedBox(
+                              height: 10,
+                              width: 60,
+                              child: LinearProgressIndicator(
+                                color: Color(0xFF009178),
+                                backgroundColor: AppColors.borderDefault,
                               ),
-                              textAlign: TextAlign.center,
                             ),
-                            const SizedBox(height: 4),
-                            // Online status
-                            otherUserProfileAsync.when(
-                              data: (profile) {
-                                // Check if we have last sign-in info from profile
-                                if (profile?.lastSignInAt != null) {
-                                  final onlineStatus = TimeFormatter.formatOnlineStatus(profile!.lastSignInAt);
-                                  return Text(
-                                    onlineStatus,
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w400,
-                                      color: AppColors.textSecondary,
-                                    ),
-                                  );
-                                } else {
-                                  // Fallback to using updatedAt if available
-                                  final lastActivity = profile?.updatedAt;
-                                  final onlineStatus = lastActivity != null
-                                      ? TimeFormatter.formatOnlineStatus(lastActivity)
-                                      : '';
-                                  return onlineStatus.isNotEmpty
-                                      ? Text(
-                                          onlineStatus,
-                                          style: const TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w400,
-                                            color: AppColors.textSecondary,
-                                          ),
-                                        )
-                                      : const SizedBox.shrink();
-                                }
-                              },
-                              loading: () => const SizedBox(
-                                height: 10,
-                                width: 60,
-                                child: LinearProgressIndicator(
-                                  color: Color(0xFF009178),
-                                  backgroundColor: AppColors.borderDefault,
-                                ),
-                              ),
-                              error: (_, __) => const SizedBox.shrink(),
-                            ),
-                          ],
-                        ),
+                            error: (_, __) => const SizedBox.shrink(),
+                          ),
+                        ],
                       ),
                     ),
-                    IconButton(
-                      icon: const Icon(
-                        Icons.more_vert,
-                        size: 24,
-                        color: AppColors.primaryBlack,
-                      ),
-                      onPressed: () {},
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
+                    SizedBox(
+                      width: 20, // Match chevron icon width for perfect centering
                     ),
+                    SizedBox(width: AppSpacing.lg),
                   ],
                 ),
               ),
-
-              const Divider(color: AppColors.borderDefault, height: 1),
-              const SizedBox(height: 12),
+              SizedBox(height: AppSpacing.md),
 
               // Task info
               Container(
@@ -368,7 +361,7 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                       height: 20,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: AppColors.primaryYellow,
+                        color: AppColors.primary,
                       ),
                     ),
                   ),
@@ -378,12 +371,12 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                         width: 60,
                         height: 60,
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: AppRadius.md,
                           color: AppColors.borderDefault,
                         ),
                         child: const Icon(Icons.error_outline, color: AppColors.textSecondary),
                       ),
-                      const SizedBox(width: 12),
+                      SizedBox(width: AppSpacing.md),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -393,20 +386,18 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                               style: const TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w400,
-                                color: AppColors.primaryBlack,
-                                fontFamily: 'Instrument Sans',
+                                color: AppColors.textPrimary,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                             const SizedBox(height: 7),
-                            const Text(
+                            Text(
                               'Price unavailable',
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w400,
                                 color: AppColors.textTertiary,
-                                fontFamily: 'Instrument Sans',
                               ),
                             ),
                           ],
@@ -417,7 +408,7 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                 ),
               ),
 
-              const SizedBox(height: 12),
+              SizedBox(height: AppSpacing.md),
 
               // Action buttons
               Container(
@@ -479,7 +470,7 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                 ),
               ),
 
-              const SizedBox(height: 24),
+              SizedBox(height: AppSpacing.xxl),
 
               // Date time header
               messagesAsync.when(
@@ -500,7 +491,7 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                             color: AppColors.textTertiary,
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        SizedBox(width: AppSpacing.md),
                         Text(
                           time,
                           style: const TextStyle(
@@ -518,7 +509,7 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                 error: (_, __) => const SizedBox.shrink(),
               ),
 
-              const SizedBox(height: 16),
+              SizedBox(height: AppSpacing.lg),
 
               // Chat messages
               Expanded(
@@ -534,22 +525,20 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                               size: 64,
                               color: AppColors.borderDefault,
                             ),
-                            const SizedBox(height: 16),
+                            SizedBox(height: AppSpacing.lg),
                             Text(
                               'No messages yet',
                               style: TextStyle(
                                 fontSize: 16,
                                 color: AppColors.textSecondary,
-                                fontFamily: 'Instrument Sans',
                               ),
                             ),
-                            const SizedBox(height: 8),
+                            SizedBox(height: AppSpacing.sm),
                             Text(
                               'Start the conversation!',
                               style: TextStyle(
                                 fontSize: 14,
                                 color: AppColors.textTertiary,
-                                fontFamily: 'Instrument Sans',
                               ),
                             ),
                           ],
@@ -561,7 +550,7 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                       controller: _scrollController,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       itemCount: messages.length,
-                      separatorBuilder: (context, index) => const SizedBox(height: 8),
+                      separatorBuilder: (context, index) => SizedBox(height: AppSpacing.sm),
                       itemBuilder: (context, index) {
                         final message = messages[index];
                         final isMe = message.senderId == currentUserId;
@@ -571,7 +560,7 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                   },
                   loading: () => const Center(
                     child: CircularProgressIndicator(
-                      color: AppColors.primaryYellow,
+                      color: AppColors.primary,
                     ),
                   ),
                   error: (error, __) => Center(
@@ -581,18 +570,18 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                         const Icon(
                           Icons.error_outline,
                           size: 48,
-                          color: AppColors.errorRed,
+                          color: AppColors.error,
                         ),
-                        const SizedBox(height: 16),
-                        const Text(
+                        SizedBox(height: AppSpacing.lg),
+                        Text(
                           'Failed to load messages',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.primaryBlack,
+                            color: AppColors.textPrimary,
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        SizedBox(height: AppSpacing.sm),
                         Text(
                           error.toString(),
                           style: TextStyle(
@@ -623,7 +612,7 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                             Icon(
                               Icons.done_all,
                               size: 14,
-                              color: AppColors.successGreen,
+                              color: AppColors.success,
                             ),
                             SizedBox(width: 4),
                             Text(
@@ -665,7 +654,6 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                         children: [
                           _buildSuggestionChip("I'm interested!"),
                           _buildSuggestionChip("Hello! Could I get this please?"),
-                          _buildSuggestionChip("Nice!"),
                         ],
                       ),
                       SizedBox(height: AppSpacing.lg),
@@ -747,11 +735,11 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
             ],
           ),
       bottomNavigationBar: Container(
-        color: AppColors.backgroundWhite,
+        color: AppColors.backgroundPrimary,
         child: SafeArea(
           child: Container(
             height: 64,
-            color: AppColors.backgroundWhite,
+            color: AppColors.backgroundPrimary,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [

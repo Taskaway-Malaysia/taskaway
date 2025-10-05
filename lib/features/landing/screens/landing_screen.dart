@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../features/auth/controllers/auth_controller.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_radius.dart';
 
 class LandingScreen extends ConsumerWidget {
   const LandingScreen({super.key});
@@ -12,7 +16,7 @@ class LandingScreen extends ConsumerWidget {
     final screenWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.white,
       body: Column(
         children: [
           // Hero Image Section - extends to top of screen
@@ -34,9 +38,9 @@ class LandingScreen extends ConsumerWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 24), // Small spacing from image
+                    SizedBox(height: AppSpacing.xxl), // Small spacing from image
                     // Title
-                    const Text(
+                    Text(
                       'Find the perfect freelance services for your business',
                       style: TextStyle(
                         fontSize: 24,
@@ -50,7 +54,7 @@ class LandingScreen extends ConsumerWidget {
                     const SizedBox(height: 10),
 
                     // Subtitle
-                    const Text(
+                    Text(
                       'Explore a vast marketplace of talented freelancers offering a wide range of services to help your business thrive.',
                       style: TextStyle(
                         fontSize: 14,
@@ -61,7 +65,7 @@ class LandingScreen extends ConsumerWidget {
                       ),
                       textAlign: TextAlign.left,
                     ),
-                    const SizedBox(height: 24),
+                    SizedBox(height: AppSpacing.xxl),
 
                     // Login Button
                     SizedBox(
@@ -76,14 +80,14 @@ class LandingScreen extends ConsumerWidget {
                           foregroundColor: Colors.black,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: AppRadius.smMd,
                             side: const BorderSide(
                               color: Color(0xFFFFC333),
                               width: 1,
                             ),
                           ),
                         ),
-                        child: const Text(
+                        child: Text(
                           'Login',
                           style: TextStyle(
                             fontSize: 14,
@@ -93,7 +97,7 @@ class LandingScreen extends ConsumerWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: AppSpacing.md),
 
                     // Sign Up Button
                     SizedBox(
@@ -104,17 +108,17 @@ class LandingScreen extends ConsumerWidget {
                           context.go('/create-account');
                         },
                         style: OutlinedButton.styleFrom(
-                          backgroundColor: Colors.white,
+                          backgroundColor: AppColors.white,
                           foregroundColor: Colors.black,
                           side: const BorderSide(
                             color: Color(0xFFE4E4E4),
                             width: 1,
                           ),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: AppRadius.smMd,
                           ),
                         ),
-                        child: const Text(
+                        child: Text(
                           'Sign Up',
                           style: TextStyle(
                             fontSize: 14,
@@ -133,7 +137,7 @@ class LandingScreen extends ConsumerWidget {
                         ref.read(isGuestModeProvider.notifier).state = true;
                         context.go('/home');
                       },
-                      child: const Text(
+                      child: Text(
                         'Explore as guest',
                         style: TextStyle(
                           fontSize: 14,

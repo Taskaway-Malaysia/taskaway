@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:taskaway/features/auth/controllers/auth_controller.dart';
 import '../../../core/widgets/qwerty_overlay.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 
 class ChangePasswordScreen extends ConsumerStatefulWidget {
   final String email;
@@ -105,35 +108,32 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back_ios, color: AppColors.textPrimary),
           onPressed: () => context.pop(),
         ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+            padding: EdgeInsets.fromLTRB(AppSpacing.xxl, 0, AppSpacing.xxl, AppSpacing.xxl),
             child: Form(
               key: _formKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const SizedBox(height: 40),
+                  SizedBox(height: AppSpacing.huge),
                   Text(
                     'Change Your Password',
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
+                    style: AppTypography.headlineMedium,
                   ),
-                  const SizedBox(height: 12),
+                  SizedBox(height: AppSpacing.md),
                   Text(
                     'Enter a new password below to change your password for ${widget.email}',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: Colors.black54,
-                        ),
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
                   ),
-                  const SizedBox(height: 40),
+                  SizedBox(height: AppSpacing.huge),
                   GestureDetector(
                     onTap: () {
                       _newPasswordFocusNode.requestFocus();
@@ -167,7 +167,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                   ), // Closes TextFormField
                 ), // Closes AbsorbPointer
               ), // Closes GestureDetector
-                  const SizedBox(height: 16),
+                  SizedBox(height: AppSpacing.lg),
                   GestureDetector(
                     onTap: () {
                       _repeatPasswordFocusNode.requestFocus();
@@ -201,26 +201,26 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                   ), // Closes TextFormField
                 ), // Closes AbsorbPointer
               ), // Closes GestureDetector
-                  const SizedBox(height: 8),
+                  SizedBox(height: AppSpacing.sm),
                   Text(
                     'Must include at least 8 characters',
-                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.black54,
-                        ),
+                    style: AppTypography.bodySmall.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
                   ),
-                  const SizedBox(height: 40),
+                  SizedBox(height: AppSpacing.huge),
                   ElevatedButton(
                     onPressed: _isLoading ? null : _resetPassword,
                     child: _isLoading
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
+                        ? SizedBox(
+                            height: AppSpacing.xl,
+                            width: AppSpacing.xl,
                             child: CircularProgressIndicator(
-                              color: Colors.white,
+                              color: AppColors.textInverted,
                               strokeWidth: 2,
                             ),
                           )
-                        : const Text('Reset Password'),
+                        : Text('Reset Password', style: AppTypography.labelLarge),
                   ),
                 ],
               ),

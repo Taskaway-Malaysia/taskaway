@@ -4,6 +4,10 @@ import 'package:go_router/go_router.dart';
 import '../controllers/notification_controller.dart';
 import '../models/notification.dart' as notification_model;
 import '../../../core/constants/style_constants.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_radius.dart';
 
 class NotificationsScreen extends ConsumerStatefulWidget {
   const NotificationsScreen({super.key});
@@ -37,10 +41,10 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Notifications',
           style: TextStyle(
-            color: Colors.white,
+            color: AppColors.white,
             fontSize: 20,
             fontWeight: FontWeight.w600,
           ),
@@ -48,12 +52,12 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         backgroundColor: StyleConstants.primaryColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: Icon(Icons.arrow_back_ios, color: AppColors.white),
           onPressed: () => context.pop(),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.mark_email_read, color: Colors.white),
+            icon: Icon(Icons.mark_email_read, color: AppColors.white),
             onPressed: () {
               ref.read(notificationControllerProvider.notifier).markAllAsRead();
             },
@@ -74,7 +78,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                 size: 64,
                 color: Colors.grey[400],
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: AppSpacing.lg),
               Text(
                 'Failed to load notifications',
                 style: TextStyle(
@@ -82,10 +86,10 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                   color: Colors.grey[600],
                 ),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: AppSpacing.sm),
               TextButton(
                 onPressed: () => ref.refresh(userNotificationsProvider),
-                child: const Text('Retry'),
+                child: Text('Retry'),
               ),
             ],
           ),
@@ -101,7 +105,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                     size: 80,
                     color: Colors.grey[400],
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: AppSpacing.lg),
                   Text(
                     'No notifications yet',
                     style: TextStyle(
@@ -110,7 +114,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                       color: Colors.grey[600],
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: AppSpacing.sm),
                   Text(
                     'You\'ll see notifications here when you have updates',
                     style: TextStyle(
@@ -125,7 +129,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
           }
 
           return ListView.builder(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(AppSpacing.lg),
             itemCount: notifications.length,
             itemBuilder: (context, index) {
               final notification = notifications[index];
@@ -141,22 +145,22 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: notification.isRead ? Colors.white : Colors.blue[50],
-        borderRadius: BorderRadius.circular(12),
+        color: notification.isRead ? AppColors.white : Colors.blue[50],
+        borderRadius: AppRadius.lg,
         border: Border.all(
           color: notification.isRead ? Colors.grey[200]! : Colors.blue[100]!,
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: AppColors.textPrimary.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
         ],
       ),
       child: ListTile(
-        contentPadding: const EdgeInsets.all(16),
+        contentPadding: EdgeInsets.all(AppSpacing.lg),
         leading: _buildNotificationIcon(notification.type),
         title: Text(
           notification.title,
@@ -178,7 +182,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                 height: 1.3,
               ),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: AppSpacing.sm),
             Text(
               _formatTimeAgo(notification.createdAt),
               style: TextStyle(
@@ -279,7 +283,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       height: 48,
       decoration: BoxDecoration(
         color: backgroundColor,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: AppRadius.lg,
       ),
       child: Icon(
         iconData,
@@ -302,12 +306,12 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Notification'),
-        content: const Text('Are you sure you want to delete this notification?'),
+        title: Text('Delete Notification'),
+        content: Text('Are you sure you want to delete this notification?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
+            child: Text('Cancel'),
           ),
           TextButton(
             onPressed: () {
@@ -318,7 +322,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
             style: TextButton.styleFrom(
               foregroundColor: Colors.red,
             ),
-            child: const Text('Delete'),
+            child: Text('Delete'),
           ),
         ],
       ),

@@ -326,12 +326,12 @@ class _PaymentReturnHandlerState extends ConsumerState<PaymentReturnHandler> {
               if (_isProcessing) ...[
                 const CircularProgressIndicator(),
                 const SizedBox(height: 24),
-                const Text(
+                Text(
                   'Processing payment return...',
                   style: TextStyle(fontSize: 18),
                 ),
                 const SizedBox(height: 8),
-                const Text(
+                Text(
                   'Please wait while we verify your payment',
                   style: TextStyle(fontSize: 14, color: Colors.grey),
                 ),
@@ -350,7 +350,7 @@ class _PaymentReturnHandlerState extends ConsumerState<PaymentReturnHandler> {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 24),
-                const Text(
+                Text(
                   'Redirecting...',
                   style: TextStyle(fontSize: 14, color: Colors.grey),
                 ),

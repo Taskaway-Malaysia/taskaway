@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/constants/api_constants.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/app_radius.dart';
 
 class ImagePickerGrid extends StatefulWidget {
   final List<String> initialImages;
@@ -72,7 +75,7 @@ class _ImagePickerGridState extends State<ImagePickerGrid> {
           _imageUrls.add(imageUrl);
         });
         widget.onImagesChanged(_imageUrls);
-        _showSnackBar('Image uploaded successfully', const Color(0xFF6C5CE7));
+        _showSnackBar('Image uploaded successfully', AppColors.posterPrimary);
       } else {
         setState(() {
           _uploadingImages.remove(image.path);
@@ -105,7 +108,7 @@ class _ImagePickerGridState extends State<ImagePickerGrid> {
         );
       }
 
-      _showSnackBar('Image removed successfully', const Color(0xFF6C5CE7));
+      _showSnackBar('Image removed successfully', AppColors.posterPrimary);
     } catch (e) {
       _showSnackBar('Error removing image: $e', Colors.red);
     }
@@ -165,7 +168,7 @@ class _ImagePickerGridState extends State<ImagePickerGrid> {
             height: 200,
             decoration: BoxDecoration(
               border: Border.all(color: Colors.grey.shade300, width: 2),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: AppRadius.lg,
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -189,9 +192,9 @@ class _ImagePickerGridState extends State<ImagePickerGrid> {
                   ElevatedButton.icon(
                     onPressed: _pickAndUploadImage,
                     icon: const Icon(Icons.add_a_photo),
-                    label: const Text('Add Image'),
+                    label: Text('Add Image'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF6C5CE7),
+                      backgroundColor: AppColors.posterPrimary,
                       foregroundColor: Colors.white,
                     ),
                   ),
@@ -208,7 +211,7 @@ class _ImagePickerGridState extends State<ImagePickerGrid> {
       child: Container(
         decoration: BoxDecoration(
           color: Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: AppRadius.lg,
           border: Border.all(color: Colors.grey.shade300, width: 2),
         ),
         child: Column(
@@ -237,12 +240,12 @@ class _ImagePickerGridState extends State<ImagePickerGrid> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.grey.shade200,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: AppRadius.lg,
       ),
       child: Stack(
         children: [
           ClipRRect(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: AppRadius.lg,
             child: Image.file(
               File(path),
               width: double.infinity,
@@ -254,7 +257,7 @@ class _ImagePickerGridState extends State<ImagePickerGrid> {
           Container(
             decoration: BoxDecoration(
               color: Colors.black.withValues(alpha: 0.5),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: AppRadius.lg,
             ),
             child: const Center(
               child: Column(
@@ -283,7 +286,7 @@ class _ImagePickerGridState extends State<ImagePickerGrid> {
   Widget _buildImageItem(String imageUrl) {
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: AppRadius.lg,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.1),
@@ -295,7 +298,7 @@ class _ImagePickerGridState extends State<ImagePickerGrid> {
       child: Stack(
         children: [
           ClipRRect(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: AppRadius.lg,
             child: Image.network(
               imageUrl,
               width: double.infinity,

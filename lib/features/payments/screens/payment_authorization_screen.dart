@@ -8,6 +8,10 @@ import '../../../core/constants/api_constants.dart';
 import '../../../core/constants/style_constants.dart';
 import '../controllers/payment_controller.dart';
 import '../../applications/controllers/application_controller.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_radius.dart';
 import 'dart:developer' as dev;
 
 class PaymentAuthorizationScreen extends ConsumerStatefulWidget {
@@ -239,7 +243,7 @@ class _PaymentAuthorizationScreenState extends ConsumerState<PaymentAuthorizatio
               // Payment Summary Card
               Card(
                 child: Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: EdgeInsets.all(AppSpacing.lg),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -249,12 +253,12 @@ class _PaymentAuthorizationScreenState extends ConsumerState<PaymentAuthorizatio
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      SizedBox(height: AppSpacing.md),
                       Text(
                         'Task: ${widget.taskTitle}',
                         style: theme.textTheme.bodyLarge,
                       ),
-                      const SizedBox(height: 8),
+                      SizedBox(height: AppSpacing.sm),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -305,14 +309,14 @@ class _PaymentAuthorizationScreenState extends ConsumerState<PaymentAuthorizatio
                 ),
               ),
               
-              const SizedBox(height: 24),
+              SizedBox(height: AppSpacing.xxl),
 
               // Security Notice
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: Colors.blue.shade50,
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: AppRadius.md,
                   border: Border.all(color: Colors.blue.shade200),
                 ),
                 child: Row(
@@ -322,7 +326,7 @@ class _PaymentAuthorizationScreenState extends ConsumerState<PaymentAuthorizatio
                       color: Colors.blue.shade700,
                       size: 20,
                     ),
-                    const SizedBox(width: 8),
+                    SizedBox(width: AppSpacing.sm),
                     Expanded(
                       child: Text(
                         widget.paymentType == 'offer_acceptance'
@@ -338,14 +342,14 @@ class _PaymentAuthorizationScreenState extends ConsumerState<PaymentAuthorizatio
                 ),
               ),
 
-              const SizedBox(height: 24),
+              SizedBox(height: AppSpacing.xxl),
 
               if (ApiConstants.mockPayments) ...[
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: Colors.amber.shade50,
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: AppRadius.md,
                     border: Border.all(color: Colors.amber.shade200),
                   ),
                   child: Row(
@@ -355,7 +359,7 @@ class _PaymentAuthorizationScreenState extends ConsumerState<PaymentAuthorizatio
                         color: Colors.amber.shade700,
                         size: 20,
                       ),
-                      const SizedBox(width: 8),
+                      SizedBox(width: AppSpacing.sm),
                       Expanded(
                         child: Text(
                           'Developer mode: Mock payments are enabled. No real charges will occur.',
@@ -369,7 +373,7 @@ class _PaymentAuthorizationScreenState extends ConsumerState<PaymentAuthorizatio
                   ),
                 ),
 
-                const SizedBox(height: 24),
+                SizedBox(height: AppSpacing.xxl),
               ],
 
               // Card Form
@@ -384,16 +388,16 @@ class _PaymentAuthorizationScreenState extends ConsumerState<PaymentAuthorizatio
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      SizedBox(height: AppSpacing.md),
                       
                       if (!ApiConstants.mockPayments) ...[
                         if (kIsWeb)
                           // Web: Use CardField which is the web-compatible card input
                           Container(
-                            padding: const EdgeInsets.all(16),
+                            padding: EdgeInsets.all(AppSpacing.lg),
                             decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(8),
+                              color: AppColors.white,
+                              borderRadius: AppRadius.md,
                               border: Border.all(color: Colors.grey.shade300),
                             ),
                             child: CardField(
@@ -423,13 +427,13 @@ class _PaymentAuthorizationScreenState extends ConsumerState<PaymentAuthorizatio
                               if (_cardController == null) {
                                 print('[PaymentAuth] CardController is null, showing error message');
                                 return Container(
-                                  padding: const EdgeInsets.all(16),
+                                  padding: EdgeInsets.all(AppSpacing.lg),
                                   decoration: BoxDecoration(
                                     color: Colors.red.shade50,
-                                    borderRadius: BorderRadius.circular(8),
+                                    borderRadius: AppRadius.md,
                                     border: Border.all(color: Colors.red.shade300),
                                   ),
-                                  child: const Text(
+                                  child: Text(
                                     'Error: Card input not available. Please restart the app.',
                                     style: TextStyle(color: Colors.red),
                                   ),
@@ -440,7 +444,7 @@ class _PaymentAuthorizationScreenState extends ConsumerState<PaymentAuthorizatio
                                 return CardFormField(
                                   controller: _cardController!,
                                   style: CardFormStyle(
-                                    backgroundColor: Colors.white,
+                                    backgroundColor: AppColors.white,
                                     borderRadius: 8,
                                     borderColor: Colors.grey.shade300,
                                     borderWidth: 1,
@@ -449,10 +453,10 @@ class _PaymentAuthorizationScreenState extends ConsumerState<PaymentAuthorizatio
                               } catch (e) {
                                 print('[PaymentAuth] Error rendering CardFormField: $e');
                                 return Container(
-                                  padding: const EdgeInsets.all(16),
+                                  padding: EdgeInsets.all(AppSpacing.lg),
                                   decoration: BoxDecoration(
                                     color: Colors.orange.shade50,
-                                    borderRadius: BorderRadius.circular(8),
+                                    borderRadius: AppRadius.md,
                                     border: Border.all(color: Colors.orange.shade300),
                                   ),
                                   child: Column(
@@ -464,7 +468,7 @@ class _PaymentAuthorizationScreenState extends ConsumerState<PaymentAuthorizatio
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
-                                      const SizedBox(height: 8),
+                                      SizedBox(height: AppSpacing.sm),
                                       Text(
                                         'Please restart the app to initialize payment system',
                                         style: TextStyle(color: Colors.orange.shade700),
@@ -478,12 +482,12 @@ class _PaymentAuthorizationScreenState extends ConsumerState<PaymentAuthorizatio
                       ],
 
                       if (_errorMessage != null) ...[
-                        const SizedBox(height: 16),
+                        SizedBox(height: AppSpacing.lg),
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
                             color: Colors.red.shade50,
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: AppRadius.md,
                             border: Border.all(color: Colors.red.shade200),
                           ),
                           child: Row(
@@ -493,7 +497,7 @@ class _PaymentAuthorizationScreenState extends ConsumerState<PaymentAuthorizatio
                                 color: Colors.red.shade700,
                                 size: 20,
                               ),
-                              const SizedBox(width: 8),
+                              SizedBox(width: AppSpacing.sm),
                               Expanded(
                                 child: Text(
                                   _errorMessage!,
@@ -512,7 +516,7 @@ class _PaymentAuthorizationScreenState extends ConsumerState<PaymentAuthorizatio
                 ),
               ),
 
-              const SizedBox(height: 24),
+              SizedBox(height: AppSpacing.xxl),
 
               // Action Buttons
               Row(
@@ -520,10 +524,10 @@ class _PaymentAuthorizationScreenState extends ConsumerState<PaymentAuthorizatio
                   Expanded(
                     child: OutlinedButton(
                       onPressed: _isProcessing ? null : () => context.pop(),
-                      child: const Text('Cancel'),
+                      child: Text('Cancel'),
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  SizedBox(width: AppSpacing.lg),
                   Expanded(
                     flex: 2,
                     child: ElevatedButton(

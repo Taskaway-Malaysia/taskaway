@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/style_constants.dart';
 import '../controllers/payment_controller.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 
 class PaymentCompletionScreen extends ConsumerStatefulWidget {
   final String paymentId;
@@ -51,7 +54,7 @@ class _PaymentCompletionScreenState extends ConsumerState<PaymentCompletionScree
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Payment Status'),
+        title: Text('Payment Status'),
       ),
       body: Center(
         child: Padding(
@@ -61,20 +64,20 @@ class _PaymentCompletionScreenState extends ConsumerState<PaymentCompletionScree
             children: [
               if (_isProcessing) ...[
                 const CircularProgressIndicator(),
-                const SizedBox(height: 16),
-                const Text('Processing payment...'),
+                SizedBox(height: AppSpacing.lg),
+                Text('Processing payment...'),
               ] else if (_errorMessage != null) ...[
                 Icon(
                   Icons.error_outline,
                   color: theme.colorScheme.error,
                   size: 64,
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: AppSpacing.lg),
                 Text(
                   'Payment Error',
                   style: theme.textTheme.headlineSmall,
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: AppSpacing.sm),
                 Text(
                   _errorMessage!,
                   textAlign: TextAlign.center,
@@ -86,17 +89,17 @@ class _PaymentCompletionScreenState extends ConsumerState<PaymentCompletionScree
                   color: theme.colorScheme.primary,
                   size: 64,
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: AppSpacing.lg),
                 Text(
                   'Payment Successful',
                   style: theme.textTheme.headlineSmall,
                 ),
-                const SizedBox(height: 8),
-                const Text(
+                SizedBox(height: AppSpacing.sm),
+                Text(
                   'Your payment has been processed successfully.',
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: AppSpacing.lg),
                 Text(
                   'Transaction ID: ${widget.billplzParams['billplz[transaction_id]']}',
                   style: theme.textTheme.bodySmall,
@@ -108,23 +111,23 @@ class _PaymentCompletionScreenState extends ConsumerState<PaymentCompletionScree
                   color: theme.colorScheme.error,
                   size: 64,
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: AppSpacing.lg),
                 Text(
                   'Payment Failed',
                   style: theme.textTheme.headlineSmall,
                 ),
-                const SizedBox(height: 8),
-                const Text(
+                SizedBox(height: AppSpacing.sm),
+                Text(
                   'Your payment was not successful. Please try again.',
                   textAlign: TextAlign.center,
                 ),
               ],
-              const SizedBox(height: 32),
+              SizedBox(height: AppSpacing.xxxl),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () => context.go('/home'),
-                  child: const Text('Return to Home'),
+                  child: Text('Return to Home'),
                 ),
               ),
             ],

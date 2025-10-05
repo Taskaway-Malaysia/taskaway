@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/theme/app_radius.dart';
 
 class SearchOverlay extends ConsumerWidget {
   final TextEditingController searchController;
@@ -26,7 +27,7 @@ class SearchOverlay extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(6),
+                borderRadius: AppRadius.smMd,
                 border: Border.all(color: const Color(0xFFE4E4E4)),
                 boxShadow: [
                   BoxShadow(
@@ -81,7 +82,7 @@ class SearchOverlay extends ConsumerWidget {
             height: 44,
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(6),
+              borderRadius: AppRadius.smMd,
               border: Border.all(color: const Color(0xFFD9D9D9)),
             ),
             child: IconButton(

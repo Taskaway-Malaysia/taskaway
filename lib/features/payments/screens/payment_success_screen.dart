@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/style_constants.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_radius.dart';
 
 class PaymentSuccessScreen extends StatelessWidget {
   final double amount;
@@ -20,7 +24,7 @@ class PaymentSuccessScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Payment Successful'),
+        title: Text('Payment Successful'),
         automaticallyImplyLeading: false, // Remove back button
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -45,7 +49,7 @@ class PaymentSuccessScreen extends StatelessWidget {
               ),
             ),
             
-            const SizedBox(height: 32),
+            SizedBox(height: AppSpacing.xxxl),
 
             // Success Message
             Text(
@@ -57,7 +61,7 @@ class PaymentSuccessScreen extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
 
-            const SizedBox(height: 16),
+            SizedBox(height: AppSpacing.lg),
 
             Text(
               'Your payment has been successfully authorized and the task has been completed.',
@@ -65,7 +69,7 @@ class PaymentSuccessScreen extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
 
-            const SizedBox(height: 32),
+            SizedBox(height: AppSpacing.xxxl),
 
             // Payment Details Card
             Card(
@@ -80,13 +84,13 @@ class PaymentSuccessScreen extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: AppSpacing.lg),
                     
                     Text(
                       'Task: $taskTitle',
                       style: theme.textTheme.bodyMedium,
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: AppSpacing.sm),
                     
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -147,14 +151,14 @@ class PaymentSuccessScreen extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(height: 32),
+            SizedBox(height: AppSpacing.xxxl),
 
             // Information Box
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(AppSpacing.lg),
               decoration: BoxDecoration(
                 color: Colors.blue.shade50,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: AppRadius.lg,
                 border: Border.all(color: Colors.blue.shade200),
               ),
               child: Row(
@@ -164,7 +168,7 @@ class PaymentSuccessScreen extends StatelessWidget {
                     color: Colors.blue.shade700,
                     size: 24,
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: AppSpacing.md),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -201,15 +205,15 @@ class PaymentSuccessScreen extends StatelessWidget {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () => context.go('/home'),
-                    child: const Text('Return to Home'),
+                    child: Text('Return to Home'),
                   ),
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: AppSpacing.md),
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton(
                     onPressed: () => context.go('/profile/payment-history'),
-                    child: const Text('View Payment History'),
+                    child: Text('View Payment History'),
                   ),
                 ),
               ],

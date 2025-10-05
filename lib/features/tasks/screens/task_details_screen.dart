@@ -15,6 +15,10 @@ import 'package:taskaway/features/tasks/controllers/task_controller.dart';
 import 'package:taskaway/features/payments/controllers/payment_controller.dart';
 import 'package:taskaway/features/tasks/models/task.dart';
 import 'package:intl/intl.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_radius.dart';
 
 class TaskDetailsScreen extends ConsumerStatefulWidget {
   final String taskId;
@@ -181,9 +185,9 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Task Details'),
+        title: Text('Task Details'),
         elevation: 0,
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.white,
         foregroundColor: Colors.black,
       ),
       body: taskAsyncValue.when(
@@ -207,21 +211,22 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
           return Stack(
             children: [
               SingleChildScrollView(
-                padding: const EdgeInsets.all(16.0),
+                padding: EdgeInsets.all(AppSpacing.lg),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildSectionContainer(
                       child: _buildPosterInfo(taskData, ref),
                     ),
-                    _buildSectionContainer(
+                    Padding(
+                      padding: EdgeInsets.all(AppSpacing.lg),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           _buildTaskHeader(taskData),
-                          const SizedBox(height: 24),
+                          SizedBox(height: AppSpacing.xxl),
                           _buildTaskDetails(taskData),
-                          const SizedBox(height: 24),
+                          SizedBox(height: AppSpacing.xxl),
                           _buildTaskSchedule(taskData),
                         ],
                       ),
@@ -249,24 +254,24 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
                     }(),
                     if (taskData.taskerId == currentUser?.id &&
                         statusLc == 'accepted') ...[
-                      const SizedBox(height: 8),
+                      SizedBox(height: AppSpacing.sm),
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
                           onPressed: _startTask,
-                          child: const Text('Start Task'),
+                          child: Text('Start Task'),
                         ),
                       ),
                     ],
                     _buildSectionContainer(
                       child: _buildDetailsSection(taskData),
                     ),
-                    const SizedBox(height: 24),
+                    SizedBox(height: AppSpacing.xxl),
 
 
                     // Show offers if any
                     if (isPoster) _buildOffersSection(taskData, currentUser!.id),
-                    const SizedBox(height: 16),
+                    SizedBox(height: AppSpacing.lg),
                     _buildActionButtons(taskData, isPoster, currentUser?.id),
 
                     // Dev mode quick complete button removed - no longer needed with simplified flow
@@ -416,7 +421,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
             ),
           ),
         ),
-        const SizedBox(width: 16),
+        SizedBox(width: AppSpacing.lg),
         _buildStatusBadge(task.status),
       ],
     );
@@ -433,7 +438,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
             fontWeight: FontWeight.w600,
           ),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: AppSpacing.sm),
         Text(
           task.description,
           style: const TextStyle(
@@ -442,7 +447,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
             height: 1.5,
           ),
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: AppSpacing.lg),
         
         // Category
         _buildDetailItem(Icons.category_outlined, task.category),
@@ -459,7 +464,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
       child: Row(
         children: [
           Icon(icon, size: 18, color: Colors.grey[700]),
-          const SizedBox(width: 8),
+          SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
               text,
@@ -488,7 +493,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
             fontWeight: FontWeight.w600,
           ),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: AppSpacing.sm),
         _buildDetailItem(
           Icons.calendar_today_outlined,
           dateFormat.format(task.scheduledTime),
@@ -517,7 +522,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
                   ? const Icon(Icons.person, size: 24)
                   : null,
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: AppSpacing.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -550,7 +555,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
         );
       },
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (err, stack) => const Text('Error loading poster info'),
+      error: (err, stack) => Text('Error loading poster info'),
     );
   }
   
@@ -565,7 +570,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
             fontWeight: FontWeight.w600,
           ),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: AppSpacing.sm),
         Text(
           task.description,
           style: const TextStyle(
@@ -575,15 +580,15 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
           ),
         ),
         if (task.images != null && task.images!.isNotEmpty) ...[
-          const SizedBox(height: 16),
-          const Text(
+          SizedBox(height: AppSpacing.lg),
+          Text(
             'Images',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: AppSpacing.sm),
           SizedBox(
             height: 100,
             child: ListView.builder(
@@ -594,7 +599,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
                 return Padding(
                   padding: const EdgeInsets.only(right: 8.0),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: AppRadius.md,
                     child: Image.network(
                       imageUrl,
                       width: 100,
@@ -614,9 +619,9 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
             ),
           ),
         ],
-        const SizedBox(height: 16),
+        SizedBox(height: AppSpacing.lg),
         if (task.providesMaterials == true) ...[
-          const Text(
+          Text(
             '* Materials are provided by the poster.',
             style: TextStyle(
               fontSize: 14,
@@ -625,7 +630,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
             ),
           ),
         ] else ...[
-          const Text(
+          Text(
             '* You are expected to provide your own materials.',
             style: TextStyle(
               fontSize: 14,
@@ -648,16 +653,16 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center, // Center content horizontally
       children: [
-        const Text(
+        Text(
           'Task Budget',
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: AppSpacing.sm),
         Text(
           'RM${task.price.toStringAsFixed(2)}',
-          style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: Colors.black),
+          style: AppTypography.headlineMedium,
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: AppSpacing.lg),
         if (isPoster && task.status == 'open')
           SizedBox(
             width: double.infinity,
@@ -671,9 +676,9 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: StyleConstants.primaryColor, // Poster color
-                foregroundColor: Colors.white,
+                foregroundColor: AppColors.white,
               ),
-              child: const Text('Revise'),
+              child: Text('Revise'),
             ),
           ),
         if (isTasker && userApplication != null)
@@ -689,11 +694,11 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
                   _showNumpad = true;
                 });
               },
-              child: const Text('Make an Offer'),
+              child: Text('Make an Offer'),
             ),
           ),
         if (isPoster && (statusLc == 'open' || statusLc == 'accepted')) ...[
-          const SizedBox(height: 8),
+          SizedBox(height: AppSpacing.sm),
           SizedBox(
             width: double.infinity,
             child: OutlinedButton(
@@ -702,7 +707,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
                 foregroundColor: Colors.red,
                 side: const BorderSide(color: Colors.red),
               ),
-              child: const Text('Cancel Task'),
+              child: Text('Cancel Task'),
             ),
           ),
         ],
@@ -759,12 +764,12 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
       margin: const EdgeInsets.only(top: 16),
       decoration: BoxDecoration(
         color: Colors.red.shade50,
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: AppRadius.sm,
       ),
       child: Row(
         children: [
           Icon(Icons.error_outline, color: Colors.red.shade700),
-          const SizedBox(width: 8),
+          SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
               _errorMessage!,
@@ -873,9 +878,9 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
                 fontWeight: FontWeight.bold,
               ),
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: AppSpacing.md),
         if (offers.isEmpty)
-          const Text('No offers yet.')
+          Text('No offers yet.')
         else
           ListView.builder(
             shrinkWrap: true,
@@ -899,9 +904,9 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
               return Card(
                 margin: const EdgeInsets.only(bottom: 12),
                 elevation: 1,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                shape: RoundedRectangleBorder(borderRadius: AppRadius.md),
                 child: Padding(
-                  padding: const EdgeInsets.all(16.0),
+                  padding: EdgeInsets.all(AppSpacing.lg),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -914,13 +919,13 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
                             backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
                             child: avatarUrl == null ? const Icon(Icons.person, size: 24) : null,
                           ),
-                          const SizedBox(width: 12),
+                          SizedBox(width: AppSpacing.md),
                           // Tasker Info
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text('Offered by', style: TextStyle(color: Colors.grey)),
+                                Text('Offered by', style: TextStyle(color: Colors.grey)),
                                 Text(taskerName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                                 const Row(
                                   children: [
@@ -936,7 +941,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
-                              const Text(timeAgo, style: TextStyle(color: Colors.grey, fontSize: 12)),
+                              Text(timeAgo, style: TextStyle(color: Colors.grey, fontSize: 12)),
                               const SizedBox(height: 4),
                               Text(
                                 'RM${price.toStringAsFixed(2)}',
@@ -950,10 +955,10 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 16),
+                      SizedBox(height: AppSpacing.lg),
                       // Message
                       Text(message),
-                      const SizedBox(height: 16),
+                      SizedBox(height: AppSpacing.lg),
                       // Accept Button
                       if (status == 'pending')
                         SizedBox(
@@ -962,18 +967,18 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
                             onPressed: _isLoading ? null : () => _acceptOffer(offerId, taskerId, price),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: StyleConstants.primaryColor,
-                              foregroundColor: Colors.white,
+                              foregroundColor: AppColors.white,
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
+                                borderRadius: AppRadius.md,
                               ),
                             ),
                             child: _isLoading
                                 ? const SizedBox(
                                     height: 20,
                                     width: 20,
-                                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                    child: CircularProgressIndicator(color: AppColors.white, strokeWidth: 2),
                                   )
-                                : const Text('Accept'),
+                                : Text('Accept'),
                           ),
                         )
                       else
@@ -983,7 +988,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                             decoration: BoxDecoration(
                               color: status == 'accepted' ? Colors.green.shade100 : Colors.grey.shade200,
-                              borderRadius: BorderRadius.circular(20),
+                              borderRadius: AppRadius.xxl,
                             ),
                             child: Text(
                               status == 'accepted' ? 'Accepted' : 'Rejected',
@@ -1009,11 +1014,11 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: _getStatusColor(status),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: AppRadius.xxl,
       ),
       child: Text(
         _getReadableStatus(status),
-        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+        style: TextStyle(color: AppColors.white, fontWeight: FontWeight.w500),
       ),
     );
   }
@@ -1078,12 +1083,12 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
             label: Text(isPoster ? 'Message Tasker' : 'Message Poster'),
             style: ElevatedButton.styleFrom(
               backgroundColor: StyleConstants.primaryColor,
-              foregroundColor: Colors.white,
+              foregroundColor: AppColors.white,
             ),
           ),
         ),
       );
-      buttons.add(const SizedBox(height: 8));
+      buttons.add(SizedBox(height: AppSpacing.sm));
     }
     
     // Existing action buttons
@@ -1096,9 +1101,9 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
               onPressed: _approveTask,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green,
-                foregroundColor: Colors.white,
+                foregroundColor: AppColors.white,
               ),
-              child: const Text('Approve Completion'),
+              child: Text('Approve Completion'),
             ),
           ),
         );
@@ -1110,7 +1115,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
             width: double.infinity,
             child: ElevatedButton(
               onPressed: _completeTask,
-              child: const Text('Submit for Review'),
+              child: Text('Submit for Review'),
             ),
           ),
         );
@@ -1202,8 +1207,8 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Cancel Task?'),
-        content: const Text(
+        title: Text('Cancel Task?'),
+        content: Text(
           'Are you sure you want to cancel this task? This action cannot be undone.',
         ),
         actionsAlignment: MainAxisAlignment.center,
@@ -1212,10 +1217,10 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
             width: 140,
             child: OutlinedButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('No'),
+              child: Text('No'),
             ),
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: AppSpacing.sm),
           SizedBox(
             width: 140,
             child: ElevatedButton(
@@ -1225,9 +1230,9 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
+                foregroundColor: AppColors.white,
               ),
-              child: const Text('Yes, cancel'),
+              child: Text('Yes, cancel'),
             ),
           ),
         ],
@@ -1240,11 +1245,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
   Widget _buildSectionContainer({required Widget child}) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade300),
-        borderRadius: BorderRadius.circular(12),
-      ),
+      padding: EdgeInsets.all(AppSpacing.lg),
       child: child,
     );
   }
