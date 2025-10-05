@@ -109,40 +109,66 @@ class _MapSearchBarState extends State<MapSearchBar> {
             ),
           ),
 
-          // Banner Carousel Section
+          // Banner Carousel Section with background layer
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
             child: Column(
               children: [
-                ClipRRect(
-                  borderRadius: AppRadius.md,
-                  child: SizedBox(
-                    width: double.infinity,
-                    height: 130,
-                    child: PageView(
-                      controller: _pageController,
-                      children: [
-                        Image.asset(
-                          'assets/images/my-11134258-820lh-mf2fi3npb2tn0f.webp',
-                          width: double.infinity,
-                          height: 130,
-                          fit: BoxFit.cover,
-                        ),
-                        Image.asset(
-                          'assets/images/my-11134258-820lh-mf2fi3npb2tn0f.webp',
-                          width: double.infinity,
-                          height: 130,
-                          fit: BoxFit.cover,
-                        ),
-                        Image.asset(
-                          'assets/images/my-11134258-820lh-mf2fi3npb2tn0f.webp',
-                          width: double.infinity,
-                          height: 130,
-                          fit: BoxFit.cover,
-                        ),
-                      ],
+                Stack(
+                  children: [
+                    // Background layer (white rounded container)
+                    Container(
+                      margin: const EdgeInsets.only(top: 4, left: 4, right: 4),
+                      height: 120,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF5F5F5),
+                        borderRadius: AppRadius.md,
+                      ),
                     ),
-                  ),
+                    // Main banner with shadow
+                    Container(
+                      decoration: BoxDecoration(
+                        borderRadius: AppRadius.md,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: AppRadius.md,
+                        child: SizedBox(
+                          width: double.infinity,
+                          height: 120,
+                          child: PageView(
+                            controller: _pageController,
+                            children: [
+                              Image.asset(
+                                'assets/images/my-11134258-820lh-mf2fi3npb2tn0f.webp',
+                                width: double.infinity,
+                                height: 120,
+                                fit: BoxFit.cover,
+                              ),
+                              Image.asset(
+                                'assets/images/my-11134258-820lh-mf2fi3npb2tn0f.webp',
+                                width: double.infinity,
+                                height: 120,
+                                fit: BoxFit.cover,
+                              ),
+                              Image.asset(
+                                'assets/images/my-11134258-820lh-mf2fi3npb2tn0f.webp',
+                                width: double.infinity,
+                                height: 120,
+                                fit: BoxFit.cover,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 8),
                 SmoothPageIndicator(

@@ -561,12 +561,15 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
             top: 0,
             left: 0,
             right: 0,
-            child: Container(
-              color: AppColors.backgroundPrimary,
-              child: SafeArea(
-                bottom: false,
-                child: Column(
-                  children: [
+            child: Column(
+              children: [
+                // Yellow background section
+                Container(
+                  color: const Color(0xFFFFDB5B),
+                  child: SafeArea(
+                    bottom: false,
+                    child: Column(
+                      children: [
                     // Profile section with availability switch
                     Container(
                       padding: EdgeInsets.all(AppSpacing.md),
@@ -674,51 +677,67 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
                         ],
                       ),
                     ),
-                    // Show search bar in Tasker mode
-                    if (_isTaskerMode) ...[
-                      MapSearchBar(
-                        isTaskerMode: _isTaskerMode,
-                        onFilterTap: () {
-                          print('Filter tap received in MapHomeScreen');
-                          _showFilterBottomSheet(context);
-                        },
-                        onToggle: (isTasker) {
-                          setState(() {
-                            _isTaskerMode = isTasker;
-                            // When switching to Poster mode, automatically switch to list view
-                            if (!isTasker) {
-                              _isMapView = false;
-                            } else {
-                              // When switching back to Tasker mode, show map view
-                              _isMapView = true;
-                            }
-                          });
-                        },
-                        onSearch: (query) {
-                          // Handle search
-                        },
-                      ),
-                    ] else
-                      // Show search bar in Poster mode (MapSearchBar already includes tabs)
-                      MapSearchBar(
-                        isTaskerMode: _isTaskerMode,
-                        onFilterTap: () {
-                          print('Filter tap received in MapHomeScreen');
-                          _showFilterBottomSheet(context);
-                        },
-                        onToggle: (isTasker) {
-                          setState(() {
-                            _isTaskerMode = isTasker;
-                            // Keep current view preference when switching modes
-                          });
-                        },
-                        onSearch: (query) {
-                          // Handle search
-                        },
-                      ),
-                  ],
+                      ],
+                    ),
+                  ),
                 ),
-              ),
+                // White rounded container with search and content
+                Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(24),
+                      topRight: Radius.circular(24),
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      // Show search bar in Tasker mode
+                      if (_isTaskerMode) ...[
+                        MapSearchBar(
+                          isTaskerMode: _isTaskerMode,
+                          onFilterTap: () {
+                            print('Filter tap received in MapHomeScreen');
+                            _showFilterBottomSheet(context);
+                          },
+                          onToggle: (isTasker) {
+                            setState(() {
+                              _isTaskerMode = isTasker;
+                              // When switching to Poster mode, automatically switch to list view
+                              if (!isTasker) {
+                                _isMapView = false;
+                              } else {
+                                // When switching back to Tasker mode, show map view
+                                _isMapView = true;
+                              }
+                            });
+                          },
+                          onSearch: (query) {
+                            // Handle search
+                          },
+                        ),
+                      ] else
+                        // Show search bar in Poster mode (MapSearchBar already includes tabs)
+                        MapSearchBar(
+                          isTaskerMode: _isTaskerMode,
+                          onFilterTap: () {
+                            print('Filter tap received in MapHomeScreen');
+                            _showFilterBottomSheet(context);
+                          },
+                          onToggle: (isTasker) {
+                            setState(() {
+                              _isTaskerMode = isTasker;
+                              // Keep current view preference when switching modes
+                            });
+                          },
+                          onSearch: (query) {
+                            // Handle search
+                          },
+                        ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
           
