@@ -29,7 +29,7 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
   final MapController _mapController = MapController();
   LatLng _currentLocation = const LatLng(3.1390, 101.6869); // KL default
   bool _isTaskerMode = true;
-  bool _isMapView = true; // Toggle between map and list view
+  bool _isMapView = false; // Toggle between map and list view
   final PageController _cardPageController = PageController(viewportFraction: 0.85);
   int _currentCardIndex = 0;
   final _locationService = LocationService();
@@ -539,13 +539,14 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
             else if (!_isMapView || !_isTaskerMode)
               // List view (shown when not in map view or when in Poster mode)
               Positioned.fill(
-                top: _isTaskerMode ? 140 : 150, // Adjusted space for "List" title without search bar
+                top: 260, // Adjusted space for profile and search bar with tabs
                 bottom: _isTaskerMode ? 48 : 0, // Space for VIEW MAP button only in Tasker mode
                 child: Container(
-                  color: AppColors.backgroundSecondary, // Light gray background
-                  child: ListView.builder(
-                    padding: const EdgeInsets.only(top: 24), // Increased padding to prevent overlap with tabs
+                  color: AppColors.white, // White background
+                  child: ListView.separated(
+                    padding: const EdgeInsets.all(16),
                     itemCount: sortedTasks.length,
+                    separatorBuilder: (context, index) => SizedBox(height: 12),
                     itemBuilder: (context, index) {
                       return _TaskListItem(
                         task: sortedTasks[index],
@@ -566,29 +567,72 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
                 bottom: false,
                 child: Column(
                   children: [
-                    // Show "List" title when in Poster mode
-                    if (!_isTaskerMode)
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        color: AppColors.backgroundPrimary,
-                        child: const Center(
-                          child: Text(
-                            'List',
-                            style: AppTypography.titleMedium,
+                    // Profile section with availability switch
+                    Container(
+                      padding: EdgeInsets.all(AppSpacing.md),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Profile avatar
+                          ref.watch(currentProfileProvider).when(
+                            data: (profile) => CircleAvatar(
+                              radius: 24,
+                              backgroundColor: AppColors.gray200,
+                              backgroundImage: profile?.avatarUrl != null
+                                ? NetworkImage(profile!.avatarUrl!)
+                                : null,
+                              child: profile?.avatarUrl == null
+                                ? Text(
+                                    profile?.fullName.isNotEmpty == true
+                                      ? profile!.fullName[0].toUpperCase()
+                                      : '?',
+                                    style: AppTypography.titleMedium.copyWith(
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  )
+                                : null,
+                            ),
+                            loading: () => CircleAvatar(radius: 24, backgroundColor: AppColors.gray200),
+                            error: (_, __) => CircleAvatar(radius: 24, backgroundColor: AppColors.gray200),
                           ),
-                        ),
+                          SizedBox(width: AppSpacing.md),
+                          // Profile name, role, and availability switch
+                          Expanded(
+                            child: ref.watch(currentProfileProvider).when(
+                              data: (profile) => Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    profile?.fullName ?? 'User',
+                                    style: AppTypography.titleMedium,
+                                  ),
+                                  SizedBox(height: 4),
+                                  _buildAvailabilitySwitchCompact(),
+                                ],
+                              ),
+                              loading: () => Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('User', style: AppTypography.titleMedium),
+                                  SizedBox(height: 4),
+                                  _buildAvailabilitySwitchCompact(),
+                                ],
+                              ),
+                              error: (_, __) => Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('User', style: AppTypography.titleMedium),
+                                  SizedBox(height: 4),
+                                  _buildAvailabilitySwitchCompact(),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    // Show Taskaway logo and search bar in Tasker mode
+                    ),
+                    // Show search bar in Tasker mode
                     if (_isTaskerMode) ...[
-                      Padding(
-                        padding: const EdgeInsets.only(top: 16, bottom: 8),
-                        child: Image.asset(
-                          'assets/images/taskaway_logo.png',
-                          height: 40,
-                          fit: BoxFit.contain,
-                        ),
-                      ),
                       MapSearchBar(
                         isTaskerMode: _isTaskerMode,
                         onFilterTap: () {
@@ -612,40 +656,23 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
                         },
                       ),
                     ] else
-                      // Show only tabs in Poster mode
-                      Column(
-                        children: [
-                          Container(
-                            color: AppColors.backgroundPrimary,
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: _TabButton(
-                                    label: 'TASKER',
-                                    isSelected: _isTaskerMode,
-                                    onTap: () => setState(() {
-                                      _isTaskerMode = true;
-                                      _isMapView = true; // Switch to map view when going to Tasker
-                                    }),
-                                  ),
-                                ),
-                                Expanded(
-                                  child: _TabButton(
-                                    label: 'POSTER',
-                                    isSelected: !_isTaskerMode,
-                                    onTap: () => setState(() {
-                                      _isTaskerMode = false;
-                                      _isMapView = false; // Switch to list view when going to Poster
-                                    }),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+                      // Show search bar in Poster mode (MapSearchBar already includes tabs)
+                      MapSearchBar(
+                        isTaskerMode: _isTaskerMode,
+                        onFilterTap: () {
+                          print('Filter tap received in MapHomeScreen');
+                          _showFilterBottomSheet(context);
+                        },
+                        onToggle: (isTasker) {
+                          setState(() {
+                            _isTaskerMode = isTasker;
+                            // Keep current view preference when switching modes
+                          });
+                        },
+                        onSearch: (query) {
+                          // Handle search
+                        },
                       ),
-                    // Availability Switch - Show for all users
-                    _buildAvailabilitySwitch(),
                   ],
                 ),
               ),
@@ -900,6 +927,112 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
       error: (_, __) => const SizedBox.shrink(),
     );
   }
+
+  /// Build compact availability switch for profile section
+  Widget _buildAvailabilitySwitchCompact() {
+    final currentUser = ref.watch(currentUserProvider);
+    final profileAsync = ref.watch(currentProfileProvider);
+
+    return profileAsync.when(
+      data: (profile) {
+        final isAvailable = profile?.isAvailable ?? false;
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: isAvailable ? AppColors.successLight : AppColors.warningLight,
+            borderRadius: AppRadius.xxl,
+            border: Border.all(
+              color: isAvailable ? AppColors.success : AppColors.warning,
+              width: 1,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                isAvailable ? 'Available' : 'Offline',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: isAvailable ? AppColors.success : AppColors.warning,
+                ),
+              ),
+              SizedBox(width: AppSpacing.sm),
+              SizedBox(
+                width: 40,
+                height: 20,
+                child: Switch(
+                  value: isAvailable,
+                  onChanged: (value) async {
+                    if (currentUser == null) return;
+
+                    if (value) {
+                      // Turning availability ON
+                      final hasPermission = await _locationService.requestPermissions();
+                      if (!hasPermission) {
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Location permission is required to be available for tasks'),
+                              backgroundColor: AppColors.error,
+                            ),
+                          );
+                        }
+                        return;
+                      }
+
+                      await ref.read(profileControllerProvider).updateAvailability(
+                        userId: currentUser.id,
+                        isAvailable: true,
+                      );
+
+                      await _locationService.startTracking(currentUser.id);
+                      ref.invalidate(currentProfileProvider);
+
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('You are now available!'),
+                            backgroundColor: AppColors.success,
+                            duration: Duration(seconds: 3),
+                          ),
+                        );
+                      }
+                    } else {
+                      // Turning availability OFF
+                      await ref.read(profileControllerProvider).updateAvailability(
+                        userId: currentUser.id,
+                        isAvailable: false,
+                      );
+
+                      _locationService.stopTracking();
+                      ref.invalidate(currentProfileProvider);
+
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('You are now offline'),
+                            backgroundColor: AppColors.warning,
+                          ),
+                        );
+                      }
+                    }
+                  },
+                  activeColor: AppColors.success,
+                  activeTrackColor: AppColors.successLight,
+                  inactiveThumbColor: AppColors.warning,
+                  inactiveTrackColor: AppColors.warningLight,
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+    );
+  }
 }
 
 class ServiceMarker {
@@ -993,14 +1126,13 @@ class _TaskListItem extends ConsumerWidget {
         context.go('/home/tasks/${task.id}');
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: AppColors.backgroundPrimary,
-          border: Border(
-            bottom: BorderSide(
-              color: AppColors.borderDefault,
-              width: 1,
-            ),
+          borderRadius: AppRadius.md,
+          border: Border.all(
+            color: AppColors.borderDefault,
+            width: 1,
           ),
         ),
         child: Row(

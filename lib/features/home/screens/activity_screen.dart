@@ -192,14 +192,16 @@ class _TaskCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     task.title,
-                    style: AppTypography.titleMedium.copyWith(
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
                       color: AppColors.textPrimary,
                     ),
                   ),
                 ),
                 SizedBox(width: AppSpacing.lg),
                 Text(
-                  'RM ${task.budget.toStringAsFixed(2)}',
+                  'RM ${task.budget.toStringAsFixed(0)}',
                   style: AppTypography.titleMedium.copyWith(
                     fontWeight: AppTypography.bold,
                     color: AppColors.textPrimary,
@@ -207,32 +209,42 @@ class _TaskCard extends StatelessWidget {
                 ),
               ],
             ),
-            SizedBox(height: AppSpacing.sm),
+            const SizedBox(height: 4),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
                   child: Text(
                     'By $posterName',
-                    style: AppTypography.bodyMedium.copyWith(
+                    style: const TextStyle(
+                      fontSize: 13,
                       color: AppColors.textSecondary,
                     ),
                   ),
                 ),
-                Text(
-                  _getStatusLabel(task.status),
-                  style: AppTypography.bodyMedium.copyWith(
-                    fontWeight: AppTypography.semiBold,
-                    color: _getStatusColor(task.status),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: _getStatusColor(task.status).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    _getStatusLabel(task.status).toUpperCase(),
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: _getStatusColor(task.status),
+                    ),
                   ),
                 ),
               ],
             ),
-            SizedBox(height: AppSpacing.sm),
+            const SizedBox(height: 2),
             Text(
               'Due date $dueDate',
-              style: AppTypography.bodySmall.copyWith(
-                color: AppColors.textSecondary,
+              style: const TextStyle(
+                fontSize: 12,
+                color: AppColors.textTertiary,
               ),
             ),
           ],

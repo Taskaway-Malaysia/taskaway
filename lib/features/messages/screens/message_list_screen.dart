@@ -165,15 +165,15 @@ class MessageListScreen extends ConsumerWidget {
                                   Text(
                                     otherPersonName,
                                     style: const TextStyle(
-                                      fontWeight: FontWeight.w400,
-                                      fontSize: 14,
-                                      color: Color(0xFF050316),
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 13,
+                                      color: AppColors.textPrimary,
                                     ),
                                   ),
                                   Text(
                                     _getFormattedTime(channel.lastMessageAt),
                                     style: const TextStyle(
-                                      color: Color(0xFF8F9098),
+                                      color: AppColors.textTertiary,
                                       fontSize: 10,
                                       fontWeight: FontWeight.w500,
                                     ),
@@ -187,7 +187,7 @@ class MessageListScreen extends ConsumerWidget {
                                 style: const TextStyle(
                                   fontWeight: FontWeight.w600,
                                   fontSize: 16,
-                                  color: Color(0xFF050316),
+                                  color: AppColors.textPrimary,
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -200,10 +200,10 @@ class MessageListScreen extends ConsumerWidget {
                                   if (channel.lastMessageSenderId == currentUserId) ...[
                                     Icon(
                                       Icons.done_all,
-                                      size: 20,
+                                      size: 16,
                                       color: channel.unreadCount == 0
                                           ? const Color(0xFFFDAB2F) // Read (yellow)
-                                          : const Color(0xFF8F9098), // Sent (gray)
+                                          : AppColors.textSecondary, // Sent (gray)
                                     ),
                                     const SizedBox(width: 4),
                                   ],
@@ -211,9 +211,9 @@ class MessageListScreen extends ConsumerWidget {
                                     child: Text(
                                       channel.lastMessageContent ?? 'No messages yet',
                                       style: const TextStyle(
-                                        color: Color(0xFF8F9098),
+                                        color: AppColors.textSecondary,
                                         fontWeight: FontWeight.w400,
-                                        fontSize: 14,
+                                        fontSize: 13,
                                       ),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,

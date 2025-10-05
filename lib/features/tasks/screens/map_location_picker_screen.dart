@@ -245,30 +245,36 @@ class _MapLocationPickerScreenState extends State<MapLocationPickerScreen> {
                 decoration: BoxDecoration(
                   color: AppColors.white,
                   borderRadius: AppRadius.md,
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.textPrimary.withOpacity(0.1),
-                      blurRadius: 10,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
                 ),
                 child: Column(
                   children: [
                     Row(
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.arrow_back),
+                          icon: const Icon(Icons.arrow_back_ios),
                           onPressed: () => context.pop(),
                         ),
                         Expanded(
                           child: GooglePlaceAutoCompleteTextField(
                             textEditingController: _searchController,
                             googleAPIKey: ApiConstants.googleMapsApiKey,
-                            inputDecoration: const InputDecoration(
+                            boxDecoration: BoxDecoration(
+                              border: Border.all(color: Colors.transparent, width: 0),
+                              color: AppColors.white,
+                              borderRadius: AppRadius.md,
+                            ),
+                            inputDecoration: InputDecoration(
                               hintText: 'Search location...',
+                              filled: true,
+                              fillColor: AppColors.white,
                               border: InputBorder.none,
-                              hintStyle: TextStyle(color: Color(0xFF788494)),
+                              enabledBorder: InputBorder.none,
+                              focusedBorder: InputBorder.none,
+                              errorBorder: InputBorder.none,
+                              disabledBorder: InputBorder.none,
+                              hintStyle: AppTypography.bodyMedium.copyWith(
+                                color: AppColors.gray400,
+                              ),
                             ),
                             debounceTime: 800,
                             countries: const ["my"], // Malaysia only
@@ -370,8 +376,8 @@ class _MapLocationPickerScreenState extends State<MapLocationPickerScreen> {
                                         ? _selectedAddress
                                         : 'Lat: ${_selectedLocation.latitude.toStringAsFixed(6)}, Lng: ${_selectedLocation.longitude.toStringAsFixed(6)}',
                                     style: const TextStyle(
-                                      fontSize: 12,
-                                      color: Color(0xFF788494),
+                                      fontSize: 13,
+                                      color: AppColors.textSecondary,
                                     ),
                                     maxLines: 2,
                                     overflow: TextOverflow.ellipsis,
@@ -389,17 +395,16 @@ class _MapLocationPickerScreenState extends State<MapLocationPickerScreen> {
                           foregroundColor: const Color(0xFF000000),
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
-                            borderRadius: AppRadius.xs,
+                            borderRadius: AppRadius.md,
                             side: const BorderSide(color: Color(0xFFFFC333), width: 1),
                           ),
                         ),
                         onPressed: _selectedAddress.isNotEmpty ? _confirmLocation : null,
                         child: Text(
                           'Confirm location',
-                          style: TextStyle(
-                            fontSize: 14,
+                          style: const TextStyle(
+                            fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            letterSpacing: 0.7,
                           ),
                         ),
                       ),

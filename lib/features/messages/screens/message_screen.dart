@@ -247,7 +247,11 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                             currentUserId == _channel.posterId
                                 ? _channel.taskerName
                                 : _channel.posterName,
-                            style: AppTypography.headlineMedium,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary,
+                            ),
                             textAlign: TextAlign.center,
                           ),
                           const SizedBox(height: 4),
@@ -259,7 +263,8 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                                 final onlineStatus = TimeFormatter.formatOnlineStatus(profile!.lastSignInAt);
                                 return Text(
                                   onlineStatus,
-                                  style: AppTypography.bodyMedium.copyWith(
+                                  style: const TextStyle(
+                                    fontSize: 13,
                                     color: AppColors.textSecondary,
                                   ),
                                   textAlign: TextAlign.center,
@@ -273,7 +278,8 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                                 return onlineStatus.isNotEmpty
                                     ? Text(
                                         onlineStatus,
-                                        style: AppTypography.bodyMedium.copyWith(
+                                        style: const TextStyle(
+                                          fontSize: 13,
                                           color: AppColors.textSecondary,
                                         ),
                                         textAlign: TextAlign.center,
@@ -335,8 +341,9 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                           children: [
                             Text(
                               task?.title ?? _channel.taskTitle,
-                              style: AppTypography.bodyMedium.copyWith(
-                                fontWeight: AppTypography.semiBold,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
                                 color: AppColors.textPrimary,
                               ),
                               maxLines: 2,
@@ -344,9 +351,10 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                             ),
                             SizedBox(height: AppSpacing.xs),
                             Text(
-                              task != null ? 'RM${task.price.toStringAsFixed(2)}' : 'RM--',
-                              style: AppTypography.titleMedium.copyWith(
-                                fontWeight: AppTypography.bold,
+                              task != null ? 'RM${task.price.toStringAsFixed(0)}' : 'RM--',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
                                 color: AppColors.textPrimary,
                               ),
                             ),
@@ -384,8 +392,8 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                             Text(
                               _channel.taskTitle,
                               style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w400,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
                                 color: AppColors.textPrimary,
                               ),
                               maxLines: 1,
@@ -394,8 +402,8 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                             const SizedBox(height: 7),
                             Text(
                               'Price unavailable',
-                              style: TextStyle(
-                                fontSize: 14,
+                              style: const TextStyle(
+                                fontSize: 13,
                                 fontWeight: FontWeight.w400,
                                 color: AppColors.textTertiary,
                               ),
@@ -430,10 +438,11 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                           ),
                           elevation: 0,
                         ),
-                        child: Text(
+                        child: const Text(
                           'Make Offer',
-                          style: AppTypography.labelMedium.copyWith(
-                            fontWeight: AppTypography.semiBold,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
                             color: AppColors.gray900,
                           ),
                         ),
@@ -457,10 +466,11 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                             borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
                           ),
                         ),
-                        child: Text(
+                        child: const Text(
                           'View Seller',
-                          style: AppTypography.labelMedium.copyWith(
-                            fontWeight: AppTypography.semiBold,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
                             color: AppColors.gray900,
                           ),
                         ),
@@ -675,12 +685,8 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                 ),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: AppColors.backgroundSecondary,
+                    color: AppColors.gray100,
                     borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
-                    border: Border.all(
-                      color: AppColors.borderDefault,
-                      width: 1,
-                    ),
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
@@ -693,7 +699,7 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                           decoration: InputDecoration(
                             hintText: 'Text Message',
                             hintStyle: AppTypography.bodyMedium.copyWith(
-                              color: AppColors.textTertiary,
+                              color: AppColors.gray400,
                             ),
                             isDense: true,
                             border: InputBorder.none,

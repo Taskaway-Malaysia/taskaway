@@ -440,15 +440,17 @@ class _ProfileScreenNewState extends ConsumerState<ProfileScreenNew> {
                         children: [
                           Text(
                             'About me',
-                            style: AppTypography.titleLarge.copyWith(
-                              fontWeight: AppTypography.semiBold,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
                               color: AppColors.textPrimary,
                             ),
                           ),
                           SizedBox(height: AppSpacing.xs),
                           Text(
                             'Write a fun and punchy intro.',
-                            style: AppTypography.bodyLarge.copyWith(
+                            style: const TextStyle(
+                              fontSize: 13,
                               color: AppColors.textSecondary,
                             ),
                           ),
@@ -468,7 +470,8 @@ class _ProfileScreenNewState extends ConsumerState<ProfileScreenNew> {
                               ),
                               child: Text(
                                 profile?.bio ?? 'A little bit about you...',
-                                style: AppTypography.bodyLarge.copyWith(
+                                style: TextStyle(
+                                  fontSize: 13,
                                   color: profile?.bio == null
                                       ? AppColors.textTertiary
                                       : AppColors.textPrimary,
@@ -491,15 +494,17 @@ class _ProfileScreenNewState extends ConsumerState<ProfileScreenNew> {
                         children: [
                           Text(
                             'Skills',
-                            style: AppTypography.titleLarge.copyWith(
-                              fontWeight: AppTypography.semiBold,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
                               color: AppColors.textPrimary,
                             ),
                           ),
                           SizedBox(height: AppSpacing.xs),
                           Text(
                             'Add your top skills and expertise.',
-                            style: AppTypography.bodyLarge.copyWith(
+                            style: const TextStyle(
+                              fontSize: 13,
                               color: AppColors.textSecondary,
                             ),
                           ),
@@ -521,7 +526,8 @@ class _ProfileScreenNewState extends ConsumerState<ProfileScreenNew> {
                                 profile?.skills?.isNotEmpty == true
                                     ? profile!.skills!.join(', ')
                                     : 'Add your skills...',
-                                style: AppTypography.bodyLarge.copyWith(
+                                style: TextStyle(
+                                  fontSize: 13,
                                   color: profile?.skills?.isNotEmpty == true
                                       ? AppColors.textPrimary
                                       : AppColors.textTertiary,
@@ -544,15 +550,17 @@ class _ProfileScreenNewState extends ConsumerState<ProfileScreenNew> {
                         children: [
                           Text(
                             'My works',
-                            style: AppTypography.titleLarge.copyWith(
-                              fontWeight: AppTypography.semiBold,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
                               color: AppColors.textPrimary,
                             ),
                           ),
                           SizedBox(height: AppSpacing.sm),
                           Text(
                             'Please add your works',
-                            style: AppTypography.bodyLarge.copyWith(
+                            style: const TextStyle(
+                              fontSize: 13,
                               color: AppColors.textTertiary,
                             ),
                           ),
@@ -717,8 +725,9 @@ class _ProfileScreenNewState extends ConsumerState<ProfileScreenNew> {
                           },
                           child: Text(
                             'Logout',
-                            style: AppTypography.labelLarge.copyWith(
-                              fontWeight: AppTypography.semiBold,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
                               color: AppColors.error,
                             ),
                           ),
@@ -816,8 +825,9 @@ class _UserInfoCard extends StatelessWidget {
               children: [
                 Text(
                   name,
-                  style: AppTypography.titleLarge.copyWith(
-                    fontWeight: AppTypography.bold,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
                     color: AppColors.textPrimary,
                   ),
                   overflow: TextOverflow.ellipsis,

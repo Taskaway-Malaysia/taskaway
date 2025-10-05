@@ -450,7 +450,9 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
                 Text(
                   label,
                   style: const TextStyle(
-                    fontWeight: FontWeight.w500,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
                   ),
                 ),
               ],
@@ -460,7 +462,7 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
               timeRange,
               style: const TextStyle(
                 fontSize: 12,
-                color: Color(0xFF788494),
+                color: AppColors.textTertiary,
               ),
             ),
           ],
@@ -504,7 +506,9 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
             Text(
               label,
               style: const TextStyle(
-                fontWeight: FontWeight.w500,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
               ),
             ),
             const SizedBox(height: 4),
@@ -513,7 +517,7 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
               textAlign: TextAlign.center,
               style: const TextStyle(
                 fontSize: 12,
-                color: Color(0xFF788494),
+                color: AppColors.textTertiary,
               ),
             ),
           ],
@@ -594,9 +598,9 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
                       Text(
                         label,
                         style: TextStyle(
-                          fontSize: 15,
+                          fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: isComingSoon ? const Color(0xFF788494) : const Color(0xFF000000),
+                          color: isComingSoon ? AppColors.textSecondary : AppColors.textPrimary,
                         ),
                       ),
                       if (isComingSoon) ...[
@@ -624,7 +628,7 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
                     description,
                     style: const TextStyle(
                       fontSize: 13,
-                      color: Color(0xFF788494),
+                      color: AppColors.textSecondary,
                     ),
                   ),
                 ],
@@ -673,19 +677,18 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
                 children: [
                   Text(
                     'Price • Payment method',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.24,
-                      color: Color(0xFF000000),
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     '$priceText • $paymentText',
                     style: TextStyle(
-                      fontSize: 14,
-                      color: hasValues ? const Color(0xFF000000) : const Color(0xFF788494),
+                      fontSize: 13,
+                      color: hasValues ? AppColors.textPrimary : AppColors.textSecondary,
                     ),
                   ),
                 ],
@@ -783,11 +786,10 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
                     children: [
                       Text(
                         'Title',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.24,
-                          color: Color(0xFF000000),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
                         ),
                       ),
                       SizedBox(height: AppSpacing.sm),
@@ -817,11 +819,10 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
                       const SizedBox(height: 18),
                       Text(
                         'Description',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.24,
-                          color: Color(0xFF000000),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
                         ),
                       ),
                       SizedBox(height: AppSpacing.sm),
@@ -852,26 +853,38 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
                       const SizedBox(height: 18),
                       Text(
                         'Category',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.24,
-                          color: Color(0xFF000000),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
                         ),
                       ),
                       SizedBox(height: AppSpacing.sm),
                       Container(
-                        height: 33,
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 1),
                         decoration: BoxDecoration(
                           color: AppColors.white,
                           border: Border.all(color: const Color(0xFFE4E4E4)),
-                          borderRadius: AppRadius.smMd,
+                          borderRadius: AppRadius.md,
                         ),
                         child: DropdownButtonHideUnderline(
                           child: DropdownButton<String>(
                             value: selectedCategory,
                             isExpanded: true,
+                            icon: const Icon(Icons.keyboard_arrow_down, size: 24, color: AppColors.textSecondary),
+                            hint: const Text(
+                              'All Categories',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w400,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w400,
+                              color: AppColors.textPrimary,
+                            ),
                             items: const [
                               DropdownMenuItem(value: 'cleaning', child: Text('Cleaning')),
                               DropdownMenuItem(value: 'handyman', child: Text('Handyman')),
@@ -896,11 +909,10 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
                       const SizedBox(height: 18),
                       Text(
                         'Date & Time',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.24,
-                          color: Color(0xFF000000),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
                         ),
                       ),
                       SizedBox(height: AppSpacing.sm),
@@ -955,11 +967,10 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
                       const SizedBox(height: 18),
                       Text(
                         'Location',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.24,
-                          color: Color(0xFF000000),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
                         ),
                       ),
                       SizedBox(height: AppSpacing.sm),
@@ -996,10 +1007,10 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
                                         ? taskData['location']
                                         : 'Select location on map',
                                     style: TextStyle(
-                                      fontSize: 14,
+                                      fontSize: 13,
                                       color: taskData['location'] != null && taskData['location'].toString().isNotEmpty
-                                          ? const Color(0xFF000000)
-                                          : const Color(0xFF788494),
+                                          ? AppColors.textPrimary
+                                          : AppColors.textSecondary,
                                     ),
                                     maxLines: 2,
                                     overflow: TextOverflow.ellipsis,
@@ -1015,11 +1026,10 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
                       const SizedBox(height: 18),
                       Text(
                         'Photos (Optional)',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.24,
-                          color: Color(0xFF000000),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
                         ),
                       ),
                       SizedBox(height: AppSpacing.sm),
@@ -1139,10 +1149,9 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
                           )
                         : Text(
                             'Find tasker',
-                            style: TextStyle(
-                              fontSize: 15,
+                            style: const TextStyle(
+                              fontSize: 13,
                               fontWeight: FontWeight.w600,
-                              letterSpacing: 0.3,
                             ),
                           ),
                   ),
@@ -1219,10 +1228,10 @@ class _PricePaymentModalContentState extends State<_PricePaymentModalContent> {
                         const Expanded(
                           child: Text(
                             'Price & Payment',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF000000),
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary,
                             ),
                           ),
                         ),
@@ -1251,11 +1260,10 @@ class _PricePaymentModalContentState extends State<_PricePaymentModalContent> {
                       // Price Section
                       Text(
                         'Task Price *',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.24,
-                          color: Color(0xFF000000),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
                         ),
                       ),
                       SizedBox(height: AppSpacing.md),
@@ -1284,8 +1292,8 @@ class _PricePaymentModalContentState extends State<_PricePaymentModalContent> {
                           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                         ),
                         style: const TextStyle(
-                          fontSize: 15,
-                          color: Color(0xFF000000),
+                          fontSize: 13,
+                          color: AppColors.textPrimary,
                         ),
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
                         onChanged: (value) {
@@ -1299,19 +1307,18 @@ class _PricePaymentModalContentState extends State<_PricePaymentModalContent> {
                       // Payment Method Section
                       Text(
                         'Payment Method *',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.24,
-                          color: Color(0xFF000000),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
                         ),
                       ),
                       SizedBox(height: AppSpacing.sm),
                       Text(
                         'Choose how you want to pay',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF788494),
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: AppColors.textSecondary,
                         ),
                       ),
                       SizedBox(height: AppSpacing.md),
@@ -1398,10 +1405,9 @@ class _PricePaymentModalContentState extends State<_PricePaymentModalContent> {
                     },
                     child: Text(
                       'Confirm',
-                      style: TextStyle(
-                        fontSize: 14,
+                      style: const TextStyle(
+                        fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        letterSpacing: 0.7,
                       ),
                     ),
                   ),
@@ -1467,9 +1473,9 @@ class _PricePaymentModalContentState extends State<_PricePaymentModalContent> {
                       Text(
                         label,
                         style: TextStyle(
-                          fontSize: 15,
+                          fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: isComingSoon ? const Color(0xFF788494) : const Color(0xFF000000),
+                          color: isComingSoon ? AppColors.textSecondary : AppColors.textPrimary,
                         ),
                       ),
                       if (isComingSoon) ...[
@@ -1497,7 +1503,7 @@ class _PricePaymentModalContentState extends State<_PricePaymentModalContent> {
                     description,
                     style: const TextStyle(
                       fontSize: 13,
-                      color: Color(0xFF788494),
+                      color: AppColors.textSecondary,
                     ),
                   ),
                 ],
