@@ -91,9 +91,14 @@ class ActivityScreen extends ConsumerWidget {
                     );
                   }
 
-                  return ListView.builder(
+                  return ListView.separated(
                     padding: EdgeInsets.zero,
                     itemCount: tasks.length,
+                    separatorBuilder: (context, index) => Container(
+                      height: 1,
+                      color: const Color(0xFFE8E9F1),
+                      margin: const EdgeInsets.symmetric(horizontal: 8),
+                    ),
                     itemBuilder: (context, index) {
                       return _TaskCard(task: tasks[index]);
                     },
@@ -170,18 +175,14 @@ class _TaskCard extends StatelessWidget {
         context.push('/home/tasks/${task.id}');
       },
       child: Container(
-        padding: EdgeInsets.symmetric(
-          vertical: AppSpacing.lg,
-          horizontal: AppSpacing.lg,
+        padding: EdgeInsets.fromLTRB(
+          AppSpacing.xxl,
+          AppSpacing.lg,
+          AppSpacing.xxl,
+          AppSpacing.lg,
         ),
         decoration: BoxDecoration(
           color: AppColors.white,
-          border: Border(
-            bottom: BorderSide(
-              color: AppColors.borderDefault,
-              width: 1,
-            ),
-          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

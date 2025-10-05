@@ -407,6 +407,7 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
           dateText ?? label,
           textAlign: TextAlign.center,
           style: TextStyle(
+            fontSize: 13,
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
             color: AppColors.textPrimary,
           ),
@@ -784,9 +785,9 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
+                      const Text(
                         'Title',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                           color: AppColors.textPrimary,
@@ -795,8 +796,16 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
                       SizedBox(height: AppSpacing.sm),
                       TextFormField(
                         controller: _titleController,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: AppColors.textPrimary,
+                        ),
                         decoration: InputDecoration(
                           hintText: 'Enter task title',
+                          hintStyle: const TextStyle(
+                            fontSize: 13,
+                            color: AppColors.textSecondary,
+                          ),
                           filled: true,
                           fillColor: AppColors.white,
                           border: OutlineInputBorder(
@@ -828,8 +837,16 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
                       SizedBox(height: AppSpacing.sm),
                       TextFormField(
                         controller: _descriptionController,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: AppColors.textPrimary,
+                        ),
                         decoration: InputDecoration(
                           hintText: 'Describe your task',
+                          hintStyle: const TextStyle(
+                            fontSize: 13,
+                            color: AppColors.textSecondary,
+                          ),
                           filled: true,
                           fillColor: AppColors.white,
                           border: OutlineInputBorder(
@@ -861,7 +878,7 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
                       ),
                       SizedBox(height: AppSpacing.sm),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 1),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
                         decoration: BoxDecoration(
                           color: AppColors.white,
                           border: Border.all(color: const Color(0xFFE4E4E4)),
@@ -875,13 +892,13 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
                             hint: const Text(
                               'All Categories',
                               style: TextStyle(
-                                fontSize: 16,
+                                fontSize: 13,
                                 fontWeight: FontWeight.w400,
                                 color: AppColors.textPrimary,
                               ),
                             ),
                             style: const TextStyle(
-                              fontSize: 16,
+                              fontSize: 13,
                               fontWeight: FontWeight.w400,
                               color: AppColors.textPrimary,
                             ),
@@ -1269,10 +1286,14 @@ class _PricePaymentModalContentState extends State<_PricePaymentModalContent> {
                       SizedBox(height: AppSpacing.md),
                       TextFormField(
                         controller: _priceController,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: AppColors.textPrimary,
+                        ),
                         decoration: InputDecoration(
                           hintText: 'RM 0.00',
                           hintStyle: const TextStyle(
-                            fontSize: 15,
+                            fontSize: 13,
                             color: Color(0xFF788494),
                           ),
                           filled: true,
@@ -1290,10 +1311,6 @@ class _PricePaymentModalContentState extends State<_PricePaymentModalContent> {
                             borderSide: const BorderSide(color: Color(0xFFFFDB5B), width: 2),
                           ),
                           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                        ),
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: AppColors.textPrimary,
                         ),
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
                         onChanged: (value) {
