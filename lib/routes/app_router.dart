@@ -26,7 +26,6 @@ import '../features/home/screens/home_screen.dart';
 import '../features/tasks/screens/my_task_screen.dart';
 import '../features/tasks/screens/create_task_screen.dart';
 import '../features/tasks/screens/create_task_single_page_screen.dart';
-import '../features/tasks/screens/task_details_screen.dart';
 import '../features/tasks/screens/task_details_screen_new.dart';
 import '../features/tasks/screens/apply_task_screen.dart';
 import '../features/tasks/screens/offer_accepted_success_screen.dart';
@@ -452,6 +451,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 path: '/chip-payment',
                 name: 'chip-payment',
                 builder: (context, state) {
+                  if (state.extra == null) {
+                    return Scaffold(
+                      appBar: AppBar(title: const Text('Error')),
+                      body: const Center(
+                        child: Text('Missing payment data. Please try again.'),
+                      ),
+                    );
+                  }
                   final extra = state.extra as Map<String, dynamic>;
                   return ChipPaymentScreen(
                     checkoutUrl: extra['checkoutUrl'] as String,
@@ -459,6 +466,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                     amount: extra['amount'] as double,
                     taskTitle: extra['taskTitle'] as String,
                     paymentType: extra['paymentType'] as String?,
+                    applicationId: extra['applicationId'] as String?,
+                    taskerId: extra['taskerId'] as String?,
+                    chipPaymentId: extra['chipPaymentId'] as String?,
                   );
                 },
               ),

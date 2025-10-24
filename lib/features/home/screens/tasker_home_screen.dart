@@ -13,6 +13,7 @@ import 'package:taskaway/features/home/widgets/view_list_toggle.dart';
 import 'package:taskaway/features/auth/controllers/auth_controller.dart';
 import 'package:taskaway/features/profile/controllers/profile_controller.dart';
 import 'package:taskaway/core/services/location_service.dart';
+import 'package:taskaway/core/widgets/bank_verification_banner.dart';
 import 'dart:developer' as dev;
 
 // Provider for browse page region filter
@@ -185,9 +186,17 @@ class _TaskerHomeScreenState extends ConsumerState<TaskerHomeScreen> {
           );
         } else {
           // List view
+          final currentProfile = ref.watch(currentProfileProvider).asData?.value;
+
           return Column(
             children: [
               const SizedBox(height: 200), // Space for header
+
+              // Bank verification banner
+              BankVerificationBanner(
+                verificationStatus: currentProfile?.bankVerificationStatus,
+              ),
+
               Expanded(
                 child: tasks.isEmpty
                     ? const Center(

@@ -6,6 +6,7 @@ import '../features/profile/screens/payment_options_screen.dart';
 import '../features/profile/screens/payment_history_screen.dart';
 import '../features/profile/screens/payment_methods_screen.dart';
 import '../features/profile/screens/my_reviews_screen.dart';
+import '../features/profile/screens/bank_details_screen.dart';
 
 /// Profile-related routes for the app
 class ProfileRouter {
@@ -45,6 +46,11 @@ class ProfileRouter {
       path: '/payment-methods',
       name: 'payment-methods',
       builder: (context, state) => const PaymentMethodsScreen(),
+    ),
+    GoRoute(
+      path: '/profile/bank-details',
+      name: 'bank-details',
+      builder: (context, state) => const BankDetailsScreen(),
     ),
   ];
 }

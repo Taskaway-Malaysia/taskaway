@@ -8,6 +8,7 @@ import 'package:taskaway/features/auth/controllers/auth_controller.dart';
 import 'package:taskaway/features/notifications/controllers/notification_controller.dart';
 import 'package:taskaway/features/tasks/controllers/task_controller.dart';
 import 'package:taskaway/features/messages/repositories/message_repository.dart';
+import 'package:taskaway/features/profile/controllers/profile_controller.dart';
 import 'package:taskaway/core/services/supabase_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 part 'application_controller.g.dart';
@@ -25,6 +26,23 @@ class ApplicationController extends _$ApplicationController {
     required double offerPrice,
   }) async {
     state = const AsyncValue.loading();
+
+    // Backend validation: Check bank verification status
+    final supabase = SupabaseService.client;
+    final profileData = await supabase
+        .from('taskaway_profiles')
+        .select('bank_verification_status')
+        .eq('id', taskerId)
+        .single();
+
+    if (profileData['bank_verification_status'] != 'verified') {
+      state = AsyncValue.error(
+        Exception('Bank account verification required. Please verify your bank account in profile settings to submit offers.'),
+        StackTrace.current,
+      );
+      return;
+    }
+
     final repo = ref.read(applicationRepositoryProvider);
     final existingApp = await repo.getUserApplicationForTask(taskId, taskerId);
 
@@ -168,6 +186,7 @@ class ApplicationController extends _$ApplicationController {
       state = const AsyncValue.data(null);
 
       return {
+        'paymentType': 'online',
         'checkoutUrl': checkoutUrl,
         'chipPaymentId': chipPaymentId,
         'applicationId': applicationId,
@@ -217,6 +236,21 @@ class ApplicationController extends _$ApplicationController {
       };
       await supabase.from('taskaway_tasks').update(taskData).eq('id', taskId);
       dev.log('[completeOfferAcceptance] Task updated successfully');
+
+      // Update CHIP payment record with tasker_id (fixes RLS access for tasker)
+      if (chipPaymentId.isNotEmpty) {
+        dev.log('[completeOfferAcceptance] Step 2.1: Updating CHIP payment record with tasker_id...');
+        try {
+          await supabase
+              .from('taskaway_chip_payments')
+              .update({'tasker_id': taskerId, 'updated_at': DateTime.now().toIso8601String()})
+              .eq('id', chipPaymentId);
+          dev.log('[completeOfferAcceptance] CHIP payment record updated with tasker_id successfully');
+        } catch (paymentUpdateError) {
+          dev.log('[completeOfferAcceptance] WARNING: Failed to update CHIP payment tasker_id: $paymentUpdateError');
+          // Don't fail the entire operation - the payment is still valid
+        }
+      }
 
       // CHIPP payments are held in escrow automatically - no status update needed
       dev.log('[completeOfferAcceptance] CHIPP payment is in escrow, will be released on task approval');
@@ -408,8 +442,48 @@ class ApplicationController extends _$ApplicationController {
 
       final paymentMethod = taskData['payment_method'] as String?;
 
+      // PAYMENT VALIDATION: Ensure payment was properly authorized
+      dev.log('[ApproveTask] Validating payment authorization...');
+
+      // Check if payment method is set
+      if (paymentMethod == null || paymentMethod.isEmpty) {
+        throw Exception('Payment method not set. Task cannot be approved without payment authorization. Please contact support.');
+      }
+
       // If payment method is online_banking, release CHIP escrow
       if (paymentMethod == 'online_banking') {
+        // Additional validation for online payments
+        dev.log('[ApproveTask] Validating online payment record...');
+
+        // Check if payment record exists
+        final paymentCheck = await supabase
+            .from('taskaway_chip_payments')
+            .select('id, payment_status, settlement_status, chip_budget_allocation_id')
+            .eq('task_id', taskId)
+            .maybeSingle();
+
+        if (paymentCheck == null) {
+          throw Exception('Payment record not found. This task was not properly paid. Cannot approve without payment. Please contact support.');
+        }
+
+        // Verify payment is in paid status
+        if (paymentCheck['payment_status'] != 'paid') {
+          throw Exception('Payment not completed. Current payment status: ${paymentCheck['payment_status']}. Please complete payment before approving task.');
+        }
+
+        // Verify payment is held in escrow (either 'held', 'partially_settled', or 'fully_settled')
+        final settlementStatus = paymentCheck['settlement_status'] as String?;
+        if (settlementStatus != 'held' && settlementStatus != 'partially_settled' && settlementStatus != 'fully_settled') {
+          throw Exception('Payment not properly held in escrow. Current settlement status: $settlementStatus. Cannot release payment. Please contact support.');
+        }
+
+        // Note: budget_allocation_id will be fetched automatically by Edge Function if missing
+        if (paymentCheck['chip_budget_allocation_id'] == null) {
+          dev.log('[ApproveTask] WARNING: Budget allocation ID is missing. Edge Function will attempt to fetch from CHIP API...');
+        }
+
+        dev.log('[ApproveTask] Payment validation passed. Proceeding with escrow release...');
+
         dev.log('[ApproveTask] Releasing CHIP escrow payment...');
 
         try {

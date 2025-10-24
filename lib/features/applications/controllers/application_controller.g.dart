@@ -309,7 +309,7 @@ class _TaskApplicationsStreamProviderElement
 }
 
 String _$applicationControllerHash() =>
-    r'90d0b40dd0652c7d4830fd8e06d81b271142c370';
+    r'083afd038bc6c51bd047b39d3a61ab7d62b46982';
 
 /// See also [ApplicationController].
 @ProviderFor(ApplicationController)

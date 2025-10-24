@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/style_constants.dart';
+import '../../applications/controllers/application_controller.dart';
 import 'dart:developer' as dev;
 
 /// ChipPaymentScreen
@@ -10,12 +12,15 @@ import 'dart:developer' as dev;
 /// Displays CHIP payment checkout page in a WebView
 /// Handles payment callbacks (success, failure, cancel)
 /// Deep link handling for taskaway:// URLs
-class ChipPaymentScreen extends StatefulWidget {
+class ChipPaymentScreen extends ConsumerStatefulWidget {
   final String checkoutUrl;
   final String taskId;
   final double amount;
   final String taskTitle;
   final String? paymentType; // 'task_creation' or 'offer_acceptance'
+  final String? applicationId;  // For offer acceptance
+  final String? taskerId;       // For offer acceptance
+  final String? chipPaymentId;  // For offer acceptance
 
   const ChipPaymentScreen({
     super.key,
@@ -24,13 +29,16 @@ class ChipPaymentScreen extends StatefulWidget {
     required this.amount,
     required this.taskTitle,
     this.paymentType,
+    this.applicationId,
+    this.taskerId,
+    this.chipPaymentId,
   });
 
   @override
-  State<ChipPaymentScreen> createState() => _ChipPaymentScreenState();
+  ConsumerState<ChipPaymentScreen> createState() => _ChipPaymentScreenState();
 }
 
-class _ChipPaymentScreenState extends State<ChipPaymentScreen> {
+class _ChipPaymentScreenState extends ConsumerState<ChipPaymentScreen> {
   late final WebViewController _controller;
   bool _isLoading = true;
   String? _errorMessage;
@@ -140,8 +148,41 @@ class _ChipPaymentScreenState extends State<ChipPaymentScreen> {
     }
   }
 
-  void _handlePaymentSuccess() {
+  Future<void> _handlePaymentSuccess() async {
     dev.log('[CHIP Payment] Payment successful for task ${widget.taskId}');
+
+    // If this is offer acceptance, call completeOfferAcceptance first
+    if (widget.paymentType == 'offer_acceptance' &&
+        widget.applicationId != null &&
+        widget.taskerId != null &&
+        widget.chipPaymentId != null) {
+      try {
+        dev.log('[CHIP Payment] Completing offer acceptance...');
+
+        final applicationController = ref.read(applicationControllerProvider.notifier);
+        await applicationController.completeOfferAcceptance(
+          applicationId: widget.applicationId!,
+          taskId: widget.taskId,
+          taskerId: widget.taskerId!,
+          chipPaymentId: widget.chipPaymentId!,
+          offerPrice: widget.amount,
+        );
+
+        dev.log('[CHIP Payment] Offer acceptance completed successfully');
+      } catch (e, st) {
+        dev.log('[CHIP Payment] Error completing offer acceptance: $e\nStackTrace: $st');
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Payment succeeded but failed to assign tasker: $e'),
+              backgroundColor: Colors.orange,
+              duration: const Duration(seconds: 5),
+            ),
+          );
+        }
+      }
+    }
 
     if (mounted) {
       // Navigate to success screen using route name

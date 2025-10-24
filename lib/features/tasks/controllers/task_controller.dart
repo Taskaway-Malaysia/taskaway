@@ -389,19 +389,53 @@ class TaskController {
     // Get the current task
     final task = await _repository.getTaskById(taskId);
     final currentUserId = _supabase.auth.currentUser?.id;
-    
+
     // Verify the current user is the tasker
     if (currentUserId != task.taskerId) {
       throw Exception('Only the tasker for this task can start it');
     }
-    
+
     // Verify the task is in the correct state (offer accepted)
     if (task.status != 'accepted') {
       throw Exception(
         'This task cannot be started. Current status: ${task.status}',
       );
     }
-    
+
+    // PAYMENT VALIDATION: Ensure payment was properly authorized before starting work
+    dev.log('[StartTask] Validating payment authorization for task $taskId...');
+
+    // Check if payment method is set
+    if (task.paymentMethod == null || task.paymentMethod!.isEmpty) {
+      throw Exception('Payment method not set. Task cannot be started without payment authorization. Please contact the poster to complete payment.');
+    }
+
+    // If payment method is online_banking, verify payment record exists
+    if (task.paymentMethod == 'online_banking') {
+      dev.log('[StartTask] Validating online payment record...');
+
+      final paymentCheck = await _supabase
+          .from('taskaway_chip_payments')
+          .select('id, payment_status')
+          .eq('task_id', taskId)
+          .maybeSingle();
+
+      if (paymentCheck == null) {
+        throw Exception('Payment record not found. The poster has not completed payment. Please contact the poster before starting work.');
+      }
+
+      if (paymentCheck['payment_status'] != 'paid') {
+        throw Exception('Payment not completed. Current payment status: ${paymentCheck['payment_status']}. Please wait for the poster to complete payment before starting work.');
+      }
+
+      dev.log('[StartTask] Payment validation passed.');
+    } else if (task.paymentMethod == 'cash_on_delivery') {
+      dev.log('[StartTask] Cash on delivery payment - no online payment validation needed.');
+      // For cash payments, we rely on poster confirmation at completion time
+    } else {
+      throw Exception('Unknown payment method: ${task.paymentMethod}. Please contact support.');
+    }
+
     // Update the task
     await _repository.updateTask(taskId, {
       'status': 'in_progress',
@@ -414,17 +448,50 @@ class TaskController {
     // Get the current task
     final task = await _repository.getTaskById(taskId);
     final currentUserId = _supabase.auth.currentUser?.id;
-    
+
     // Verify the current user is the tasker
     if (currentUserId != task.taskerId) {
       throw Exception('Only the tasker for this task can complete it');
     }
-    
+
     // Verify the task is in the correct state
     if (task.status != 'in_progress') {
       throw Exception('This task cannot be marked as complete. Current status: ${task.status}');
     }
-    
+
+    // PAYMENT VALIDATION: Ensure payment exists before requesting approval
+    dev.log('[CompleteTask] Validating payment record for task $taskId...');
+
+    // Check if payment method is set
+    if (task.paymentMethod == null || task.paymentMethod!.isEmpty) {
+      throw Exception('Payment method not set. Task cannot be completed without payment record. Please contact support.');
+    }
+
+    // If payment method is online_banking, verify payment is still valid
+    if (task.paymentMethod == 'online_banking') {
+      dev.log('[CompleteTask] Validating online payment record...');
+
+      final paymentCheck = await _supabase
+          .from('taskaway_chip_payments')
+          .select('id, payment_status')
+          .eq('task_id', taskId)
+          .maybeSingle();
+
+      if (paymentCheck == null) {
+        throw Exception('Payment record not found. Cannot complete task without payment. Please contact support.');
+      }
+
+      if (paymentCheck['payment_status'] != 'paid') {
+        throw Exception('Payment not in paid status. Current status: ${paymentCheck['payment_status']}. Cannot complete task. Please contact support.');
+      }
+
+      dev.log('[CompleteTask] Payment validation passed.');
+    } else if (task.paymentMethod == 'cash_on_delivery') {
+      dev.log('[CompleteTask] Cash on delivery payment - poster will confirm payment at approval.');
+    } else {
+      throw Exception('Unknown payment method: ${task.paymentMethod}. Please contact support.');
+    }
+
     // Update the task
     await _repository.updateTask(taskId, {
       'status': 'pending_approval',
@@ -437,30 +504,90 @@ class TaskController {
     // Get the current task
     final task = await _repository.getTaskById(taskId);
     final currentUserId = _supabase.auth.currentUser?.id;
-    
+
     // Verify the current user is the poster
     if (currentUserId != task.posterId) {
       throw Exception('Only the task poster can approve this task');
     }
-    
+
     // Verify the task is in the correct state
     if (task.status != 'pending_approval') {
       throw Exception('This task cannot be approved. Current status: ${task.status}');
     }
-    
-    // Check if there's a payment to capture
-    if (task.paymentIntentId != null) {
-      // Payment capture is handled by the payment controller
-      // The payment controller will also update the task status
-      // This method is called from UI which handles payment capture separately
-      print('Task has payment_intent_id: ${task.paymentIntentId}');
-    } else {
-      // Legacy flow: No payment to capture, just update status
-      print('No payment_intent_id found, using legacy approval flow');
+
+    // PAYMENT VALIDATION: Ensure payment was properly authorized
+    dev.log('[ApproveTask] Validating payment authorization for task $taskId...');
+
+    // Check if payment method is set
+    if (task.paymentMethod == null || task.paymentMethod!.isEmpty) {
+      throw Exception('Payment method not set. Task cannot be approved without payment authorization. Please contact support.');
+    }
+
+    // If payment method is online_banking, verify payment record and escrow
+    if (task.paymentMethod == 'online_banking') {
+      dev.log('[ApproveTask] Validating online payment record...');
+
+      final paymentCheck = await _supabase
+          .from('taskaway_chip_payments')
+          .select('id, payment_status, settlement_status, chip_budget_allocation_id')
+          .eq('task_id', taskId)
+          .maybeSingle();
+
+      if (paymentCheck == null) {
+        throw Exception('Payment record not found. This task was not properly paid. Cannot approve without payment. Please contact support.');
+      }
+
+      if (paymentCheck['payment_status'] != 'paid') {
+        throw Exception('Payment not completed. Current payment status: ${paymentCheck['payment_status']}. Please complete payment before approving task.');
+      }
+
+      final settlementStatus = paymentCheck['settlement_status'] as String?;
+      if (settlementStatus != 'held' && settlementStatus != 'partially_settled' && settlementStatus != 'fully_settled') {
+        throw Exception('Payment not properly held in escrow. Current settlement status: $settlementStatus. Cannot release payment. Please contact support.');
+      }
+
+      // Note: budget_allocation_id will be fetched automatically by Edge Function if missing
+      if (paymentCheck['chip_budget_allocation_id'] == null) {
+        dev.log('[ApproveTask] WARNING: Budget allocation ID is missing. Edge Function will attempt to fetch from CHIP API...');
+      }
+
+      dev.log('[ApproveTask] Payment validation passed. Proceeding with escrow release...');
+
+      // Call CHIP Release Payout Edge Function to release escrow and transfer to tasker
+      dev.log('[ApproveTask] Releasing CHIP escrow payment...');
+
+      try {
+        final response = await _supabase.functions.invoke(
+          'chip-release-payout',
+          body: {
+            'taskId': taskId,
+            'approverId': currentUserId,
+          },
+        );
+
+        dev.log('[ApproveTask] Payout release response: ${response.data}');
+
+        if (response.data == null || response.data['success'] != true) {
+          throw Exception(response.data?['error'] ?? 'Failed to release payout');
+        }
+
+        dev.log('[ApproveTask] Escrow released successfully. Payout ID: ${response.data['payout_id']}');
+      } catch (payoutError) {
+        dev.log('[ApproveTask] Error releasing payout: $payoutError');
+        throw Exception('Failed to release payment to tasker: $payoutError');
+      }
+    } else if (task.paymentMethod == 'cash_on_delivery') {
+      dev.log('[ApproveTask] Cash on delivery payment - poster confirms payment at approval.');
+      // For cash payments, the poster approving confirms they have paid/will pay the tasker directly
+      // No escrow to release, payment happens outside the platform
+
+      // Just update task status to completed
       await _repository.updateTask(taskId, {
         'status': 'completed',
         'updated_at': DateTime.now().toIso8601String(),
       });
+    } else {
+      throw Exception('Unknown payment method: ${task.paymentMethod}. Please contact support.');
     }
   }
   

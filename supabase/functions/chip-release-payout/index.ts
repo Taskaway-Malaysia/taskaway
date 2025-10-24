@@ -96,14 +96,15 @@ serve(async (req) => {
       throw new Error(`Payment record not found for task: ${taskId}`)
     }
 
-    // Verify payment is paid and has budget allocation ID
+    // Verify payment is paid
     if (payment.payment_status !== 'paid') {
       throw new Error(`Payment is not in paid status: ${payment.payment_status}`)
     }
 
-    if (!payment.chip_budget_allocation_id) {
-      throw new Error('No budget allocation ID found. Cannot release payout.')
-    }
+    // NOTE: Using immediate settlement approach (no CHIP budgets)
+    // Funds already settled to business account
+    // Manual payout will be processed via CHIP dashboard
+    console.log('[CHIP Payout] Using manual payout approach (no budget allocation needed)')
 
     // Check if payout already requested/completed
     if (payment.payout_status !== 'pending') {
@@ -132,51 +133,34 @@ serve(async (req) => {
 
     console.log(`[CHIP Payout] Tasker bank: ${taskerProfile.bank_name} - ${taskerProfile.bank_account_number}`)
 
-    // Prepare CHIP Send payout payload
-    const payoutPayload = {
-      brand_id: CHIP_BRAND_ID,
-      recipient: {
-        bank_account_no: taskerProfile.bank_account_number,
-        bank_name: taskerProfile.bank_name,
-        account_holder_name: taskerProfile.bank_account_holder_name,
-      },
-      amount: Math.round(payment.tasker_amount * 100), // Convert to cents
+    // Manual payout approach - no CHIP Send API call
+    // Admin will process payout via CHIP dashboard using tasker's verified bank details
+    console.log('[CHIP Payout] Preparing payout instructions for manual processing')
+
+    const payoutInstructions = {
+      amount: payment.tasker_amount,
       currency: 'MYR',
-      budget_id: payment.chip_budget_allocation_id, // Use budget from split payment
-      description: `Payout for Task ${taskId}`,
+      bank_name: taskerProfile.bank_name,
+      account_number: taskerProfile.bank_account_number,
+      account_holder: taskerProfile.bank_account_holder_name,
+      task_id: taskId,
       reference: `TASK-${taskId}`,
-      webhook_url: `${supabaseUrl}/functions/v1/chip-payout-webhook`,
+      chip_purchase_id: payment.chip_purchase_id,
     }
 
-    console.log('[CHIP Payout] Creating payout:', JSON.stringify(payoutPayload, null, 2))
+    console.log('[CHIP Payout] Payout instructions:', JSON.stringify(payoutInstructions, null, 2))
 
-    // Call CHIP Send API to create payout
-    const chipResponse = await fetch(`${CHIP_API_URL}/payouts/`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${CHIP_SECRET_KEY}`,
-      },
-      body: JSON.stringify(payoutPayload),
-    })
-
-    if (!chipResponse.ok) {
-      const errorText = await chipResponse.text()
-      console.error('[CHIP Payout] API Error:', errorText)
-      throw new Error(`CHIP Payout API error: ${chipResponse.status} - ${errorText}`)
-    }
-
-    const payoutData: ChipPayoutResponse = await chipResponse.json()
-    console.log('[CHIP Payout] Payout created:', payoutData.id)
-
-    // Update payment record with payout details
+    // Update payment record for manual payout
     const { error: updateError } = await supabase
       .from('taskaway_chip_payments')
       .update({
-        chip_payout_id: payoutData.id,
-        payout_status: 'processing',
+        payout_status: 'pending',
         payout_requested_at: new Date().toISOString(),
-        settlement_status: 'partially_settled', // Platform settled, payout processing
+        settlement_status: 'fully_settled', // All funds settled to platform account
+        metadata: {
+          ...payment.metadata,
+          payout_instructions: payoutInstructions,
+        },
         updated_at: new Date().toISOString(),
       })
       .eq('id', payment.id)
@@ -191,17 +175,17 @@ serve(async (req) => {
       .from('taskaway_tasks')
       .update({
         status: 'completed',
-        escrow_status: 'releasing',
+        escrow_status: 'released',
         updated_at: new Date().toISOString(),
       })
       .eq('id', taskId)
 
     if (taskUpdateError) {
       console.error('[CHIP Payout] Task update error:', taskUpdateError)
-      // Don't throw - payout was created successfully
+      // Don't throw - payment record updated successfully
     }
 
-    // Create platform finance record for escrow release
+    // Create platform finance record for manual payout request
     await supabase
       .from('taskaway_platform_finances')
       .insert({
@@ -210,24 +194,24 @@ serve(async (req) => {
         task_id: taskId,
         amount: payment.tasker_amount,
         currency: 'MYR',
-        description: `Escrow release for task ${taskId} to tasker`,
+        description: `Manual payout request for task ${taskId}`,
         metadata: {
-          chip_payout_id: payoutData.id,
           tasker_id: task.tasker_id,
           bank_account: taskerProfile.bank_account_number,
+          payout_instructions: payoutInstructions,
         },
       })
 
-    console.log('[CHIP Payout] Payout initiated successfully')
+    console.log('[CHIP Payout] Manual payout request recorded successfully')
 
-    // Return success response
+    // Return success response with payout instructions
     return new Response(
       JSON.stringify({
         success: true,
-        payout_id: payoutData.id,
+        status: 'pending_manual',
         amount: payment.tasker_amount,
-        status: payoutData.status,
-        message: 'Payout initiated successfully. Funds will be transferred to tasker.',
+        payout_instructions: payoutInstructions,
+        message: 'Task approved. Process manual payout via CHIP dashboard using the provided bank details.',
       }),
       {
         headers: {

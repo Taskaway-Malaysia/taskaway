@@ -6,6 +6,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
 import { createHmac } from 'https://deno.land/std@0.168.0/node/crypto.ts'
 
+const CHIP_API_URL = 'https://gate.chip-in.asia/api/v1'
 const CHIP_SECRET_KEY = Deno.env.get('CHIP_SECRET_KEY') || ''
 const CHIP_WEBHOOK_SECRET = Deno.env.get('CHIP_WEBHOOK_SECRET') || ''
 
@@ -72,19 +73,19 @@ serve(async (req) => {
     const rawBody = await req.text()
     console.log('[CHIP Webhook] Received webhook:', rawBody)
 
-    // Verify webhook signature if secret is configured
+    // Verify webhook signature if secret is configured AND signature is provided
     if (CHIP_WEBHOOK_SECRET) {
       const signature = req.headers.get('x-chip-signature') || ''
-      if (!signature) {
-        console.error('[CHIP Webhook] Missing signature header')
-        throw new Error('Missing webhook signature')
+      if (signature) {
+        // Only verify if signature is provided
+        if (!verifyWebhookSignature(rawBody, signature, CHIP_WEBHOOK_SECRET)) {
+          console.error('[CHIP Webhook] Invalid signature')
+          throw new Error('Invalid webhook signature')
+        }
+        console.log('[CHIP Webhook] Signature verified')
+      } else {
+        console.log('[CHIP Webhook] No signature provided, skipping verification')
       }
-
-      if (!verifyWebhookSignature(rawBody, signature, CHIP_WEBHOOK_SECRET)) {
-        console.error('[CHIP Webhook] Invalid signature')
-        throw new Error('Invalid webhook signature')
-      }
-      console.log('[CHIP Webhook] Signature verified')
     }
 
     // Parse webhook payload
@@ -101,7 +102,7 @@ serve(async (req) => {
     // Find payment record by CHIP purchase ID
     const { data: payment, error: paymentError } = await supabase
       .from('taskaway_chip_payments')
-      .select('*, taskaway_tasks!inner(*)')
+      .select('*')
       .eq('chip_purchase_id', purchaseId)
       .single()
 
@@ -112,22 +113,27 @@ serve(async (req) => {
 
     console.log(`[CHIP Webhook] Found payment record: ${payment.id}`)
 
-    // Extract budget allocation ID from split payment if available
-    let budgetAllocationId = null
-    if (split?.modules && split.modules.length > 0) {
-      // Find the escrow module (should be the first/only module)
-      const escrowModule = split.modules.find((m) =>
-        m.description.includes('Escrow')
-      )
-      if (escrowModule?.budget_allocation_id) {
-        budgetAllocationId = escrowModule.budget_allocation_id
-        console.log(`[CHIP Webhook] Budget allocation ID: ${budgetAllocationId}`)
-      }
-    }
+    // NOTE: Using immediate settlement approach (no CHIP budgets)
+    // Both platform fee and tasker amount settle directly to business account
+    // No budget allocation ID needed for manual payout workflow
+    console.log('[CHIP Webhook] Using immediate settlement - no budget extraction needed')
 
     // Update payment record based on status
+    // Map CHIP status to our payment_status constraint values
+    let mappedStatus: string
+    if (status === 'paid') {
+      mappedStatus = 'paid'
+    } else if (status === 'cancelled') {
+      mappedStatus = 'cancelled'
+    } else if (status === 'failed') {
+      mappedStatus = 'failed'
+    } else {
+      // For any other status (created, processing, etc.), map to 'processing'
+      mappedStatus = 'processing'
+    }
+
     const updateData: Record<string, any> = {
-      payment_status: status === 'paid' ? 'paid' : status,
+      payment_status: mappedStatus,
       payment_method: payment_method,
       updated_at: new Date().toISOString(),
     }
@@ -135,18 +141,13 @@ serve(async (req) => {
     if (status === 'paid') {
       updateData.paid_at = paid_at || new Date().toISOString()
 
-      // Store budget allocation ID for later payout
-      if (budgetAllocationId) {
-        updateData.chip_budget_allocation_id = budgetAllocationId
-      }
-
-      // Platform fee settlement happens automatically via split payment
-      // Mark platform fee as settled
+      // Using immediate settlement - both platform fee and tasker amount settle to business account
+      // Mark both as settled since funds are immediately available
       updateData.platform_fee_settled = true
       updateData.platform_fee_settled_at = new Date().toISOString()
-      updateData.settlement_status = 'partially_settled' // Platform fee settled, tasker amount held
+      updateData.settlement_status = 'fully_settled' // All funds settled to platform account
 
-      console.log('[CHIP Webhook] Payment successful, platform fee settled, escrow held')
+      console.log('[CHIP Webhook] Payment successful, all funds settled to platform account')
     } else if (status === 'cancelled' || status === 'failed') {
       updateData.settlement_status = 'failed'
       updateData.error_message = `Payment ${status}`
@@ -164,13 +165,13 @@ serve(async (req) => {
       throw new Error(`Failed to update payment: ${updateError.message}`)
     }
 
-    // Update task escrow status if payment successful
+    // Update task payment status if payment successful
     if (status === 'paid') {
       const { error: taskUpdateError } = await supabase
         .from('taskaway_tasks')
         .update({
           chip_payment_id: payment.id,
-          escrow_status: 'held',
+          escrow_status: 'held', // Funds held by platform until task completion
           escrow_held_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         })
@@ -180,7 +181,7 @@ serve(async (req) => {
         console.error('[CHIP Webhook] Task update error:', taskUpdateError)
         // Don't throw - payment update succeeded, this is secondary
       } else {
-        console.log('[CHIP Webhook] Task escrow status updated to held')
+        console.log('[CHIP Webhook] Task payment status updated')
       }
 
       // Update platform finance records

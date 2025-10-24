@@ -24,12 +24,15 @@ class TaskRepository {
       return supabase
           .from(_tableName)
           .stream(primaryKey: ['id'])
-          .neq('status', 'cancelled') // Filter out cancelled tasks
+          .eq('status', 'open') // Only show open tasks
           .order('created_at', ascending: false)
           .asyncMap((data) async {
+            // Filter out tasks that already have a tasker assigned
+            final unassignedTasks = data.where((taskJson) => taskJson['tasker_id'] == null).toList();
+
             // For each task, fetch the poster profile
             final tasksWithProfiles = await Future.wait(
-              data.map((taskJson) async {
+              unassignedTasks.map((taskJson) async {
                 final posterId = taskJson['poster_id'];
                 if (posterId != null) {
                   try {
@@ -97,6 +100,23 @@ class TaskRepository {
       return response.map((json) => Task.fromJson(json)).toList().cast<Task>();
     } catch (e) {
       print('Error fetching tasks by poster: $e');
+      return [];
+    }
+  }
+
+  // Get all tasks posted by a specific user (for "My Tasks" screen)
+  // Returns tasks with ALL statuses (open, accepted, in_progress, pending_approval, completed, cancelled)
+  Future<List<Task>> getMyPostedTasks(String posterId) async {
+    try {
+      final response = await supabase
+          .from(_tableName)
+          .select('*, poster_profile:taskaway_profiles!poster_id(*)')
+          .eq('poster_id', posterId)
+          .order('created_at', ascending: false);
+
+      return response.map((json) => Task.fromJson(json)).toList().cast<Task>();
+    } catch (e) {
+      print('Error fetching my posted tasks: $e');
       return [];
     }
   }
@@ -185,10 +205,13 @@ class TaskRepository {
       final response = await supabase
           .from(_tableName)
           .select('*, poster_profile:taskaway_profiles!poster_id(*)')
-          .neq('status', 'cancelled') // Filter out cancelled tasks
+          .eq('status', 'open') // Only show open tasks
           .order('created_at', ascending: false);
 
-      return response.map((json) => Task.fromJson(json)).toList().cast<Task>();
+      // Filter out tasks that already have a tasker assigned
+      final unassignedTasks = response.where((taskJson) => taskJson['tasker_id'] == null).toList();
+
+      return unassignedTasks.map((json) => Task.fromJson(json)).toList().cast<Task>();
     } catch (e) {
       print('Error fetching tasks: $e');
       return [];

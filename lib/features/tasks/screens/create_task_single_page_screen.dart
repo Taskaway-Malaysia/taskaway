@@ -128,14 +128,15 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-    });
+    // DON'T use setState for loading - it causes Navigator locking
+    // Just do the work and navigate
+    dev.log('[CreateTask] _submitForm started');
 
     try {
       final user = ref.read(currentUserProvider)!;
       String category = taskData['category'] ?? 'cleaning';
 
+      dev.log('[CreateTask] Creating task...');
       final createdTask = await ref.read(taskControllerProvider).createTask(
             title: _titleController.text,
             description: _descriptionController.text,
@@ -155,6 +156,7 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
             paymentMethod: paymentMethod as String?,
           );
 
+      dev.log('[CreateTask] Task created, logging analytics...');
       final analytics = ref.read(analyticsServiceProvider);
       await analytics.logTaskCreated(
         taskId: createdTask.id,
@@ -166,19 +168,20 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
       dev.log('[CreateTask] Task created successfully with ID: ${createdTask.id}');
       dev.log('[CreateTask] Payment method: $paymentMethod - Payment will be processed after offer acceptance');
 
+      // Use Future.microtask to defer navigation to next event loop
+      // This ensures all setState operations complete before navigation
       if (mounted) {
-        setState(() {
-          _isLoading = false;
+        dev.log('[CreateTask] Scheduling navigation via microtask...');
+        Future.microtask(() {
+          if (mounted) {
+            dev.log('[CreateTask] Navigating to find-tasker');
+            context.goNamed('find-tasker', pathParameters: {'taskId': createdTask.id});
+          }
         });
-
-        // Navigate to Find Tasker Map screen
-        context.goNamed('find-tasker', pathParameters: {'taskId': createdTask.id});
       }
     } catch (e) {
+      dev.log('[CreateTask] Error in _submitForm: $e');
       if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: ${e.toString()}')),
         );

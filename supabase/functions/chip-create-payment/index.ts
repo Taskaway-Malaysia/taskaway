@@ -128,23 +128,21 @@ serve(async (req) => {
         skip_capture: false, // We want immediate settlement for FPX
         due_strict: false,
       },
-      // Split payment configuration
+      // Split payment configuration - immediate settlement for both fees
       split: {
-        // Platform fee settles to business bank account
+        // Both platform fee and tasker amount settle immediately to business bank account
+        // Manual payout to tasker will be processed via CHIP dashboard after task approval
         settle: [
           {
             amount: Math.round(platformFee * 100),
             description: 'Platform Fee',
           },
-        ],
-        // Tasker amount held in CHIP budget for escrow
-        modules: [
           {
             amount: Math.round(taskerAmount * 100),
-            description: `Escrow for Tasker - Task ${taskId}`,
-            budget_type: 'internal', // Use CHIP's internal budget
+            description: `Tasker Payment - Task ${taskId}`,
           },
         ],
+        // No budget modules - avoiding budget_allocation_id requirement
       },
       success_callback: `${supabaseUrl}/functions/v1/chip-webhook`,
       success_redirect: `${supabaseUrl}/functions/v1/payment-return-handler?task_id=${taskId}&source=chip&status=success`,

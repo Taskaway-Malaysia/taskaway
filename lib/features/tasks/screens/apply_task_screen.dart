@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:taskaway/core/theme/app_colors.dart';
 import 'package:taskaway/features/tasks/controllers/task_controller.dart';
 import 'package:taskaway/features/auth/controllers/auth_controller.dart';
+import 'package:taskaway/features/profile/controllers/profile_controller.dart';
 
 final offerAmountProvider = StateProvider.autoDispose<double?>((ref) => null);
 final offerMessageProvider = StateProvider.autoDispose<String>((ref) => '');
@@ -40,6 +41,45 @@ class _ApplyTaskScreenState extends ConsumerState<ApplyTaskScreen> {
     });
 
     try {
+      // Check bank verification status first
+      final currentProfileAsync = ref.read(currentProfileProvider);
+      final currentProfile = currentProfileAsync.asData?.value;
+
+      if (currentProfile?.bankVerificationStatus != 'verified') {
+        setState(() {
+          _errorMessage = 'Bank account verification required. Please verify your bank account in your profile settings to submit offers.';
+          _isLoading = false;
+        });
+
+        // Show dialog with navigation option
+        if (mounted) {
+          await showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('Bank Verification Required'),
+              content: const Text(
+                'You must verify your bank account before applying for tasks. '
+                'This ensures you can receive payments safely.',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    context.push('/profile/bank-details');
+                  },
+                  child: const Text('Verify Now'),
+                ),
+              ],
+            ),
+          );
+        }
+        return;
+      }
+
       final taskController = ref.read(taskControllerProvider);
       final currentUser = ref.read(currentUserProvider);
       final offerId = DateTime.now().millisecondsSinceEpoch.toString();

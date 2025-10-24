@@ -14,7 +14,47 @@ import 'tasker_home_screen.dart'; // Import to use filter providers
 import '../../auth/controllers/auth_controller.dart';
 import '../../profile/controllers/profile_controller.dart';
 import '../../../core/services/location_service.dart';
+import '../../tasks/screens/my_task_screen.dart' as my_tasks; // Import providers for poster filters
 import 'dart:developer' as dev;
+
+// Provider to filter posted tasks by status for MapHomeScreen
+final filteredPostedTasksProvider = Provider.autoDispose<AsyncValue<List<Task>>>((ref) {
+  final status = ref.watch(my_tasks.statusProvider);
+
+  return ref.watch(my_tasks.myPostedTasksProvider).when(
+    data: (tasks) {
+      // Filter by status using same mapping as MyTaskScreen
+      final filteredTasks = tasks.where((task) {
+        final mappedStatus = _mapTaskStatusToUiStatus(task.status);
+        return mappedStatus == status;
+      }).toList();
+
+      dev.log('[MapHomeScreen] Poster view - Total posted tasks: ${tasks.length}');
+      dev.log('[MapHomeScreen] Poster view - Filtered by "$status": ${filteredTasks.length}');
+
+      return AsyncValue.data(filteredTasks);
+    },
+    loading: () => const AsyncValue.loading(),
+    error: (err, stack) => AsyncValue.error(err, stack),
+  );
+});
+
+// Status mapping function (same as MyTaskScreen)
+String _mapTaskStatusToUiStatus(String dbStatus) {
+  switch (dbStatus.toLowerCase()) {
+    case 'open':
+      return 'Awaiting offers';
+    case 'accepted':
+    case 'in_progress':
+    case 'pending_approval':
+      return 'Upcoming tasks';
+    case 'completed':
+    case 'cancelled':
+      return 'Completed';
+    default:
+      return 'Awaiting offers';
+  }
+}
 
 class MapHomeScreen extends ConsumerStatefulWidget {
   const MapHomeScreen({super.key});
@@ -353,10 +393,10 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Use filtered tasks when in tasker mode
+    // Use filtered tasks when in tasker mode, filtered posted tasks when in poster mode
     final tasksAsync = _isTaskerMode
         ? ref.watch(filteredAvailableTasksProvider)  // Use filtered tasks for taskers
-        : ref.watch(currentUserPostedTasksProvider);    // Show only user's posted tasks for posters
+        : ref.watch(filteredPostedTasksProvider);    // Show user's posted tasks filtered by status
 
     return Scaffold(
       backgroundColor: _isMapView ? AppColors.backgroundWhite : AppColors.backgroundDisabled,
@@ -647,10 +687,14 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
                               ],
                             ),
                           ),
+                          // Status filter tabs - only show in POSTER mode
+                          if (!_isTaskerMode)
+                            _buildStatusFilter(),
                         ],
                       ),
-                    // Availability Switch - Show for all users
-                    _buildAvailabilitySwitch(),
+                    // Availability Switch - Show only in TASKER mode
+                    if (_isTaskerMode)
+                      _buildAvailabilitySwitch(),
                   ],
                 ),
               ),
@@ -779,6 +823,48 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
   }
 
   /// Build availability switch widget
+  Widget _buildStatusFilter() {
+    final currentStatus = ref.watch(my_tasks.statusProvider);
+    final statuses = ['Awaiting offers', 'Upcoming tasks', 'Completed'];
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        children: statuses.map((status) {
+          final isSelected = currentStatus == status;
+          return Expanded(
+            child: GestureDetector(
+              onTap: () {
+                ref.read(my_tasks.statusProvider.notifier).state = status;
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                decoration: BoxDecoration(
+                  color: isSelected ? Colors.white : Colors.transparent,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  status,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                    color: isSelected ? const Color(0xFF7B61FF) : Colors.grey[600],
+                  ),
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
   Widget _buildAvailabilitySwitch() {
     final currentUser = ref.watch(currentUserProvider);
     final profileAsync = ref.watch(currentProfileProvider);

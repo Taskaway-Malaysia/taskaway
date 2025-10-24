@@ -8,6 +8,7 @@ import 'package:taskaway/core/theme/app_spacing.dart';
 import '../controllers/task_controller.dart';
 import '../models/task.dart';
 import '../../auth/controllers/auth_controller.dart';
+import '../../auth/models/profile.dart';
 import '../../messages/controllers/message_controller.dart';
 import '../../messages/models/channel.dart';
 
@@ -567,12 +568,12 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
 
                   // Action Buttons
                   if (isPoster && task.status == 'open') ...[
-                    // Revise Button
+                    // View Offers Button
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
                         onPressed: () {
-                          _showReviseBudgetDialog(context, task);
+                          context.goNamed('find-tasker', pathParameters: {'taskId': widget.taskId});
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primaryYellow,
@@ -582,6 +583,33 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
                             borderRadius: BorderRadius.circular(2),
                           ),
                           elevation: 0,
+                        ),
+                        child: const Text(
+                          'View Offers',
+                          style: TextStyle(
+                            fontFamily: 'Instrument Sans',
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.primaryBlack,
+                            letterSpacing: 0.7,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    // Revise Button
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton(
+                        onPressed: () {
+                          _showReviseBudgetDialog(context, task);
+                        },
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: AppColors.borderLight),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(2),
+                          ),
                         ),
                         child: const Text(
                           'Revise',
@@ -633,76 +661,281 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
                       ),
                       builder: (context, snapshot) {
                         final hasExistingOffer = snapshot.data != null;
+                        final isVerified = currentProfile?.bankVerificationStatus == 'verified';
 
-                        return Row(
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Make an Offer Button or Submitted Offer Button
-                            if (task.status == 'open' && currentUser.id != task.taskerId)
-                              Expanded(
-                                child: ElevatedButton(
-                                  onPressed: hasExistingOffer ? null : () {
-                                    // Navigate to apply/offer screen
-                                    context.push('/home/browse/${widget.taskId}/apply');
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: hasExistingOffer
-                                        ? AppColors.backgroundDisabled
-                                        : AppColors.primaryYellow,
-                                    side: BorderSide(
-                                      color: hasExistingOffer
-                                          ? AppColors.borderDark
-                                          : AppColors.primaryYellowDark,
+                            Row(
+                              children: [
+                                // Make an Offer Button or Submitted Offer Button
+                                if (task.status == 'open' && currentUser.id != task.taskerId)
+                                  Expanded(
+                                    child: ElevatedButton(
+                                      onPressed: (hasExistingOffer || !isVerified) ? null : () {
+                                        // Navigate to apply/offer screen
+                                        context.push('/home/browse/${widget.taskId}/apply');
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: (hasExistingOffer || !isVerified)
+                                            ? AppColors.backgroundDisabled
+                                            : AppColors.primaryYellow,
+                                        side: BorderSide(
+                                          color: (hasExistingOffer || !isVerified)
+                                              ? AppColors.borderDark
+                                              : AppColors.primaryYellowDark,
+                                        ),
+                                        padding: const EdgeInsets.symmetric(vertical: 14),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(2),
+                                        ),
+                                        elevation: 0,
+                                        disabledBackgroundColor: AppColors.backgroundDisabled,
+                                      ),
+                                      child: Text(
+                                        hasExistingOffer ? 'Submitted Offer' : 'Make an Offer',
+                                        style: TextStyle(
+                                          fontFamily: 'Instrument Sans',
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                          color: (hasExistingOffer || !isVerified)
+                                              ? AppColors.textTertiary
+                                              : AppColors.primaryBlack,
+                                          letterSpacing: 0.7,
+                                        ),
+                                      ),
                                     ),
-                                    padding: const EdgeInsets.symmetric(vertical: 14),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(2),
-                                    ),
-                                    elevation: 0,
-                                    disabledBackgroundColor: AppColors.backgroundDisabled,
                                   ),
-                                  child: Text(
-                                    hasExistingOffer ? 'Submitted Offer' : 'Make an Offer',
-                                    style: TextStyle(
-                                      fontFamily: 'Instrument Sans',
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: hasExistingOffer
-                                          ? AppColors.textTertiary
-                                          : AppColors.primaryBlack,
-                                      letterSpacing: 0.7,
-                                    ),
-                                  ),
-                                ),
-                              ),
 
-                            // Add spacing only if Make an Offer button is shown
-                            if (task.status == 'open' && currentUser.id != task.taskerId)
-                              const SizedBox(width: 11),
+                                // Add spacing only if Make an Offer button is shown
+                                if (task.status == 'open' && currentUser.id != task.taskerId)
+                                  const SizedBox(width: 11),
 
-                            // Message Button (Icon only)
-                            SizedBox(
-                              width: 44,
-                              height: 46,
-                              child: OutlinedButton(
-                                onPressed: () => _navigateToChat(context),
-                                style: OutlinedButton.styleFrom(
-                                  side: BorderSide(color: AppColors.borderLight),
-                                  padding: EdgeInsets.zero,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(2),
+                                // Message Button (Icon only)
+                                SizedBox(
+                                  width: 44,
+                                  height: 46,
+                                  child: OutlinedButton(
+                                    onPressed: () => _navigateToChat(context),
+                                    style: OutlinedButton.styleFrom(
+                                      side: BorderSide(color: AppColors.borderLight),
+                                      padding: EdgeInsets.zero,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(2),
+                                      ),
+                                    ),
+                                    child: const Icon(
+                                      Icons.message_outlined,
+                                      size: 20,
+                                      color: AppColors.primaryBlack,
+                                    ),
                                   ),
                                 ),
-                                child: const Icon(
-                                  Icons.message_outlined,
-                                  size: 20,
-                                  color: AppColors.primaryBlack,
-                                ),
-                              ),
+                              ],
                             ),
+
+                            // Bank verification warning
+                            if (!isVerified && task.status == 'open' && currentUser.id != task.taskerId && !hasExistingOffer) ...[
+                              const SizedBox(height: 12),
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.orange.shade50,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: Colors.orange.shade200,
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.info_outline,
+                                      color: Colors.orange.shade700,
+                                      size: 20,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Text(
+                                        'Bank verification required to apply for tasks',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: Colors.orange.shade900,
+                                        ),
+                                      ),
+                                    ),
+                                    TextButton(
+                                      onPressed: () => context.push('/profile/bank-details'),
+                                      style: TextButton.styleFrom(
+                                        foregroundColor: Colors.orange.shade700,
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 4,
+                                        ),
+                                      ),
+                                      child: const Text('Verify Now'),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ],
                         );
                       },
                     ),
+                  ],
+
+                  // Task Workflow Action Buttons
+                  if (currentUser != null) ...[
+                    const SizedBox(height: 16),
+
+                    // Tasker Actions
+                    if (currentUser.id == task.taskerId) ...[
+                      // Start Task Button (when status = 'accepted')
+                      if (task.status.toLowerCase() == 'accepted')
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              try {
+                                await ref.read(taskControllerProvider).startTask(widget.taskId);
+                                // Force refresh the task data
+                                ref.invalidate(taskProvider(widget.taskId));
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Task started! Good luck!')),
+                                  );
+                                }
+                              } catch (e) {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Error: $e')),
+                                  );
+                                }
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primaryYellow,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(2),
+                              ),
+                              elevation: 0,
+                            ),
+                            child: const Text(
+                              'Start Task',
+                              style: TextStyle(
+                                fontFamily: 'Instrument Sans',
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.primaryBlack,
+                                letterSpacing: 0.7,
+                              ),
+                            ),
+                          ),
+                        ),
+
+                      // Mark Complete Button (when status = 'in_progress')
+                      if (task.status.toLowerCase() == 'in_progress')
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              try {
+                                await ref.read(taskControllerProvider).completeTask(widget.taskId);
+                                // Force refresh the task data
+                                ref.invalidate(taskProvider(widget.taskId));
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Task marked as complete! Waiting for poster approval.')),
+                                  );
+                                }
+                              } catch (e) {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Error: $e')),
+                                  );
+                                }
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(2),
+                              ),
+                              elevation: 0,
+                            ),
+                            child: const Text(
+                              'Mark Complete',
+                              style: TextStyle(
+                                fontFamily: 'Instrument Sans',
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textWhite,
+                                letterSpacing: 0.7,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+
+                    // Poster Actions
+                    if (isPoster) ...[
+                      // Approve and Request Revisions Buttons (when status = 'pending_approval')
+                      if (task.status.toLowerCase() == 'pending_approval') ...[
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: () => _showRequestRevisionsDialog(context),
+                                style: OutlinedButton.styleFrom(
+                                  side: BorderSide(color: AppColors.borderDark),
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(2),
+                                  ),
+                                ),
+                                child: const Text(
+                                  'Request Changes',
+                                  style: TextStyle(
+                                    fontFamily: 'Instrument Sans',
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.primaryBlack,
+                                    letterSpacing: 0.7,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: ElevatedButton(
+                                onPressed: () => _showApproveTaskDialog(context),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.green,
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(2),
+                                  ),
+                                  elevation: 0,
+                                ),
+                                child: const Text(
+                                  'Approve Task',
+                                  style: TextStyle(
+                                    fontFamily: 'Instrument Sans',
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.textWhite,
+                                    letterSpacing: 0.7,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ],
                   ],
 
                   const SizedBox(height: 100), // Bottom padding for navigation bar
@@ -811,6 +1044,120 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
             child: const Text(
               'Yes, Cancel',
               style: TextStyle(color: AppColors.textWhite),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showApproveTaskDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Approve Task?'),
+        content: const Text(
+          'Are you satisfied with the work? Approving will release the payment to the tasker.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(dialogContext);
+              try {
+                await ref.read(taskControllerProvider).approveTask(widget.taskId);
+                // Force refresh the task data
+                ref.invalidate(taskProvider(widget.taskId));
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Task approved! Payment released to tasker.'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error: $e')),
+                  );
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+            ),
+            child: const Text(
+              'Approve & Release Payment',
+              style: TextStyle(color: AppColors.textWhite),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showRequestRevisionsDialog(BuildContext context) {
+    final TextEditingController notesController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Request Changes'),
+        content: TextField(
+          controller: notesController,
+          maxLines: 4,
+          decoration: const InputDecoration(
+            labelText: 'What needs to be changed?',
+            hintText: 'Please describe what needs to be revised...',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final notes = notesController.text.trim();
+              if (notes.isEmpty) {
+                ScaffoldMessenger.of(dialogContext).showSnackBar(
+                  const SnackBar(content: Text('Please provide revision details')),
+                );
+                return;
+              }
+
+              Navigator.pop(dialogContext);
+              try {
+                await ref.read(taskControllerProvider).requestRevisions(widget.taskId, notes);
+                // Force refresh the task data
+                ref.invalidate(taskProvider(widget.taskId));
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Revision request sent to tasker.'),
+                      backgroundColor: Colors.orange,
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error: $e')),
+                  );
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryYellow,
+            ),
+            child: const Text(
+              'Send Request',
+              style: TextStyle(color: AppColors.primaryBlack),
             ),
           ),
         ],

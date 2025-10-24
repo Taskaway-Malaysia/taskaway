@@ -1062,40 +1062,40 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
   /// Handle accepting an offer with payment-first flow
   Future<void> _handleAcceptOffer(Application application, BuildContext sheetContext) async {
     try {
+      dev.log('[FindTaskerMap] _handleAcceptOffer started for application ${application.id}');
+
       // Close the bottom sheet first before navigating
       Navigator.of(sheetContext).pop();
+      dev.log('[FindTaskerMap] Bottom sheet closed');
 
       // Small delay to ensure sheet is closed
       await Future.delayed(const Duration(milliseconds: 100));
+      dev.log('[FindTaskerMap] Delay completed');
 
-      if (!mounted) return;
-
-      // Show loading indicator
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => const Center(
-          child: CircularProgressIndicator(
-            color: Color(0xFFFFDB5B),
-          ),
-        ),
-      );
+      if (!mounted) {
+        dev.log('[FindTaskerMap] Widget not mounted after delay, returning');
+        return;
+      }
 
       // Initiate offer acceptance (validates and prepares payment data)
+      // NO DIALOG - just do the work and navigate
+      dev.log('[FindTaskerMap] Initiating offer acceptance...');
       final applicationController = ref.read(applicationControllerProvider.notifier);
       final paymentData = await applicationController.initiateOfferAcceptance(
         applicationId: application.id!,
         taskId: widget.taskId,
         taskerId: application.taskerId,
       );
+      dev.log('[FindTaskerMap] Offer acceptance initiated, payment type: ${paymentData['paymentType']}');
 
-      if (!mounted) return;
-
-      // Close loading dialog
-      Navigator.of(context).pop();
+      if (!mounted) {
+        dev.log('[FindTaskerMap] Widget not mounted after initiate, returning');
+        return;
+      }
 
       // Check payment type - cash or online
       if (paymentData['paymentType'] == 'cash') {
+        dev.log('[FindTaskerMap] Cash payment - completing offer acceptance');
         // Cash on delivery - complete offer acceptance directly
         await applicationController.completeOfferAcceptance(
           applicationId: paymentData['applicationId'],
@@ -1104,6 +1104,7 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
           chipPaymentId: '', // No payment ID for cash
           offerPrice: paymentData['offerPrice'],
         );
+        dev.log('[FindTaskerMap] Offer acceptance completed');
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -1113,12 +1114,17 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
             ),
           );
 
-          // Navigate to task details
+          // Navigate directly - no dialog to conflict with
+          dev.log('[FindTaskerMap] Navigating to task details: /task/${widget.taskId}');
           context.go('/task/${widget.taskId}');
+          dev.log('[FindTaskerMap] Navigation command sent');
         }
       } else {
         // Online payment - navigate to CHIPP payment screen
+        dev.log('[FindTaskerMap] Online payment - preparing navigation to CHIPP');
+        // Navigate directly - no dialog Navigator to conflict with
         if (mounted) {
+          dev.log('[FindTaskerMap] Navigating to /chip-payment with data: ${paymentData.keys.join(', ')}');
           context.go('/chip-payment', extra: {
             'checkoutUrl': paymentData['checkoutUrl'],
             'taskId': paymentData['taskId'],
@@ -1129,15 +1135,14 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
             'taskerId': paymentData['taskerId'],
             'chipPaymentId': paymentData['chipPaymentId'],
           });
+          dev.log('[FindTaskerMap] Navigation to CHIPP payment sent');
+        } else {
+          dev.log('[FindTaskerMap] Widget not mounted, cannot navigate');
         }
       }
-    } catch (e) {
+    } catch (e, st) {
+      dev.log('[FindTaskerMap] Error in _handleAcceptOffer: $e\nStackTrace: $st');
       if (!mounted) return;
-
-      // Try to close loading dialog if it's open
-      try {
-        Navigator.of(context).pop();
-      } catch (_) {}
 
       // Show error message
       if (mounted) {
