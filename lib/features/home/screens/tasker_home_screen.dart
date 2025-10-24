@@ -748,7 +748,15 @@ class _TaskerHomeScreenState extends ConsumerState<TaskerHomeScreen> {
                             height: 44,
                             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                             decoration: BoxDecoration(
-                              color: AppColors.white,
+                              gradient: const LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  Colors.red,        // Top half - red
+                                  AppColors.white,   // Bottom half - white
+                                ],
+                                stops: [0.0, 0.5],   // Red covers top 50%, white covers bottom 50%
+                              ),
                               border: Border.all(color: const Color(0xFFE4E4E4), width: 1),
                               borderRadius: AppRadius.smMd,
                             ),
