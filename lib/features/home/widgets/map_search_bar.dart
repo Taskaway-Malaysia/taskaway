@@ -56,9 +56,6 @@ class _MapSearchBarState extends State<MapSearchBar> {
                 height: 34, // Half of total height (68 / 2)
                 decoration: const BoxDecoration(
                   color: AppColors.primary,
-                  borderRadius: BorderRadius.vertical(
-                    bottom: Radius.circular(24),  // Corner radius only at bottom (center dividing line)
-                  ),
                 ),
               ),
               // Content layer - search bar and filter button
