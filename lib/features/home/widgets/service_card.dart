@@ -32,76 +32,98 @@ class ServiceCard extends StatelessWidget {
         ),
       ),
       child: Padding(
-        padding: EdgeInsets.all(AppSpacing.md),
-        child: Column(
+        padding: const EdgeInsets.all(8),
+        child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
           children: [
-            // Title
-            Text(
-              task.title,
-              style: AppTypography.titleMedium.copyWith(
-                color: AppColors.gray900,
-                fontWeight: AppTypography.bold,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            SizedBox(height: AppSpacing.xs),
-
-            // Distance
-            Text(
-              distance,
-              style: AppTypography.bodySmall.copyWith(
-                color: AppColors.gray900,
-              ),
-            ),
-            SizedBox(height: 2),
-
-            // Posted by (without "By" prefix)
-            Text(
-              'By $posterName',
-              style: AppTypography.bodySmall.copyWith(
-                color: AppColors.gray900,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            SizedBox(height: AppSpacing.sm),
-
-            // Price
-            Text(
-              'RM ${task.price.toStringAsFixed(2)}',
-              style: AppTypography.titleLarge.copyWith(
-                fontWeight: AppTypography.bold,
-                color: AppColors.gray900,
-              ),
-            ),
-            SizedBox(height: AppSpacing.md),
-
-            // View Details Button
-            SizedBox(
-              height: 32,
-              child: ElevatedButton(
-                onPressed: onViewDetails,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.gray900,
-                  foregroundColor: AppColors.white,
-                  padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 0),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+            // Left side - Task info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Title
+                  Text(
+                    task.title,
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: AppColors.gray900,
+                      fontWeight: AppTypography.bold,
+                      height: 1.2,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  elevation: 0,
-                  minimumSize: Size(0, 32),
-                ),
-                child: Text(
-                  'View Details',
-                  style: AppTypography.labelSmall.copyWith(
-                    color: AppColors.white,
+                  SizedBox(height: 2),
+
+                  // Distance
+                  Text(
+                    distance,
+                    style: AppTypography.labelSmall.copyWith(
+                      color: AppColors.gray900,
+                      fontSize: 10,
+                      height: 1.2,
+                    ),
+                  ),
+                  SizedBox(height: 1),
+
+                  // Posted by (without "By" prefix)
+                  Text(
+                    'By $posterName',
+                    style: AppTypography.labelSmall.copyWith(
+                      color: AppColors.gray900,
+                      fontSize: 10,
+                      height: 1.2,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(width: 8),
+
+            // Right side - Price and Button
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Price
+                Text(
+                  'RM ${task.price.toStringAsFixed(2)}',
+                  style: AppTypography.bodyLarge.copyWith(
                     fontWeight: AppTypography.bold,
+                    color: AppColors.gray900,
+                    height: 1.2,
                   ),
                 ),
-              ),
+                SizedBox(height: 4),
+
+                // View Details Button
+                SizedBox(
+                  height: 24,
+                  child: ElevatedButton(
+                    onPressed: onViewDetails,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.gray900,
+                      foregroundColor: AppColors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      elevation: 0,
+                      minimumSize: const Size(0, 24),
+                    ),
+                    child: Text(
+                      'View Details',
+                      style: AppTypography.labelSmall.copyWith(
+                        color: AppColors.white,
+                        fontWeight: AppTypography.semiBold,
+                        fontSize: 10,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),

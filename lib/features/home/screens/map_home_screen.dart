@@ -480,7 +480,11 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
               FlutterMap(
                 mapController: _mapController,
                 options: MapOptions(
-                  initialCenter: _currentLocation,
+                  // Shift center slightly up to account for UI elements at top and bottom
+                  initialCenter: LatLng(
+                    _currentLocation.latitude + 0.002, // Shift north slightly
+                    _currentLocation.longitude,
+                  ),
                   initialZoom: 15,
                   minZoom: 10,
                   maxZoom: 18,
@@ -793,48 +797,48 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
                 right: 0,
                 child: Column(
                   children: [
-                    Container(
-                      height: 180,
-                      margin: const EdgeInsets.only(bottom: 8),
-                      child: PageView.builder(
-                        controller: _cardPageController,
-                        itemCount: sortedTasks.length,
-                        onPageChanged: (index) {
-                          setState(() {
-                            _currentCardIndex = index;
-                          });
-                          final task = sortedTasks[index];
-                          // Move map to actual task location if available
-                          if (task.latitude != null && task.longitude != null) {
-                            final position = LatLng(task.latitude!, task.longitude!);
-                            try {
-                              _mapController.move(position, 16);
-                            } catch (e) {
-                              dev.log('[MapHomeScreen] Error moving map on page change: $e');
-                            }
-                          }
-                        },
-                        itemBuilder: (context, index) {
-                          final task = sortedTasks[index];
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Row(
+                        children: sortedTasks.asMap().entries.map((entry) {
+                          final index = entry.key;
+                          final task = entry.value;
                           // Use actual task location if available, fallback to user location
                           final position = (task.latitude != null && task.longitude != null)
                               ? LatLng(task.latitude!, task.longitude!)
                               : _currentLocation;
                           final distance = _calculateDistance(_currentLocation, position);
 
-                          return Container(
-                            width: MediaQuery.of(context).size.width * 0.55,
-                            padding: const EdgeInsets.symmetric(horizontal: 8),
-                            child: ServiceCard(
-                              task: task,
-                              distance: distance,
-                              isFocused: index == _currentCardIndex,
-                              onViewDetails: () {
-                                context.go('/home/tasks/${task.id}');
-                              },
+                          return GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _currentCardIndex = index;
+                              });
+                              // Move map to actual task location if available
+                              if (task.latitude != null && task.longitude != null) {
+                                final position = LatLng(task.latitude!, task.longitude!);
+                                try {
+                                  _mapController.move(position, 16);
+                                } catch (e) {
+                                  dev.log('[MapHomeScreen] Error moving map on tap: $e');
+                                }
+                              }
+                            },
+                            child: Container(
+                              width: MediaQuery.of(context).size.width * 0.6,
+                              padding: const EdgeInsets.symmetric(horizontal: 8),
+                              child: ServiceCard(
+                                task: task,
+                                distance: distance,
+                                isFocused: index == _currentCardIndex,
+                                onViewDetails: () {
+                                  context.go('/home/tasks/${task.id}');
+                                },
+                              ),
                             ),
                           );
-                        },
+                        }).toList(),
                       ),
                     ),
                   
