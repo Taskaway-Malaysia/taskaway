@@ -121,6 +121,56 @@ class TaskRepository {
     }
   }
 
+  // Watch tasks posted by a specific user (real-time stream)
+  // Returns tasks with ALL statuses with real-time updates
+  Stream<List<Task>> watchMyPostedTasks(String posterId) {
+    try {
+      // Use Supabase Real-time subscription
+      return supabase
+          .from(_tableName)
+          .stream(primaryKey: ['id'])
+          .eq('poster_id', posterId)
+          .order('created_at', ascending: false)
+          .asyncMap((data) async {
+            // For each task, fetch the poster profile
+            final tasksWithProfiles = await Future.wait(
+              data.map((taskJson) async {
+                final posterId = taskJson['poster_id'];
+                if (posterId != null) {
+                  try {
+                    final profileResponse = await supabase
+                        .from('taskaway_profiles')
+                        .select()
+                        .eq('id', posterId)
+                        .single();
+                    taskJson['poster_profile'] = profileResponse;
+                  } catch (e) {
+                    print('Error fetching poster profile for $posterId: $e');
+                  }
+                }
+                return taskJson;
+              }).toList(),
+            );
+            return tasksWithProfiles.map((json) => Task.fromJson(json)).toList();
+          })
+          .handleError((error) {
+            print('Realtime subscription error for posted tasks: $error');
+            // Fallback to polling if real-time fails
+            return _createMyPostedTasksPollingStream(posterId);
+          });
+    } catch (e) {
+      print('Error setting up Realtime stream for posted tasks: $e');
+      return _createMyPostedTasksPollingStream(posterId);
+    }
+  }
+
+  // Creates a polling-based stream for posted tasks as a fallback when Realtime fails
+  Stream<List<Task>> _createMyPostedTasksPollingStream(String posterId) {
+    return Stream.periodic(const Duration(seconds: 3), (_) => null)
+        .asyncMap((_) => getMyPostedTasks(posterId))
+        .asBroadcastStream();
+  }
+
   // Creates a polling-based stream as a fallback when Realtime fails
   Stream<List<Task>> _createPollingStream() {
     // Use a periodic timer to poll data every 3 seconds

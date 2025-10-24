@@ -5,6 +5,9 @@ import 'package:taskaway/core/theme/app_colors.dart';
 import 'package:taskaway/features/tasks/controllers/task_controller.dart';
 import 'package:taskaway/features/auth/controllers/auth_controller.dart';
 import 'package:taskaway/features/profile/controllers/profile_controller.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_radius.dart';
 
 final offerAmountProvider = StateProvider.autoDispose<double?>((ref) => null);
 final offerMessageProvider = StateProvider.autoDispose<String>((ref) => '');
@@ -150,12 +153,12 @@ class _ApplyTaskScreenState extends ConsumerState<ApplyTaskScreen> {
     final task = ref.watch(taskProvider(widget.taskId));
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundWhite,
+      backgroundColor: AppColors.backgroundPrimary,
       appBar: AppBar(
-        title: const Text('Apply for Task'),
+        title: Text('Apply for Task'),
         elevation: 0,
-        backgroundColor: AppColors.backgroundWhite,
-        foregroundColor: AppColors.primaryBlack,
+        backgroundColor: AppColors.backgroundPrimary,
+        foregroundColor: AppColors.textPrimary,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.pop(),
@@ -164,7 +167,7 @@ class _ApplyTaskScreenState extends ConsumerState<ApplyTaskScreen> {
       body: task.when(
         data: (taskData) {
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
+            padding: EdgeInsets.all(AppSpacing.lg),
             child: Form(
               key: _formKey,
               child: Column(
@@ -173,48 +176,36 @@ class _ApplyTaskScreenState extends ConsumerState<ApplyTaskScreen> {
                   // Task title and details
                   Text(
                     taskData.title,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.primaryBlack,
-                    ),
+                    style: AppTypography.titleMedium,
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: AppSpacing.sm),
                   Text(
                     'Budget: RM${taskData.budget.toStringAsFixed(2)}',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w400,
-                      color: AppColors.textSecondary,
-                    ),
+                    style: AppTypography.bodyMedium.copyWith(color: AppColors.textSecondary),
                   ),
-                  const SizedBox(height: 24),
+                  SizedBox(height: AppSpacing.xxl),
                   
                   // Amount field
-                  const Text(
+                  Text(
                     'Your Offer Amount',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.primaryBlack,
-                    ),
+                    style: AppTypography.labelMedium,
                   ),
-                  const SizedBox(height: 12),
+                  SizedBox(height: AppSpacing.md),
                   Container(
                     decoration: BoxDecoration(
-                      color: AppColors.backgroundGray,
+                      color: AppColors.backgroundTertiary,
                       border: Border.all(color: AppColors.borderDefault),
-                      borderRadius: BorderRadius.circular(8.0),
+                      borderRadius: AppRadius.md,
                     ),
                     child: Row(
                       children: [
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                          child: const Text(
+                          child: Text(
                             'RM',
                             style: TextStyle(
                               fontSize: 14,
-                              color: AppColors.primaryBlack,
+                              color: AppColors.textPrimary,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -223,10 +214,7 @@ class _ApplyTaskScreenState extends ConsumerState<ApplyTaskScreen> {
                           child: TextFormField(
                             controller: _amountController,
                             keyboardType: TextInputType.number,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: AppColors.primaryBlack,
-                            ),
+                            style: AppTypography.bodyMedium,
                             decoration: const InputDecoration(
                               hintText: 'Enter amount',
                               hintStyle: TextStyle(
@@ -234,7 +222,7 @@ class _ApplyTaskScreenState extends ConsumerState<ApplyTaskScreen> {
                                 color: AppColors.textTertiary,
                               ),
                               filled: true,
-                              fillColor: AppColors.backgroundGray,
+                              fillColor: AppColors.backgroundTertiary,
                               border: InputBorder.none,
                               focusedBorder: InputBorder.none,
                               enabledBorder: InputBorder.none,
@@ -261,25 +249,18 @@ class _ApplyTaskScreenState extends ConsumerState<ApplyTaskScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  SizedBox(height: AppSpacing.xxl),
                   
                   // Message field
-                  const Text(
+                  Text(
                     'Message to Poster',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.primaryBlack,
-                    ),
+                    style: AppTypography.labelMedium,
                   ),
-                  const SizedBox(height: 12),
+                  SizedBox(height: AppSpacing.md),
                   TextFormField(
                     controller: _messageController,
                     maxLines: 6,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: AppColors.primaryBlack,
-                    ),
+                    style: AppTypography.bodyMedium,
                     decoration: InputDecoration(
                       hintText: 'Describe why you\'re a good fit for this task',
                       hintStyle: const TextStyle(
@@ -287,26 +268,26 @@ class _ApplyTaskScreenState extends ConsumerState<ApplyTaskScreen> {
                         color: AppColors.textTertiary,
                       ),
                       filled: true,
-                      fillColor: AppColors.backgroundGray,
-                      contentPadding: const EdgeInsets.all(16),
+                      fillColor: AppColors.backgroundTertiary,
+                      contentPadding: EdgeInsets.all(AppSpacing.lg),
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.0),
+                        borderRadius: AppRadius.md,
                         borderSide: BorderSide(color: AppColors.borderDefault),
                       ),
                       enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.0),
+                        borderRadius: AppRadius.md,
                         borderSide: BorderSide(color: AppColors.borderDefault),
                       ),
                       focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.0),
+                        borderRadius: AppRadius.md,
                         borderSide: BorderSide(color: AppColors.borderDefault),
                       ),
                       errorBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.0),
+                        borderRadius: AppRadius.md,
                         borderSide: BorderSide(color: AppColors.borderDefault),
                       ),
                       focusedErrorBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.0),
+                        borderRadius: AppRadius.md,
                         borderSide: BorderSide(color: AppColors.borderDefault),
                       ),
                     ),
@@ -323,21 +304,21 @@ class _ApplyTaskScreenState extends ConsumerState<ApplyTaskScreen> {
                   
                   // Error message
                   if (_errorMessage != null) ...[  
-                    const SizedBox(height: 16),
+                    SizedBox(height: AppSpacing.lg),
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
                         color: AppColors.errorLight,
-                        borderRadius: BorderRadius.circular(4),
+                        borderRadius: AppRadius.sm,
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.error_outline, color: AppColors.errorRed),
-                          const SizedBox(width: 8),
+                          Icon(Icons.error_outline, color: AppColors.error),
+                          SizedBox(width: AppSpacing.sm),
                           Expanded(
                             child: Text(
                               _errorMessage!,
-                              style: TextStyle(color: AppColors.errorRed),
+                              style: TextStyle(color: AppColors.error),
                             ),
                           ),
                         ],
@@ -345,7 +326,7 @@ class _ApplyTaskScreenState extends ConsumerState<ApplyTaskScreen> {
                     ),
                   ],
                   
-                  const SizedBox(height: 32),
+                  SizedBox(height: AppSpacing.xxxl),
                   
                   // Submit button
                   SizedBox(
@@ -354,25 +335,22 @@ class _ApplyTaskScreenState extends ConsumerState<ApplyTaskScreen> {
                     child: ElevatedButton(
                       onPressed: _isLoading ? null : _submitOffer,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryYellow,
-                        foregroundColor: AppColors.primaryBlack,
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: AppColors.textPrimary,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: AppRadius.md,
                           side: const BorderSide(
-                            color: AppColors.primaryYellowDark,
+                            color: AppColors.primaryDark,
                             width: 1,
                           ),
                         ),
                       ),
                       child: _isLoading
-                          ? CircularProgressIndicator(color: AppColors.primaryBlack)
-                          : const Text(
+                          ? CircularProgressIndicator(color: AppColors.textPrimary)
+                          : Text(
                               'Submit Offer',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                              ),
+                              style: AppTypography.labelMedium,
                             ),
                     ),
                   ),

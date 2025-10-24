@@ -7,6 +7,8 @@ import 'package:taskaway/core/theme/app_typography.dart';
 import 'package:taskaway/core/theme/app_colors.dart';
 import 'package:taskaway/core/widgets/numpad_overlay.dart';
 import 'package:taskaway/features/auth/controllers/auth_controller.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_radius.dart';
 
 class OtpVerificationScreen extends ConsumerStatefulWidget {
   const OtpVerificationScreen({
@@ -137,7 +139,7 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Verification Code'),
+        title: Text('Verification Code'),
         elevation: 0,
         backgroundColor: Colors.transparent,
       ),
@@ -157,19 +159,18 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
                       children: [
                         Text(
                           'Enter Verification Code',
-                          style: AppTypography.headlineLarge,
+                          style: AppTypography.headlineMedium,
                           textAlign: TextAlign.center,
                         ),
-                        const SizedBox(height: 12),
+                        SizedBox(height: AppSpacing.md),
                         Text(
                           'Enter the verification code we just sent to \n${widget.email}',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            color: Colors.grey,
+                          style: AppTypography.bodyMedium.copyWith(
+                            color: AppColors.textSecondary,
                           ),
                           textAlign: TextAlign.center,
                         ),
-                        const SizedBox(height: 40),
+                        SizedBox(height: AppSpacing.huge),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: List.generate(6, (index) {
@@ -181,7 +182,7 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
                                 alignment: Alignment.center,
                                 decoration: BoxDecoration(
                                   color: Colors.grey.shade100,
-                                  borderRadius: BorderRadius.circular(8),
+                                  borderRadius: AppRadius.md,
                                   border: Border.all(
                                     color: _currentOtpIndex == index
                                         ? StyleConstants.taskerColorPrimary
@@ -194,10 +195,7 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
                                     controller: _controllers[index],
                                     readOnly: true,
                                     textAlign: TextAlign.center,
-                                    style: const TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w500,
-                                    ),
+                                    style: AppTypography.titleMedium,
                                     decoration: const InputDecoration(
                                       counterText: '',
                                       border: InputBorder.none,
@@ -209,13 +207,15 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
                             );
                           }),
                         ),
-                        const SizedBox(height: 32),
+                        SizedBox(height: AppSpacing.xxxl),
                         if (_errorMessage != null)
                           Padding(
                             padding: const EdgeInsets.symmetric(vertical: 8.0),
                             child: Text(
                               _errorMessage!,
-                              style: const TextStyle(color: Colors.red),
+                              style: AppTypography.bodySmall.copyWith(
+                                color: AppColors.error,
+                              ),
                               textAlign: TextAlign.center,
                             ),
                           ),
@@ -257,12 +257,11 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
                                     _resendSeconds > 0
                                         ? 'Resend code in ${_resendSeconds}s'
                                         : 'Resend Code',
-                                    style: TextStyle(
+                                    style: AppTypography.bodyMedium.copyWith(
                                       color: _resendSeconds > 0
-                                          ? Colors.grey
-                                          : StyleConstants.taskerColorPrimary,
-                                      fontWeight: FontWeight.w500,
-                                      fontSize: 16,
+                                          ? AppColors.textDisabled
+                                          : AppColors.primary,
+                                      fontWeight: AppTypography.medium,
                                     ),
                                   ),
                           ),
@@ -275,13 +274,16 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
                                   height: 20,
                                   width: 20,
                                   child: CircularProgressIndicator(
-                                    color: Colors.white,
+                                    color: AppColors.white,
                                     strokeWidth: 2,
                                   ),
                                 )
-                              : const Text('Verify'),
+                              : Text(
+                                  'Verify',
+                                  style: AppTypography.labelLarge,
+                                ),
                         ),
-                        const SizedBox(height: 16), // Padding at the bottom
+                        SizedBox(height: AppSpacing.lg), // Padding at the bottom
                       ],
                     ),
                   ),

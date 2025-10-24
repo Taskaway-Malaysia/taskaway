@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:taskaway/core/constants/api_constants.dart';
 import 'package:taskaway/features/tasks/models/task.dart';
+import '../../../core/theme/app_radius.dart';
 
 // Provider for map view mode (map vs list)
 final viewModeProvider = StateProvider<ViewMode>((ref) => ViewMode.map);
@@ -112,7 +113,7 @@ class _MapWidgetState extends ConsumerState<MapWidget> {
       margin: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: isSelected ? const Color(0xFFFFDB5B) : Colors.white,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: AppRadius.mdLg,
         border: Border.all(
           color: isSelected ? const Color(0xFFFCC133) : const Color(0xFFD9D9D9),
         ),

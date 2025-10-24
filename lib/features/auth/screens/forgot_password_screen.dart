@@ -3,6 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:taskaway/features/auth/controllers/auth_controller.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_radius.dart';
 
 class ForgotPasswordScreen extends ConsumerStatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -55,12 +59,12 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.white,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back_ios, color: AppColors.textPrimary),
           onPressed: () => context.go('/login'),
         ),
       ),
@@ -73,10 +77,10 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 40),
+                  SizedBox(height: AppSpacing.huge),
 
                   // Title
-                  const Text(
+                  Text(
                     'Forgot Password?',
                     style: TextStyle(
                       fontSize: 24,
@@ -86,10 +90,10 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: 12),
+                  SizedBox(height: AppSpacing.md),
 
                   // Subtitle
-                  const Text(
+                  Text(
                     'No worries, we\'ve got you covered.',
                     style: TextStyle(
                       fontSize: 14,
@@ -99,13 +103,13 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: 40),
+                  SizedBox(height: AppSpacing.huge),
 
                   // Email field
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Email',
                         style: TextStyle(
                           fontSize: 14,
@@ -117,10 +121,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                       TextFormField(
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
+                        style: AppTypography.labelMedium,
                         decoration: InputDecoration(
                           hintText: 'Enter your email...',
                           hintStyle: const TextStyle(
@@ -134,41 +135,41 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                             size: 20,
                           ),
                           filled: true,
-                          fillColor: Colors.white,
+                          fillColor: AppColors.white,
                           contentPadding: const EdgeInsets.symmetric(
                             horizontal: 14,
                             vertical: 10,
                           ),
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: AppRadius.smMd,
                             borderSide: const BorderSide(
                               color: Color(0xFFE4E4E4),
                               width: 1,
                             ),
                           ),
                           enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: AppRadius.smMd,
                             borderSide: const BorderSide(
                               color: Color(0xFFE4E4E4),
                               width: 1,
                             ),
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: AppRadius.smMd,
                             borderSide: const BorderSide(
                               color: Color(0xFFFFC333),
                               width: 1,
                             ),
                           ),
                           errorBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: AppRadius.smMd,
                             borderSide: const BorderSide(
                               color: Colors.red,
                               width: 1,
                             ),
                           ),
                           focusedErrorBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: AppRadius.smMd,
                             borderSide: const BorderSide(
                               color: Colors.red,
                               width: 1,
@@ -188,10 +189,10 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                     ],
                   ),
 
-                  const SizedBox(height: 16),
+                  SizedBox(height: AppSpacing.lg),
 
                   // Info text
-                  const Text(
+                  Text(
                     'We will send you a code to reset your password. If you have any issues, contact admin@taskawayasia.com',
                     style: TextStyle(
                       fontSize: 12,
@@ -214,7 +215,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                         foregroundColor: Colors.black,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(6),
+                          borderRadius: AppRadius.smMd,
                           side: const BorderSide(
                             color: Color(0xFFFFC333),
                             width: 1,
@@ -226,11 +227,11 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                               height: 20,
                               width: 20,
                               child: CircularProgressIndicator(
-                                color: Colors.black,
+                                color: AppColors.textPrimary,
                                 strokeWidth: 2,
                               ),
                             )
-                          : const Text(
+                          : Text(
                               'Confirm',
                               style: TextStyle(
                                 fontSize: 14,
@@ -241,13 +242,13 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: 24),
+                  SizedBox(height: AppSpacing.xxl),
 
                   // Back to login link
                   Center(
                     child: GestureDetector(
                       onTap: () => context.go('/login'),
-                      child: const Text(
+                      child: Text(
                         'Back to login',
                         style: TextStyle(
                           fontSize: 14,

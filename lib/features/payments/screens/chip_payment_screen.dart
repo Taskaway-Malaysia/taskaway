@@ -5,6 +5,9 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/style_constants.dart';
 import '../../applications/controllers/application_controller.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import 'dart:developer' as dev;
 
 /// ChipPaymentScreen
@@ -62,7 +65,7 @@ class _ChipPaymentScreenState extends ConsumerState<ChipPaymentScreen> {
     try {
       _controller = WebViewController()
         ..setJavaScriptMode(JavaScriptMode.unrestricted)
-        ..setBackgroundColor(Colors.white)
+        ..setBackgroundColor(AppColors.white)
         ..setNavigationDelegate(
           NavigationDelegate(
             onProgress: (int progress) {
@@ -240,7 +243,7 @@ class _ChipPaymentScreenState extends ConsumerState<ChipPaymentScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Complete Payment'),
+        title: Text('Complete Payment'),
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
@@ -250,14 +253,14 @@ class _ChipPaymentScreenState extends ConsumerState<ChipPaymentScreen> {
             showDialog(
               context: context,
               builder: (context) => AlertDialog(
-                title: const Text('Cancel Payment?'),
-                content: const Text(
+                title: Text('Cancel Payment?'),
+                content: Text(
                   'Are you sure you want to cancel this payment? Your task will not be posted.',
                 ),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text('Continue Payment'),
+                    child: Text('Continue Payment'),
                   ),
                   TextButton(
                     onPressed: () {
@@ -267,7 +270,7 @@ class _ChipPaymentScreenState extends ConsumerState<ChipPaymentScreen> {
                     style: TextButton.styleFrom(
                       foregroundColor: Colors.red,
                     ),
-                    child: const Text('Cancel'),
+                    child: Text('Cancel'),
                   ),
                 ],
               ),
@@ -290,23 +293,23 @@ class _ChipPaymentScreenState extends ConsumerState<ChipPaymentScreen> {
                       size: 64,
                       color: Colors.red.shade300,
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: AppSpacing.lg),
                     Text(
                       'Payment Error',
                       style: theme.textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: AppSpacing.sm),
                     Text(
                       _errorMessage!,
                       textAlign: TextAlign.center,
                       style: theme.textTheme.bodyMedium,
                     ),
-                    const SizedBox(height: 24),
+                    SizedBox(height: AppSpacing.xxl),
                     ElevatedButton(
                       onPressed: () => context.pop(),
-                      child: const Text('Go Back'),
+                      child: Text('Go Back'),
                     ),
                   ],
                 ),
@@ -325,22 +328,22 @@ class _ChipPaymentScreenState extends ConsumerState<ChipPaymentScreen> {
                       size: 64,
                       color: theme.colorScheme.primary,
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: AppSpacing.lg),
                     Text(
                       'Mobile Required',
                       style: theme.textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    const Text(
+                    SizedBox(height: AppSpacing.sm),
+                    Text(
                       'Please complete payment on the mobile app.',
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 24),
+                    SizedBox(height: AppSpacing.xxl),
                     ElevatedButton(
                       onPressed: () => context.pop(),
-                      child: const Text('Go Back'),
+                      child: Text('Go Back'),
                     ),
                   ],
                 ),
@@ -353,13 +356,13 @@ class _ChipPaymentScreenState extends ConsumerState<ChipPaymentScreen> {
           // Loading indicator
           if (_isLoading && _errorMessage == null && !kIsWeb)
             Container(
-              color: Colors.white,
+              color: AppColors.white,
               child: Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const CircularProgressIndicator(),
-                    const SizedBox(height: 16),
+                    SizedBox(height: AppSpacing.lg),
                     Text(
                       'Loading payment page...',
                       style: theme.textTheme.bodyMedium?.copyWith(
@@ -375,10 +378,10 @@ class _ChipPaymentScreenState extends ConsumerState<ChipPaymentScreen> {
       // Payment info at bottom
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
+              color: AppColors.textPrimary.withOpacity(0.08),
               blurRadius: 20,
               offset: const Offset(0, -4),
             ),
@@ -418,7 +421,7 @@ class _ChipPaymentScreenState extends ConsumerState<ChipPaymentScreen> {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: AppSpacing.sm),
               Row(
                 children: [
                   Icon(

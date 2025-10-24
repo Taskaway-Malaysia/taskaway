@@ -4,9 +4,12 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/style_constants.dart';
 import '../../../core/constants/asset_constants.dart';
 import '../../../core/widgets/qwerty_overlay.dart';
-import '../controllers/auth_controller.dart'; 
-import 'package:supabase_flutter/supabase_flutter.dart'; 
+import '../controllers/auth_controller.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:developer' as dev;
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 
 class AuthScreen extends ConsumerStatefulWidget {
   const AuthScreen({super.key});
@@ -79,7 +82,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.all(24.0),
+            padding: EdgeInsets.all(AppSpacing.xxl),
             child: Form( // Wrapped with Form widget
               key: _formKey,
               child: Column(
@@ -88,36 +91,33 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                 // Logo
                 Center(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 32.0),
+                    padding: EdgeInsets.symmetric(vertical: AppSpacing.xxxl),
                     child: Image.asset(
                       AssetConstants.logoPath,
                       height: 100,
                     ),
                   ),
                 ),
-                
-                const SizedBox(height: 24),
-                
+
+                SizedBox(height: AppSpacing.xxl),
+
                 // Welcome back text
                 Text(
                   'Welcome back,',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
+                  style: AppTypography.headlineMedium,
                 ),
-                
-                const SizedBox(height: 8),
-                
+
+                SizedBox(height: AppSpacing.sm),
+
                 // Login to get started
                 Text(
                   'Login to Get Started',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: Colors.black54,
+                  style: AppTypography.bodyMedium.copyWith(
+                    color: AppColors.textSecondary,
                   ),
                 ),
-                
-                const SizedBox(height: 32),
+
+                SizedBox(height: AppSpacing.xxxl),
                 
                 // Email field
                 GestureDetector(
@@ -150,9 +150,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                     ),
                   ),
                 ),
-                
-                const SizedBox(height: 16),
-                
+
+                SizedBox(height: AppSpacing.lg),
+
                 // Password field
                 GestureDetector(
                   onTap: () {
@@ -193,24 +193,24 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                     ),
                   ),
                 ),
-                
-                const SizedBox(height: 16),
-                
+
+                SizedBox(height: AppSpacing.lg),
+
                 // Forgot password
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
                     onPressed: () => context.push('/forgot-password'),
-                    child: const Text(
+                    child: Text(
                       'Forgot Password?',
-                      style: TextStyle(
-                        color: StyleConstants.taskerColorPrimary,
+                      style: AppTypography.bodyMedium.copyWith(
+                        color: AppColors.primary,
                       ),
                     ),
                   ),
                 ),
-                
-                const SizedBox(height: 24),
+
+                SizedBox(height: AppSpacing.xxl),
                 
                 // Login button
                 ElevatedButton(
@@ -274,19 +274,19 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                           }
                         },
                   child: _isLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
+                      ? SizedBox(
+                          height: AppSpacing.xl,
+                          width: AppSpacing.xl,
                           child: CircularProgressIndicator(
-                            color: Colors.white,
+                            color: AppColors.textInverted,
                             strokeWidth: 2,
                           ),
                         )
-                      : const Text('Login'),
+                      : Text('Login', style: AppTypography.labelLarge),
                 ),
-                
-                const SizedBox(height: 16),
-                
+
+                SizedBox(height: AppSpacing.lg),
+
                 // Explore as guest
                 OutlinedButton(
                   onPressed: () {
@@ -294,25 +294,24 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                     context.go('/home/browse');
                     print('Explore as Guest pressed, guest mode activated');
                   },
-                  child: const Text('Explore as Guest'),
+                  child: Text('Explore as Guest', style: AppTypography.labelLarge),
                 ),
-                
-                const SizedBox(height: 80),
-                
+
+                SizedBox(height: AppSpacing.massive),
+
                 // Don't have an account
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text("Don't have an account?"),
+                    Text("Don't have an account?", style: AppTypography.bodyMedium),
                     TextButton(
                       onPressed: () {
                         context.go('/create-account');
                       },
-                      child: const Text(
+                      child: Text(
                         'Sign Up',
-                        style: TextStyle(
-                          color: StyleConstants.taskerColorPrimary,
-                          fontWeight: FontWeight.bold,
+                        style: AppTypography.labelMedium.copyWith(
+                          color: AppColors.primary,
                         ),
                       ),
                     ),

@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/style_constants.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_radius.dart';
 
 /// ChipSuccessScreen
 ///
@@ -47,7 +51,7 @@ class ChipSuccessScreen extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(height: 32),
+              SizedBox(height: AppSpacing.xxxl),
 
               // Success title
               Text(
@@ -59,7 +63,7 @@ class ChipSuccessScreen extends StatelessWidget {
                 textAlign: TextAlign.center,
               ),
 
-              const SizedBox(height: 16),
+              SizedBox(height: AppSpacing.lg),
 
               // Success message - varies by payment type
               Text(
@@ -70,7 +74,7 @@ class ChipSuccessScreen extends StatelessWidget {
                 textAlign: TextAlign.center,
               ),
 
-              const SizedBox(height: 8),
+              SizedBox(height: AppSpacing.sm),
 
               Text(
                 paymentType == 'offer_acceptance'
@@ -82,20 +86,20 @@ class ChipSuccessScreen extends StatelessWidget {
                 textAlign: TextAlign.center,
               ),
 
-              const SizedBox(height: 32),
+              SizedBox(height: AppSpacing.xxxl),
 
               // Payment details card
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
+                  color: AppColors.white,
+                  borderRadius: AppRadius.lg,
                   border: Border.all(
                     color: Colors.grey.shade200,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: AppColors.textPrimary.withOpacity(0.05),
                       blurRadius: 10,
                       offset: const Offset(0, 2),
                     ),
@@ -125,9 +129,9 @@ class ChipSuccessScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: AppSpacing.md),
                     const Divider(),
-                    const SizedBox(height: 12),
+                    SizedBox(height: AppSpacing.md),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -150,14 +154,14 @@ class ChipSuccessScreen extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(height: 24),
+              SizedBox(height: AppSpacing.xxl),
 
               // Info box
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: EdgeInsets.all(AppSpacing.lg),
                 decoration: BoxDecoration(
                   color: Colors.blue.shade50,
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: AppRadius.md,
                   border: Border.all(color: Colors.blue.shade200),
                 ),
                 child: Row(
@@ -167,7 +171,7 @@ class ChipSuccessScreen extends StatelessWidget {
                       color: Colors.blue.shade700,
                       size: 20,
                     ),
-                    const SizedBox(width: 12),
+                    SizedBox(width: AppSpacing.md),
                     Expanded(
                       child: Text(
                         'Payment is held securely and will only be released to the tasker after task completion.',
@@ -202,13 +206,12 @@ class ChipSuccessScreen extends StatelessWidget {
                           elevation: 0,
                           shadowColor: Colors.transparent,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: AppRadius.md,
                           ),
                         ),
-                        child: const Text(
+                        child: Text(
                           'View Task Details',
                           style: TextStyle(
-                            fontFamily: 'Instrument Sans',
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
                             letterSpacing: 0.3,
@@ -232,13 +235,12 @@ class ChipSuccessScreen extends StatelessWidget {
                           elevation: 0,
                           shadowColor: Colors.transparent,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: AppRadius.md,
                           ),
                         ),
-                        child: const Text(
+                        child: Text(
                           'Find Tasker',
                           style: TextStyle(
-                            fontFamily: 'Instrument Sans',
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
                             letterSpacing: 0.3,
@@ -247,7 +249,7 @@ class ChipSuccessScreen extends StatelessWidget {
                       ),
                     ),
                   ],
-                  const SizedBox(height: 12),
+                  SizedBox(height: AppSpacing.md),
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton(
@@ -259,13 +261,12 @@ class ChipSuccessScreen extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         side: BorderSide(color: Colors.grey.shade300),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: AppRadius.md,
                         ),
                       ),
-                      child: const Text(
+                      child: Text(
                         'Back to Home',
                         style: TextStyle(
-                          fontFamily: 'Instrument Sans',
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
                           letterSpacing: 0.3,

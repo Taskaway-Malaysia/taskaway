@@ -1,8 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../constants/db_constants.dart';
-import 'dart:developer' as dev;
 import 'package:flutter/foundation.dart';
-import 'dart:typed_data';
 import 'dart:io';
 import 'dart:async';
 import 'package:image_picker/image_picker.dart';

@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:taskaway/features/payments/utils/payment_fix_utility.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_radius.dart';
 
 class AdminToolsScreen extends ConsumerStatefulWidget {
   const AdminToolsScreen({super.key});
@@ -42,32 +46,32 @@ class _AdminToolsScreenState extends ConsumerState<AdminToolsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Admin Tools'),
+        title: Text('Admin Tools'),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: EdgeInsets.all(AppSpacing.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Card(
               child: Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: EdgeInsets.all(AppSpacing.lg),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Payment Status Fix',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    const Text(
+                    SizedBox(height: AppSpacing.sm),
+                    Text(
                       'This tool will fix tasks that have successful payments but incorrect status in the database.',
                       style: TextStyle(fontSize: 14, color: Colors.grey),
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: AppSpacing.lg),
                     ElevatedButton(
                       onPressed: _isProcessing ? null : _runPaymentFix,
                       child: _isProcessing
@@ -76,20 +80,20 @@ class _AdminToolsScreenState extends ConsumerState<AdminToolsScreen> {
                               width: 20,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                color: Colors.white,
+                                color: AppColors.white,
                               ),
                             )
-                          : const Text('Run Payment Fix'),
+                          : Text('Run Payment Fix'),
                     ),
                     if (_statusMessage != null) ...[
-                      const SizedBox(height: 16),
+                      SizedBox(height: AppSpacing.lg),
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
                           color: _statusMessage!.contains('Error')
                               ? Colors.red.shade50
                               : Colors.green.shade50,
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: AppRadius.md,
                           border: Border.all(
                             color: _statusMessage!.contains('Error')
                                 ? Colors.red.shade200

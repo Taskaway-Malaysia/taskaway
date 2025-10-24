@@ -8,6 +8,10 @@ import 'package:taskaway/features/tasks/models/task.dart';
 import 'package:taskaway/features/messages/controllers/message_controller.dart';
 import 'package:taskaway/features/auth/controllers/auth_controller.dart';
 import 'package:taskaway/core/constants/style_constants.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_radius.dart';
 
 class TaskCardWithMessage extends ConsumerWidget {
   final Task task;
@@ -67,27 +71,27 @@ class TaskCardWithMessage extends ConsumerWidget {
         elevation: 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: AppRadius.lg,
           side: BorderSide(color: Colors.grey.shade300),
         ),
         child: Column(
           children: [
             // Top section: Title and Price
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+              padding: EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, AppSpacing.sm),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
                     child: Text(
                       task.title,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
+                      style: AppTypography.headlineSmall.copyWith(
+                        fontWeight: AppTypography.semiBold,
+                        color: AppColors.textPrimary,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  SizedBox(width: AppSpacing.md),
                   // Add message button if applicable
                   if (shouldShowMessage) ...[
                     IconButton(
@@ -98,14 +102,13 @@ class TaskCardWithMessage extends ConsumerWidget {
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
                     ),
-                    const SizedBox(width: 8),
+                    SizedBox(width: AppSpacing.sm),
                   ],
                   Text(
                     currencyFormat.format(task.price),
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
+                    style: AppTypography.headlineSmall.copyWith(
+                      fontWeight: AppTypography.bold,
+                      color: AppColors.textPrimary,
                     ),
                   ),
                 ],
@@ -120,30 +123,28 @@ class TaskCardWithMessage extends ConsumerWidget {
                   SizedBox(
                     width: 90, // Fixed width for the first column
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      padding: EdgeInsets.symmetric(vertical: AppSpacing.sm),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
                             task.status.toUpperCase(),
-                            style: const TextStyle(
-                              color: Color(0xFF7B61FF),
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
+                            style: AppTypography.labelMedium.copyWith(
+                              color: AppColors.primary,
+                              fontWeight: AppTypography.bold,
                             ),
                           ),
-                          const SizedBox(height: 2),
+                          SizedBox(height: AppSpacing.xxs),
                           Container(
                             height: 2,
                             width: 30,
-                            color: const Color(0xFF7B61FF),
+                            color: AppColors.primary,
                           ),
-                          const SizedBox(height: 4),
+                          SizedBox(height: AppSpacing.xs),
                           Text(
                             '${task.offers?.length ?? 0} Offer${(task.offers?.length ?? 0) != 1 ? 's' : ''}',
-                            style: TextStyle(
-                              color: Colors.grey[600],
-                              fontSize: 12,
+                            style: AppTypography.bodySmall.copyWith(
+                              color: AppColors.textSecondary,
                             ),
                           ),
                         ],
@@ -154,16 +155,18 @@ class TaskCardWithMessage extends ConsumerWidget {
                   // Date
                   Expanded(
                     child: Container(
-                      color: Colors.grey.shade50,
-                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      color: AppColors.backgroundSecondary,
+                      padding: EdgeInsets.symmetric(vertical: AppSpacing.sm),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.calendar_today, size: 16, color: Colors.grey[700]),
-                          const SizedBox(height: 4),
+                          Icon(Icons.calendar_today, size: 16, color: AppColors.textSecondary),
+                          SizedBox(height: AppSpacing.xs),
                           Text(
                             _getFormattedDate(task.scheduledTime),
-                            style: TextStyle(color: Colors.grey[700], fontSize: 12),
+                            style: AppTypography.bodySmall.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
                             textAlign: TextAlign.center,
                           ),
                         ],
@@ -174,19 +177,21 @@ class TaskCardWithMessage extends ConsumerWidget {
                   // Location or Remote
                   Expanded(
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      padding: EdgeInsets.symmetric(vertical: AppSpacing.sm),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
                             task.locationType == 'remote' ? Icons.home_work : Icons.location_on,
                             size: 16,
-                            color: Colors.grey[700],
+                            color: AppColors.textSecondary,
                           ),
-                          const SizedBox(height: 4),
+                          SizedBox(height: AppSpacing.xs),
                           Text(
                             task.locationType == 'remote' ? 'Remote' : task.location,
-                            style: TextStyle(color: Colors.grey[700], fontSize: 12),
+                            style: AppTypography.bodySmall.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
                             textAlign: TextAlign.center,
                             overflow: TextOverflow.ellipsis,
                           ),

@@ -8,6 +8,10 @@ import '../controllers/task_controller.dart';
 import '../../auth/models/profile.dart';
 import '../../../core/services/supabase_service.dart';
 import 'dart:async';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_radius.dart';
 import 'dart:math' show cos, sqrt, asin;
 
 class WaitingForTaskerScreen extends ConsumerStatefulWidget {
@@ -164,7 +168,7 @@ class _WaitingForTaskerScreenState extends ConsumerState<WaitingForTaskerScreen>
         : null;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.white,
       body: Stack(
         children: [
           // Map
@@ -197,7 +201,7 @@ class _WaitingForTaskerScreenState extends ConsumerState<WaitingForTaskerScreen>
                             ),
                             child: const Icon(
                               Icons.location_on,
-                              color: Colors.black,
+                              color: AppColors.textPrimary,
                               size: 24,
                             ),
                           ),
@@ -205,20 +209,19 @@ class _WaitingForTaskerScreenState extends ConsumerState<WaitingForTaskerScreen>
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(4),
+                              color: AppColors.white,
+                              borderRadius: AppRadius.sm,
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.1),
+                                  color: AppColors.textPrimary.withOpacity(0.1),
                                   blurRadius: 4,
                                   offset: const Offset(0, 2),
                                 ),
                               ],
                             ),
-                            child: const Text(
+                            child: Text(
                               'Task',
                               style: TextStyle(
-                                fontFamily: 'Instrument Sans',
                                 fontSize: 10,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -240,11 +243,11 @@ class _WaitingForTaskerScreenState extends ConsumerState<WaitingForTaskerScreen>
                               decoration: BoxDecoration(
                                 color: Colors.green,
                                 shape: BoxShape.circle,
-                                border: Border.all(color: Colors.white, width: 2),
+                                border: Border.all(color: AppColors.white, width: 2),
                               ),
                               child: const Icon(
                                 Icons.person,
-                                color: Colors.white,
+                                color: AppColors.white,
                                 size: 24,
                               ),
                             ),
@@ -252,20 +255,19 @@ class _WaitingForTaskerScreenState extends ConsumerState<WaitingForTaskerScreen>
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(4),
+                                color: AppColors.white,
+                                borderRadius: AppRadius.sm,
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.1),
+                                    color: AppColors.textPrimary.withOpacity(0.1),
                                     blurRadius: 4,
                                     offset: const Offset(0, 2),
                                   ),
                                 ],
                               ),
-                              child: const Text(
+                              child: Text(
                                 'Tasker',
                                 style: TextStyle(
-                                  fontFamily: 'Instrument Sans',
                                   fontSize: 10,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -298,10 +300,10 @@ class _WaitingForTaskerScreenState extends ConsumerState<WaitingForTaskerScreen>
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.white,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
+                      color: AppColors.textPrimary.withOpacity(0.1),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     ),
@@ -310,18 +312,17 @@ class _WaitingForTaskerScreenState extends ConsumerState<WaitingForTaskerScreen>
                 child: Row(
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.arrow_back, color: Color(0xFF000000)),
+                      icon: const Icon(Icons.arrow_back_ios, color: Color(0xFF000000)),
                       onPressed: () => context.go('/home/tasks'),
                     ),
-                    const SizedBox(width: 8),
+                    SizedBox(width: AppSpacing.sm),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             'Tasker on the way',
                             style: TextStyle(
-                              fontFamily: 'Instrument Sans',
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
                               color: Color(0xFF000000),
@@ -331,7 +332,6 @@ class _WaitingForTaskerScreenState extends ConsumerState<WaitingForTaskerScreen>
                             Text(
                               _taskerProfile!.fullName ?? 'Tasker',
                               style: const TextStyle(
-                                fontFamily: 'Instrument Sans',
                                 fontSize: 12,
                                 color: Color(0xFF788494),
                               ),
@@ -352,14 +352,14 @@ class _WaitingForTaskerScreenState extends ConsumerState<WaitingForTaskerScreen>
             right: 0,
             child: SafeArea(
               child: Container(
-                margin: const EdgeInsets.all(16),
+                margin: EdgeInsets.all(AppSpacing.lg),
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
+                  color: AppColors.white,
+                  borderRadius: AppRadius.lg,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
+                      color: AppColors.textPrimary.withOpacity(0.1),
                       blurRadius: 8,
                       offset: const Offset(0, -2),
                     ),
@@ -384,16 +384,14 @@ class _WaitingForTaskerScreenState extends ConsumerState<WaitingForTaskerScreen>
                               Text(
                                 _formatDistance(distance),
                                 style: const TextStyle(
-                                  fontFamily: 'Instrument Sans',
                                   fontSize: 18,
                                   fontWeight: FontWeight.w700,
                                   color: Color(0xFF000000),
                                 ),
                               ),
-                              const Text(
+                              Text(
                                 'Distance',
                                 style: TextStyle(
-                                  fontFamily: 'Instrument Sans',
                                   fontSize: 12,
                                   color: Color(0xFF788494),
                                 ),
@@ -416,16 +414,14 @@ class _WaitingForTaskerScreenState extends ConsumerState<WaitingForTaskerScreen>
                               Text(
                                 _estimateTime(distance),
                                 style: const TextStyle(
-                                  fontFamily: 'Instrument Sans',
                                   fontSize: 18,
                                   fontWeight: FontWeight.w700,
                                   color: Color(0xFF000000),
                                 ),
                               ),
-                              const Text(
+                              Text(
                                 'Est. Time',
                                 style: TextStyle(
-                                  fontFamily: 'Instrument Sans',
                                   fontSize: 12,
                                   color: Color(0xFF788494),
                                 ),
@@ -435,9 +431,9 @@ class _WaitingForTaskerScreenState extends ConsumerState<WaitingForTaskerScreen>
                         ],
                       ),
 
-                    const SizedBox(height: 20),
+                    SizedBox(height: AppSpacing.xl),
                     const Divider(height: 1),
-                    const SizedBox(height: 20),
+                    SizedBox(height: AppSpacing.xl),
 
                     // Task details
                     if (_currentTask != null)
@@ -453,12 +449,11 @@ class _WaitingForTaskerScreenState extends ConsumerState<WaitingForTaskerScreen>
                                 ),
                                 decoration: BoxDecoration(
                                   color: const Color(0xFFFFDB5B),
-                                  borderRadius: BorderRadius.circular(4),
+                                  borderRadius: AppRadius.sm,
                                 ),
                                 child: Text(
                                   _currentTask!.category.toUpperCase(),
                                   style: const TextStyle(
-                                    fontFamily: 'Instrument Sans',
                                     fontSize: 10,
                                     fontWeight: FontWeight.w700,
                                     letterSpacing: 0.5,
@@ -470,7 +465,6 @@ class _WaitingForTaskerScreenState extends ConsumerState<WaitingForTaskerScreen>
                               Text(
                                 'RM ${_currentTask!.price.toStringAsFixed(2)}',
                                 style: const TextStyle(
-                                  fontFamily: 'Instrument Sans',
                                   fontSize: 16,
                                   fontWeight: FontWeight.w700,
                                   color: Color(0xFF000000),
@@ -478,17 +472,16 @@ class _WaitingForTaskerScreenState extends ConsumerState<WaitingForTaskerScreen>
                               ),
                             ],
                           ),
-                          const SizedBox(height: 12),
+                          SizedBox(height: AppSpacing.md),
                           Text(
                             _currentTask!.title,
                             style: const TextStyle(
-                              fontFamily: 'Instrument Sans',
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
                               color: Color(0xFF000000),
                             ),
                           ),
-                          const SizedBox(height: 8),
+                          SizedBox(height: AppSpacing.sm),
                           Row(
                             children: [
                               const Icon(
@@ -501,7 +494,6 @@ class _WaitingForTaskerScreenState extends ConsumerState<WaitingForTaskerScreen>
                                 child: Text(
                                   _currentTask!.location,
                                   style: const TextStyle(
-                                    fontFamily: 'Instrument Sans',
                                     fontSize: 12,
                                     color: Color(0xFF788494),
                                   ),
@@ -513,7 +505,7 @@ class _WaitingForTaskerScreenState extends ConsumerState<WaitingForTaskerScreen>
                         ],
                       ),
 
-                    const SizedBox(height: 20),
+                    SizedBox(height: AppSpacing.xl),
 
                     // Contact button
                     SizedBox(
@@ -524,7 +516,7 @@ class _WaitingForTaskerScreenState extends ConsumerState<WaitingForTaskerScreen>
                           foregroundColor: const Color(0xFF000000),
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(2),
+                            borderRadius: AppRadius.xs,
                             side: const BorderSide(
                               color: Color(0xFFFFC333),
                               width: 1,
@@ -541,10 +533,9 @@ class _WaitingForTaskerScreenState extends ConsumerState<WaitingForTaskerScreen>
                           );
                         },
                         icon: const Icon(Icons.chat_bubble_outline, size: 18),
-                        label: const Text(
+                        label: Text(
                           'Message Tasker',
                           style: TextStyle(
-                            fontFamily: 'Instrument Sans',
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
                             letterSpacing: 0.7,
@@ -562,7 +553,7 @@ class _WaitingForTaskerScreenState extends ConsumerState<WaitingForTaskerScreen>
           if (_currentTask == null || (_taskerProfile == null && _currentTask?.taskerId != null))
             Positioned.fill(
               child: Container(
-                color: Colors.black.withOpacity(0.3),
+                color: AppColors.textPrimary.withOpacity(0.3),
                 child: const Center(
                   child: CircularProgressIndicator(
                     color: Color(0xFFFFDB5B),

@@ -8,6 +8,10 @@ import 'package:google_places_flutter/model/prediction.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../../../core/constants/api_constants.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_radius.dart';
 
 class MapLocationPickerScreen extends StatefulWidget {
   final LatLng? initialLocation;
@@ -197,7 +201,7 @@ class _MapLocationPickerScreenState extends State<MapLocationPickerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.white,
       body: SafeArea(
         child: Stack(
           children: [
@@ -237,34 +241,40 @@ class _MapLocationPickerScreenState extends State<MapLocationPickerScreen> {
               left: 0,
               right: 0,
               child: Container(
-                margin: const EdgeInsets.all(16),
+                margin: EdgeInsets.all(AppSpacing.lg),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 10,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
+                  color: AppColors.white,
+                  borderRadius: AppRadius.md,
                 ),
                 child: Column(
                   children: [
                     Row(
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.arrow_back),
+                          icon: const Icon(Icons.arrow_back_ios),
                           onPressed: () => context.pop(),
                         ),
                         Expanded(
                           child: GooglePlaceAutoCompleteTextField(
                             textEditingController: _searchController,
                             googleAPIKey: ApiConstants.googleMapsApiKey,
-                            inputDecoration: const InputDecoration(
+                            boxDecoration: BoxDecoration(
+                              border: Border.all(color: Colors.transparent, width: 0),
+                              color: AppColors.white,
+                              borderRadius: AppRadius.md,
+                            ),
+                            inputDecoration: InputDecoration(
                               hintText: 'Search location...',
+                              filled: true,
+                              fillColor: AppColors.white,
                               border: InputBorder.none,
-                              hintStyle: TextStyle(color: Color(0xFF788494)),
+                              enabledBorder: InputBorder.none,
+                              focusedBorder: InputBorder.none,
+                              errorBorder: InputBorder.none,
+                              disabledBorder: InputBorder.none,
+                              hintStyle: AppTypography.bodyMedium.copyWith(
+                                color: AppColors.gray400,
+                              ),
                             ),
                             debounceTime: 800,
                             countries: const ["my"], // Malaysia only
@@ -288,7 +298,6 @@ class _MapLocationPickerScreenState extends State<MapLocationPickerScreen> {
                                       child: Text(
                                         prediction.description ?? '',
                                         style: const TextStyle(
-                                          fontFamily: 'Instrument Sans',
                                           fontSize: 14,
                                         ),
                                       ),
@@ -331,12 +340,12 @@ class _MapLocationPickerScreenState extends State<MapLocationPickerScreen> {
               left: 0,
               right: 0,
               child: Container(
-                padding: const EdgeInsets.all(24),
+                padding: EdgeInsets.all(AppSpacing.xxl),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.white,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
+                      color: AppColors.textPrimary.withOpacity(0.1),
                       blurRadius: 10,
                       offset: const Offset(0, -2),
                     ),
@@ -349,12 +358,12 @@ class _MapLocationPickerScreenState extends State<MapLocationPickerScreen> {
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: const Color(0xFFF5F5F5),
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: AppRadius.md,
                       ),
                       child: Row(
                         children: [
                           const Icon(Icons.location_on, size: 20, color: Color(0xFF788494)),
-                          const SizedBox(width: 8),
+                          SizedBox(width: AppSpacing.sm),
                           Expanded(
                             child: _isLoadingAddress
                                 ? const SizedBox(
@@ -367,9 +376,8 @@ class _MapLocationPickerScreenState extends State<MapLocationPickerScreen> {
                                         ? _selectedAddress
                                         : 'Lat: ${_selectedLocation.latitude.toStringAsFixed(6)}, Lng: ${_selectedLocation.longitude.toStringAsFixed(6)}',
                                     style: const TextStyle(
-                                      fontSize: 12,
-                                      fontFamily: 'Instrument Sans',
-                                      color: Color(0xFF788494),
+                                      fontSize: 13,
+                                      color: AppColors.textSecondary,
                                     ),
                                     maxLines: 2,
                                     overflow: TextOverflow.ellipsis,
@@ -378,7 +386,7 @@ class _MapLocationPickerScreenState extends State<MapLocationPickerScreen> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: AppSpacing.lg),
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
@@ -387,18 +395,16 @@ class _MapLocationPickerScreenState extends State<MapLocationPickerScreen> {
                           foregroundColor: const Color(0xFF000000),
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(2),
+                            borderRadius: AppRadius.md,
                             side: const BorderSide(color: Color(0xFFFFC333), width: 1),
                           ),
                         ),
                         onPressed: _selectedAddress.isNotEmpty ? _confirmLocation : null,
-                        child: const Text(
+                        child: Text(
                           'Confirm location',
-                          style: TextStyle(
-                            fontFamily: 'Instrument Sans',
-                            fontSize: 14,
+                          style: const TextStyle(
+                            fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            letterSpacing: 0.7,
                           ),
                         ),
                       ),
@@ -414,7 +420,7 @@ class _MapLocationPickerScreenState extends State<MapLocationPickerScreen> {
                 child: Container(
                   width: 2,
                   height: 20,
-                  color: Colors.black.withOpacity(0.3),
+                  color: AppColors.textPrimary.withOpacity(0.3),
                 ),
               ),
             ),
@@ -423,7 +429,7 @@ class _MapLocationPickerScreenState extends State<MapLocationPickerScreen> {
                 child: Container(
                   width: 20,
                   height: 2,
-                  color: Colors.black.withOpacity(0.3),
+                  color: AppColors.textPrimary.withOpacity(0.3),
                 ),
               ),
             ),

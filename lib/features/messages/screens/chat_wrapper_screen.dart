@@ -4,6 +4,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/channel.dart';
 import 'message_screen.dart';
 import '../../auth/controllers/auth_controller.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 
 /// Wrapper screen that loads channel data before showing the message screen
 class ChatWrapperScreen extends ConsumerStatefulWidget {
@@ -135,13 +138,13 @@ class _ChatWrapperScreenState extends ConsumerState<ChatWrapperScreen> {
     if (_isLoading) {
       return Scaffold(
         appBar: AppBar(
-          title: const Text('Loading...'),
-          backgroundColor: const Color(0xFF6C5CE7),
-          foregroundColor: Colors.white,
+          title: Text('Loading...'),
+          backgroundColor: AppColors.posterPrimary,
+          foregroundColor: AppColors.white,
         ),
         body: const Center(
           child: CircularProgressIndicator(
-            color: Color(0xFF6C5CE7),
+            color: AppColors.posterPrimary,
           ),
         ),
       );
@@ -150,9 +153,9 @@ class _ChatWrapperScreenState extends ConsumerState<ChatWrapperScreen> {
     if (_error != null) {
       return Scaffold(
         appBar: AppBar(
-          title: const Text('Error'),
-          backgroundColor: const Color(0xFF6C5CE7),
-          foregroundColor: Colors.white,
+          title: Text('Error'),
+          backgroundColor: AppColors.posterPrimary,
+          foregroundColor: AppColors.white,
         ),
         body: Center(
           child: Column(
@@ -163,21 +166,21 @@ class _ChatWrapperScreenState extends ConsumerState<ChatWrapperScreen> {
                 size: 64,
                 color: Colors.red,
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: AppSpacing.lg),
               Text(
                 _error!,
                 style: const TextStyle(fontSize: 16),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: AppSpacing.xxl),
               ElevatedButton(
                 onPressed: () {
                   Navigator.of(context).pop();
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF6C5CE7),
+                  backgroundColor: AppColors.posterPrimary,
                 ),
-                child: const Text('Go Back'),
+                child: Text('Go Back'),
               ),
             ],
           ),
@@ -188,9 +191,9 @@ class _ChatWrapperScreenState extends ConsumerState<ChatWrapperScreen> {
     if (_channel == null) {
       return Scaffold(
         appBar: AppBar(
-          title: const Text('Not Found'),
-          backgroundColor: const Color(0xFF6C5CE7),
-          foregroundColor: Colors.white,
+          title: Text('Not Found'),
+          backgroundColor: AppColors.posterPrimary,
+          foregroundColor: AppColors.white,
         ),
         body: Center(
           child: Column(
@@ -201,20 +204,20 @@ class _ChatWrapperScreenState extends ConsumerState<ChatWrapperScreen> {
                 size: 64,
                 color: Colors.grey,
               ),
-              const SizedBox(height: 16),
-              const Text(
+              SizedBox(height: AppSpacing.lg),
+              Text(
                 'Conversation not found',
                 style: TextStyle(fontSize: 16),
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: AppSpacing.xxl),
               ElevatedButton(
                 onPressed: () {
                   Navigator.of(context).pop();
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF6C5CE7),
+                  backgroundColor: AppColors.posterPrimary,
                 ),
-                child: const Text('Go Back'),
+                child: Text('Go Back'),
               ),
             ],
           ),

@@ -12,6 +12,10 @@ import '../controllers/task_controller.dart';
 import '../../../core/services/analytics_service.dart';
 import 'map_location_picker_screen.dart';
 import 'package:latlong2/latlong.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_radius.dart';
 
 final createTaskSinglePageDataProvider = StateProvider<Map<String, dynamic>>((ref) => {
       'category': 'cleaning',
@@ -304,13 +308,13 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
           _showDatePicker(context, value == 'before_date');
         }
       },
-      borderRadius: BorderRadius.circular(6),
+      borderRadius: AppRadius.smMd,
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFFFDB5B).withOpacity(0.2) : Colors.white,
-          borderRadius: BorderRadius.circular(6),
+          color: isSelected ? const Color(0xFFFFDB5B).withOpacity(0.2) : AppColors.white,
+          borderRadius: AppRadius.smMd,
           border: Border.all(
             color: isSelected ? const Color(0xFFFFC333) : const Color(0xFFE4E4E4),
             width: isSelected ? 2 : 1,
@@ -320,8 +324,9 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
           dateText ?? label,
           textAlign: TextAlign.center,
           style: TextStyle(
+            fontSize: 13,
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-            color: Colors.black,
+            color: AppColors.textPrimary,
           ),
         ),
       ),
@@ -338,7 +343,7 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
         updatedData['timeOfDay'] = value;
         ref.read(createTaskSinglePageDataProvider.notifier).state = updatedData;
       },
-      borderRadius: BorderRadius.circular(6),
+      borderRadius: AppRadius.smMd,
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
@@ -346,7 +351,7 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
             color: isSelected ? const Color(0xFFFFC333) : const Color(0xFFE4E4E4),
             width: isSelected ? 2 : 1,
           ),
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: AppRadius.smMd,
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -357,13 +362,15 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
                 Icon(
                   icon,
                   size: 20,
-                  color: Colors.black,
+                  color: AppColors.textPrimary,
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: AppSpacing.sm),
                 Text(
                   label,
                   style: const TextStyle(
-                    fontWeight: FontWeight.w500,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
                   ),
                 ),
               ],
@@ -373,7 +380,7 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
               timeRange,
               style: const TextStyle(
                 fontSize: 12,
-                color: Color(0xFF788494),
+                color: AppColors.textTertiary,
               ),
             ),
           ],
@@ -395,7 +402,7 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
         }
         ref.read(createTaskSinglePageDataProvider.notifier).state = updatedData;
       },
-      borderRadius: BorderRadius.circular(6),
+      borderRadius: AppRadius.smMd,
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
@@ -403,7 +410,7 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
             color: isSelected ? const Color(0xFFFFC333) : const Color(0xFFE4E4E4),
             width: isSelected ? 2 : 1,
           ),
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: AppRadius.smMd,
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -411,13 +418,15 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
             Icon(
               icon,
               size: 24,
-              color: Colors.black,
+              color: AppColors.textPrimary,
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: AppSpacing.sm),
             Text(
               label,
               style: const TextStyle(
-                fontWeight: FontWeight.w500,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
               ),
             ),
             const SizedBox(height: 4),
@@ -426,7 +435,7 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
               textAlign: TextAlign.center,
               style: const TextStyle(
                 fontSize: 12,
-                color: Color(0xFF788494),
+                color: AppColors.textTertiary,
               ),
             ),
           ],
@@ -471,7 +480,7 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
               updatedData['paymentMethod'] = value;
               ref.read(createTaskSinglePageDataProvider.notifier).state = updatedData;
             },
-      borderRadius: BorderRadius.circular(6),
+      borderRadius: AppRadius.smMd,
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
@@ -479,8 +488,8 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
             color: isSelected ? const Color(0xFFFFC333) : const Color(0xFFE4E4E4),
             width: isSelected ? 2 : 1,
           ),
-          borderRadius: BorderRadius.circular(6),
-          color: isComingSoon ? const Color(0xFFF5F5F5) : Colors.white,
+          borderRadius: AppRadius.smMd,
+          color: isComingSoon ? const Color(0xFFF5F5F5) : AppColors.white,
         ),
         child: Row(
           children: [
@@ -489,7 +498,7 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
               height: 40,
               decoration: BoxDecoration(
                 color: isSelected ? const Color(0xFFFFDB5B).withOpacity(0.2) : const Color(0xFFF5F5F5),
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: AppRadius.sm,
               ),
               child: Icon(
                 icon,
@@ -497,7 +506,7 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
                 color: isComingSoon ? const Color(0xFF788494) : Colors.black,
               ),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: AppSpacing.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -507,24 +516,22 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
                       Text(
                         label,
                         style: TextStyle(
-                          fontFamily: 'Instrument Sans',
-                          fontSize: 15,
+                          fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: isComingSoon ? const Color(0xFF788494) : const Color(0xFF000000),
+                          color: isComingSoon ? AppColors.textSecondary : AppColors.textPrimary,
                         ),
                       ),
                       if (isComingSoon) ...[
-                        const SizedBox(width: 8),
+                        SizedBox(width: AppSpacing.sm),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
                             color: const Color(0xFFFFDB5B).withOpacity(0.25),
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: AppRadius.smMd,
                           ),
-                          child: const Text(
+                          child: Text(
                             'Coming Soon',
                             style: TextStyle(
-                              fontFamily: 'Instrument Sans',
                               fontSize: 10,
                               fontWeight: FontWeight.w600,
                               color: Color(0xFF000000),
@@ -538,9 +545,8 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
                   Text(
                     description,
                     style: const TextStyle(
-                      fontFamily: 'Instrument Sans',
                       fontSize: 13,
-                      color: Color(0xFF788494),
+                      color: AppColors.textSecondary,
                     ),
                   ),
                 ],
@@ -579,7 +585,7 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
         decoration: BoxDecoration(
           border: Border.all(color: const Color(0xFFE4E4E4)),
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: AppRadius.smMd,
         ),
         child: Row(
           children: [
@@ -587,23 +593,20 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Price • Payment method',
-                    style: TextStyle(
-                      fontFamily: 'Instrument Sans',
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.24,
-                      color: Color(0xFF000000),
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     '$priceText • $paymentText',
                     style: TextStyle(
-                      fontFamily: 'Instrument Sans',
-                      fontSize: 14,
-                      color: hasValues ? const Color(0xFF000000) : const Color(0xFF788494),
+                      fontSize: 13,
+                      color: hasValues ? AppColors.textPrimary : AppColors.textSecondary,
                     ),
                   ),
                 ],
@@ -622,7 +625,7 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -649,14 +652,14 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
     final dateFormat = DateFormat('EEEE, d MMMM');
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.white,
       body: SafeArea(
         child: Column(
           children: [
             Container(
               padding: const EdgeInsets.symmetric(vertical: 16),
               decoration: const BoxDecoration(
-                color: Colors.white,
+                color: AppColors.white,
                 border: Border(
                   bottom: BorderSide(
                     color: Color(0xFFE8E9F1),
@@ -666,7 +669,7 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
               ),
               child: Row(
                 children: [
-                  const SizedBox(width: 16),
+                  SizedBox(width: AppSpacing.lg),
                   InkWell(
                     onTap: () => context.pop(),
                     child: const Icon(
@@ -702,26 +705,32 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
                       const Text(
                         'Title',
                         style: TextStyle(
-                          fontFamily: 'Instrument Sans',
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.24,
-                          color: Color(0xFF000000),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      SizedBox(height: AppSpacing.sm),
                       TextFormField(
                         controller: _titleController,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: AppColors.textPrimary,
+                        ),
                         decoration: InputDecoration(
                           hintText: 'Enter task title',
+                          hintStyle: const TextStyle(
+                            fontSize: 13,
+                            color: AppColors.textSecondary,
+                          ),
                           filled: true,
-                          fillColor: Colors.white,
+                          fillColor: AppColors.white,
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: AppRadius.smMd,
                             borderSide: const BorderSide(color: Color(0xFFE4E4E4)),
                           ),
                           enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: AppRadius.smMd,
                             borderSide: const BorderSide(color: Color(0xFFE4E4E4)),
                           ),
                           contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -734,29 +743,35 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
                         },
                       ),
                       const SizedBox(height: 18),
-                      const Text(
+                      Text(
                         'Description',
-                        style: TextStyle(
-                          fontFamily: 'Instrument Sans',
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.24,
-                          color: Color(0xFF000000),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      SizedBox(height: AppSpacing.sm),
                       TextFormField(
                         controller: _descriptionController,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: AppColors.textPrimary,
+                        ),
                         decoration: InputDecoration(
                           hintText: 'Describe your task',
+                          hintStyle: const TextStyle(
+                            fontSize: 13,
+                            color: AppColors.textSecondary,
+                          ),
                           filled: true,
-                          fillColor: Colors.white,
+                          fillColor: AppColors.white,
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: AppRadius.smMd,
                             borderSide: const BorderSide(color: Color(0xFFE4E4E4)),
                           ),
                           enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: AppRadius.smMd,
                             borderSide: const BorderSide(color: Color(0xFFE4E4E4)),
                           ),
                           contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -770,29 +785,40 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
                         },
                       ),
                       const SizedBox(height: 18),
-                      const Text(
+                      Text(
                         'Category',
-                        style: TextStyle(
-                          fontFamily: 'Instrument Sans',
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.24,
-                          color: Color(0xFF000000),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      SizedBox(height: AppSpacing.sm),
                       Container(
-                        height: 33,
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppColors.white,
                           border: Border.all(color: const Color(0xFFE4E4E4)),
-                          borderRadius: BorderRadius.circular(6),
+                          borderRadius: AppRadius.md,
                         ),
                         child: DropdownButtonHideUnderline(
                           child: DropdownButton<String>(
                             value: selectedCategory,
                             isExpanded: true,
+                            icon: const Icon(Icons.keyboard_arrow_down, size: 24, color: AppColors.textSecondary),
+                            hint: const Text(
+                              'All Categories',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w400,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w400,
+                              color: AppColors.textPrimary,
+                            ),
                             items: const [
                               DropdownMenuItem(value: 'cleaning', child: Text('Cleaning')),
                               DropdownMenuItem(value: 'handyman', child: Text('Handyman')),
@@ -815,28 +841,26 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
                         ),
                       ),
                       const SizedBox(height: 18),
-                      const Text(
+                      Text(
                         'Date & Time',
-                        style: TextStyle(
-                          fontFamily: 'Instrument Sans',
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.24,
-                          color: Color(0xFF000000),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      SizedBox(height: AppSpacing.sm),
                       _buildDateOption('on_date', 'On date',
                           dateText: taskData['dateOption'] == 'on_date'
                               ? 'On ${dateFormat.format(scheduledTime)}'
                               : null),
-                      const SizedBox(height: 8),
+                      SizedBox(height: AppSpacing.sm),
                       _buildDateOption('before_date', 'Before date',
                           dateText: taskData['beforeDateText'] ??
                               'Before ${dateFormat.format(scheduledTime)}'),
-                      const SizedBox(height: 8),
+                      SizedBox(height: AppSpacing.sm),
                       _buildDateOption('any_day', 'Any day'),
-                      const SizedBox(height: 12),
+                      SizedBox(height: AppSpacing.md),
                       Row(
                         children: [
                           Checkbox(
@@ -850,15 +874,15 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
                               ref.read(createTaskSinglePageDataProvider.notifier).state = updatedData;
                             },
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(4),
+                              borderRadius: AppRadius.sm,
                             ),
                             activeColor: const Color(0xFFFFDB5B),
                           ),
-                          const Text('I need a certain time of the day'),
+                          Text('I need a certain time of the day'),
                         ],
                       ),
                       if (taskData['needsSpecificTime'] == true) ...[
-                        const SizedBox(height: 12),
+                        SizedBox(height: AppSpacing.md),
                         GridView.count(
                           crossAxisCount: 2,
                           shrinkWrap: true,
@@ -875,24 +899,22 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
                         ),
                       ],
                       const SizedBox(height: 18),
-                      const Text(
+                      Text(
                         'Location',
-                        style: TextStyle(
-                          fontFamily: 'Instrument Sans',
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.24,
-                          color: Color(0xFF000000),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      SizedBox(height: AppSpacing.sm),
                       Row(
                         children: [
                           Expanded(
                             child: _buildLocationType('physical', 'Physical',
                                 'In-person help', Icons.place_outlined),
                           ),
-                          const SizedBox(width: 12),
+                          SizedBox(width: AppSpacing.md),
                           Expanded(
                             child: _buildLocationType(
                                 'online', 'Online', 'Done remotely', Icons.language),
@@ -907,29 +929,28 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
                             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                             decoration: BoxDecoration(
                               border: Border.all(color: const Color(0xFFE4E4E4)),
-                              borderRadius: BorderRadius.circular(6),
+                              borderRadius: AppRadius.smMd,
                             ),
                             child: Row(
                               children: [
                                 const Icon(Icons.map, size: 20, color: Color(0xFF788494)),
-                                const SizedBox(width: 8),
+                                SizedBox(width: AppSpacing.sm),
                                 Expanded(
                                   child: Text(
                                     taskData['location'] != null && taskData['location'].toString().isNotEmpty
                                         ? taskData['location']
                                         : 'Select location on map',
                                     style: TextStyle(
-                                      fontFamily: 'Instrument Sans',
-                                      fontSize: 14,
+                                      fontSize: 13,
                                       color: taskData['location'] != null && taskData['location'].toString().isNotEmpty
-                                          ? const Color(0xFF000000)
-                                          : const Color(0xFF788494),
+                                          ? AppColors.textPrimary
+                                          : AppColors.textSecondary,
                                     ),
                                     maxLines: 2,
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
-                                const SizedBox(width: 8),
+                                SizedBox(width: AppSpacing.sm),
                                 const Icon(Icons.chevron_right, size: 20, color: Color(0xFF788494)),
                               ],
                             ),
@@ -937,17 +958,15 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
                         ),
                       ],
                       const SizedBox(height: 18),
-                      const Text(
+                      Text(
                         'Photos (Optional)',
-                        style: TextStyle(
-                          fontFamily: 'Instrument Sans',
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.24,
-                          color: Color(0xFF000000),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      SizedBox(height: AppSpacing.sm),
                       Row(
                         children: [
                           InkWell(
@@ -957,12 +976,12 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
                               height: 80,
                               decoration: BoxDecoration(
                                 border: Border.all(color: const Color(0xFFE4E4E4)),
-                                borderRadius: BorderRadius.circular(6),
+                                borderRadius: AppRadius.smMd,
                               ),
                               child: const Icon(Icons.add, color: Color(0xFF788494)),
                             ),
                           ),
-                          const SizedBox(width: 12),
+                          SizedBox(width: AppSpacing.md),
                           if (taskData['images'] != null &&
                               (taskData['images'] as List).isNotEmpty)
                             Expanded(
@@ -971,7 +990,7 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
                                 child: ListView.separated(
                                   scrollDirection: Axis.horizontal,
                                   itemCount: (taskData['images'] as List).length,
-                                  separatorBuilder: (context, index) => const SizedBox(width: 8),
+                                  separatorBuilder: (context, index) => SizedBox(width: AppSpacing.sm),
                                   itemBuilder: (context, index) {
                                     final image = (taskData['images'] as List)[index];
                                     return Stack(
@@ -980,13 +999,13 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
                                           height: 80,
                                           width: 80,
                                           decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(6),
+                                            borderRadius: AppRadius.smMd,
                                             border: Border.all(
                                               color: const Color(0xFFE4E4E4),
                                             ),
                                           ),
                                           child: ClipRRect(
-                                            borderRadius: BorderRadius.circular(5),
+                                            borderRadius: AppRadius.smMd,
                                             child: _buildImagePreview(image),
                                           ),
                                         ),
@@ -1004,7 +1023,7 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
                                               child: const Icon(
                                                 Icons.close,
                                                 size: 16,
-                                                color: Colors.white,
+                                                color: AppColors.white,
                                               ),
                                             ),
                                           ),
@@ -1027,10 +1046,10 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
             // Bottom button with shadow
             Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.white,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.08),
+                    color: AppColors.textPrimary.withOpacity(0.08),
                     blurRadius: 20,
                     offset: const Offset(0, -4),
                   ),
@@ -1049,7 +1068,7 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
                       elevation: 0,
                       shadowColor: Colors.transparent,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: AppRadius.md,
                       ),
                     ),
                     onPressed: _isLoading ? null : _handleSubmit,
@@ -1059,16 +1078,14 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
                             width: 20,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              color: Colors.black,
+                              color: AppColors.textPrimary,
                             ),
                           )
-                        : const Text(
+                        : Text(
                             'Find tasker',
-                            style: TextStyle(
-                              fontFamily: 'Instrument Sans',
-                              fontSize: 15,
+                            style: const TextStyle(
+                              fontSize: 13,
                               fontWeight: FontWeight.w600,
-                              letterSpacing: 0.3,
                             ),
                           ),
                   ),
@@ -1134,7 +1151,7 @@ class _PricePaymentModalContentState extends State<_PricePaymentModalContent> {
                     height: 4,
                     decoration: BoxDecoration(
                       color: const Color(0xFFE4E4E4),
-                      borderRadius: BorderRadius.circular(2),
+                      borderRadius: AppRadius.xs,
                     ),
                   ),
                   // Title and close button
@@ -1145,11 +1162,10 @@ class _PricePaymentModalContentState extends State<_PricePaymentModalContent> {
                         const Expanded(
                           child: Text(
                             'Price & Payment',
-                            style: TextStyle(
-                              fontFamily: 'Instrument Sans',
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF000000),
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary,
                             ),
                           ),
                         ),
@@ -1176,46 +1192,42 @@ class _PricePaymentModalContentState extends State<_PricePaymentModalContent> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Price Section
-                      const Text(
+                      Text(
                         'Task Price *',
-                        style: TextStyle(
-                          fontFamily: 'Instrument Sans',
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.24,
-                          color: Color(0xFF000000),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      SizedBox(height: AppSpacing.md),
                       TextFormField(
                         controller: _priceController,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: AppColors.textPrimary,
+                        ),
                         decoration: InputDecoration(
                           hintText: 'RM 0.00',
                           hintStyle: const TextStyle(
-                            fontFamily: 'Instrument Sans',
-                            fontSize: 15,
+                            fontSize: 13,
                             color: Color(0xFF788494),
                           ),
                           filled: true,
-                          fillColor: Colors.white,
+                          fillColor: AppColors.white,
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: AppRadius.md,
                             borderSide: const BorderSide(color: Color(0xFFE4E4E4)),
                           ),
                           enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: AppRadius.md,
                             borderSide: const BorderSide(color: Color(0xFFE4E4E4)),
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: AppRadius.md,
                             borderSide: const BorderSide(color: Color(0xFFFFDB5B), width: 2),
                           ),
                           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                        ),
-                        style: const TextStyle(
-                          fontFamily: 'Instrument Sans',
-                          fontSize: 15,
-                          color: Color(0xFF000000),
                         ),
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
                         onChanged: (value) {
@@ -1224,29 +1236,26 @@ class _PricePaymentModalContentState extends State<_PricePaymentModalContent> {
                         },
                       ),
 
-                      const SizedBox(height: 24),
+                      SizedBox(height: AppSpacing.xxl),
 
                       // Payment Method Section
-                      const Text(
+                      Text(
                         'Payment Method *',
-                        style: TextStyle(
-                          fontFamily: 'Instrument Sans',
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.24,
-                          color: Color(0xFF000000),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      const Text(
+                      SizedBox(height: AppSpacing.sm),
+                      Text(
                         'Choose how you want to pay',
-                        style: TextStyle(
-                          fontFamily: 'Instrument Sans',
-                          fontSize: 12,
-                          color: Color(0xFF788494),
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: AppColors.textSecondary,
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      SizedBox(height: AppSpacing.md),
 
                       // Payment Options
                       _buildPaymentMethodOption(
@@ -1256,14 +1265,14 @@ class _PricePaymentModalContentState extends State<_PricePaymentModalContent> {
                         Icons.account_balance_wallet,
                         isComingSoon: true,
                       ),
-                      const SizedBox(height: 8),
+                      SizedBox(height: AppSpacing.sm),
                       _buildPaymentMethodOption(
                         'cash',
                         'Cash',
                         'Pay in person after task completion',
                         Icons.money,
                       ),
-                      const SizedBox(height: 8),
+                      SizedBox(height: AppSpacing.sm),
                       _buildPaymentMethodOption(
                         'online_banking',
                         'Online Banking',
@@ -1279,10 +1288,10 @@ class _PricePaymentModalContentState extends State<_PricePaymentModalContent> {
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.white,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.08),
+                      color: AppColors.textPrimary.withOpacity(0.08),
                       blurRadius: 20,
                       offset: const Offset(0, -4),
                     ),
@@ -1298,7 +1307,7 @@ class _PricePaymentModalContentState extends State<_PricePaymentModalContent> {
                       elevation: 0,
                       shadowColor: Colors.transparent,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: AppRadius.md,
                       ),
                     ),
                     onPressed: () {
@@ -1328,13 +1337,11 @@ class _PricePaymentModalContentState extends State<_PricePaymentModalContent> {
                       widget.onConfirm(price, _selectedPayment!);
                       Navigator.pop(context);
                     },
-                    child: const Text(
+                    child: Text(
                       'Confirm',
-                      style: TextStyle(
-                        fontFamily: 'Instrument Sans',
-                        fontSize: 14,
+                      style: const TextStyle(
+                        fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        letterSpacing: 0.7,
                       ),
                     ),
                   ),
@@ -1362,16 +1369,16 @@ class _PricePaymentModalContentState extends State<_PricePaymentModalContent> {
                 _selectedPayment = value;
               });
             },
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: AppRadius.md,
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(AppSpacing.lg),
         decoration: BoxDecoration(
           border: Border.all(
             color: isSelected ? const Color(0xFFFFDB5B) : const Color(0xFFE4E4E4),
             width: isSelected ? 2 : 1,
           ),
-          borderRadius: BorderRadius.circular(8),
-          color: isComingSoon ? const Color(0xFFF8F8F8) : Colors.white,
+          borderRadius: AppRadius.md,
+          color: isComingSoon ? const Color(0xFFF8F8F8) : AppColors.white,
         ),
         child: Row(
           children: [
@@ -1382,7 +1389,7 @@ class _PricePaymentModalContentState extends State<_PricePaymentModalContent> {
                 color: isSelected
                     ? const Color(0xFFFFDB5B).withOpacity(0.15)
                     : const Color(0xFFF5F5F5),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: AppRadius.md,
               ),
               child: Icon(
                 icon,
@@ -1390,7 +1397,7 @@ class _PricePaymentModalContentState extends State<_PricePaymentModalContent> {
                 color: isComingSoon ? const Color(0xFF788494) : const Color(0xFF000000),
               ),
             ),
-            const SizedBox(width: 16),
+            SizedBox(width: AppSpacing.lg),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1400,24 +1407,22 @@ class _PricePaymentModalContentState extends State<_PricePaymentModalContent> {
                       Text(
                         label,
                         style: TextStyle(
-                          fontFamily: 'Instrument Sans',
-                          fontSize: 15,
+                          fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: isComingSoon ? const Color(0xFF788494) : const Color(0xFF000000),
+                          color: isComingSoon ? AppColors.textSecondary : AppColors.textPrimary,
                         ),
                       ),
                       if (isComingSoon) ...[
-                        const SizedBox(width: 8),
+                        SizedBox(width: AppSpacing.sm),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
                             color: const Color(0xFFFFDB5B).withOpacity(0.25),
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: AppRadius.smMd,
                           ),
-                          child: const Text(
+                          child: Text(
                             'Coming Soon',
                             style: TextStyle(
-                              fontFamily: 'Instrument Sans',
                               fontSize: 10,
                               fontWeight: FontWeight.w600,
                               color: Color(0xFF000000),
@@ -1431,9 +1436,8 @@ class _PricePaymentModalContentState extends State<_PricePaymentModalContent> {
                   Text(
                     description,
                     style: const TextStyle(
-                      fontFamily: 'Instrument Sans',
                       fontSize: 13,
-                      color: Color(0xFF788494),
+                      color: AppColors.textSecondary,
                     ),
                   ),
                 ],

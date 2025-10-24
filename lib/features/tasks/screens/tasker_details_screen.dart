@@ -6,6 +6,10 @@ import 'package:taskaway/features/auth/controllers/auth_controller.dart';
 import 'package:taskaway/features/profile/controllers/profile_controller.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:taskaway/features/auth/models/profile.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_radius.dart';
 import 'dart:developer' as dev;
 
 /// TaskerDetailsScreen
@@ -82,10 +86,10 @@ class _TaskerDetailsScreenState extends ConsumerState<TaskerDetailsScreen> {
     final currentUser = ref.watch(currentUserProvider);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.white,
       appBar: AppBar(
-        title: const Text('Tasker Details'),
-        backgroundColor: Colors.white,
+        title: Text('Tasker Details'),
+        backgroundColor: AppColors.white,
         foregroundColor: Colors.black,
         elevation: 0,
         leading: IconButton(
@@ -105,21 +109,21 @@ class _TaskerDetailsScreenState extends ConsumerState<TaskerDetailsScreen> {
           : _errorMessage != null
               ? Center(
                   child: Padding(
-                    padding: const EdgeInsets.all(16.0),
+                    padding: EdgeInsets.all(AppSpacing.lg),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const Icon(Icons.error_outline, size: 64, color: Colors.red),
-                        const SizedBox(height: 16),
+                        SizedBox(height: AppSpacing.lg),
                         Text(
                           _errorMessage!,
                           style: theme.textTheme.titleLarge,
                           textAlign: TextAlign.center,
                         ),
-                        const SizedBox(height: 24),
+                        SizedBox(height: AppSpacing.xxl),
                         ElevatedButton(
                           onPressed: _loadTaskerProfile,
-                          child: const Text('Retry'),
+                          child: Text('Retry'),
                         ),
                       ],
                     ),
@@ -132,7 +136,7 @@ class _TaskerDetailsScreenState extends ConsumerState<TaskerDetailsScreen> {
                       children: [
                         // Tasker header
                         Container(
-                          padding: const EdgeInsets.all(24),
+                          padding: EdgeInsets.all(AppSpacing.xxl),
                           decoration: BoxDecoration(
                             color: const Color(0xFFFFF9E6),
                             border: Border(
@@ -162,19 +166,18 @@ class _TaskerDetailsScreenState extends ConsumerState<TaskerDetailsScreen> {
                                       : _buildDefaultAvatar(),
                                 ),
                               ),
-                              const SizedBox(height: 16),
+                              SizedBox(height: AppSpacing.lg),
 
                               // Name
                               Text(
                                 _taskerProfile!.fullName,
                                 style: const TextStyle(
-                                  fontFamily: 'Instrument Sans',
                                   fontSize: 24,
                                   fontWeight: FontWeight.w700,
                                 ),
                                 textAlign: TextAlign.center,
                               ),
-                              const SizedBox(height: 8),
+                              SizedBox(height: AppSpacing.sm),
 
                               // Rating
                               Row(
@@ -185,16 +188,14 @@ class _TaskerDetailsScreenState extends ConsumerState<TaskerDetailsScreen> {
                                   Text(
                                     '${_taskerProfile!.rating.toStringAsFixed(1)}',
                                     style: const TextStyle(
-                                      fontFamily: 'Instrument Sans',
                                       fontSize: 18,
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
-                                  const SizedBox(width: 8),
+                                  SizedBox(width: AppSpacing.sm),
                                   Text(
                                     '${_taskerProfile!.totalTasks} tasks completed',
                                     style: const TextStyle(
-                                      fontFamily: 'Instrument Sans',
                                       fontSize: 14,
                                       color: Color(0xFF788494),
                                     ),
@@ -220,39 +221,36 @@ class _TaskerDetailsScreenState extends ConsumerState<TaskerDetailsScreen> {
                               Row(
                                 children: [
                                   const Icon(Icons.assignment, size: 20, color: Colors.blue),
-                                  const SizedBox(width: 8),
-                                  const Text(
+                                  SizedBox(width: AppSpacing.sm),
+                                  Text(
                                     'Your Task',
                                     style: TextStyle(
-                                      fontFamily: 'Instrument Sans',
                                       fontSize: 16,
                                       fontWeight: FontWeight.w700,
                                     ),
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 12),
+                              SizedBox(height: AppSpacing.md),
                               Text(
                                 task.title,
                                 style: const TextStyle(
-                                  fontFamily: 'Instrument Sans',
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
-                              const SizedBox(height: 8),
+                              SizedBox(height: AppSpacing.sm),
                               Row(
                                 children: [
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                     decoration: BoxDecoration(
                                       color: const Color(0xFFFFDB5B),
-                                      borderRadius: BorderRadius.circular(4),
+                                      borderRadius: AppRadius.sm,
                                     ),
                                     child: Text(
                                       task.category.toUpperCase(),
                                       style: const TextStyle(
-                                        fontFamily: 'Instrument Sans',
                                         fontSize: 10,
                                         fontWeight: FontWeight.w700,
                                         letterSpacing: 0.5,
@@ -263,7 +261,6 @@ class _TaskerDetailsScreenState extends ConsumerState<TaskerDetailsScreen> {
                                   Text(
                                     'RM ${task.price.toStringAsFixed(2)}',
                                     style: const TextStyle(
-                                      fontFamily: 'Instrument Sans',
                                       fontSize: 20,
                                       fontWeight: FontWeight.w700,
                                       color: Color(0xFF000000),
@@ -282,15 +279,14 @@ class _TaskerDetailsScreenState extends ConsumerState<TaskerDetailsScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
+                                Text(
                                   'Skills',
                                   style: TextStyle(
-                                    fontFamily: 'Instrument Sans',
                                     fontSize: 18,
                                     fontWeight: FontWeight.w700,
                                   ),
                                 ),
-                                const SizedBox(height: 12),
+                                SizedBox(height: AppSpacing.md),
                                 Wrap(
                                   spacing: 8,
                                   runSpacing: 8,
@@ -299,13 +295,12 @@ class _TaskerDetailsScreenState extends ConsumerState<TaskerDetailsScreen> {
                                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                                       decoration: BoxDecoration(
                                         color: const Color(0xFFF5F5F5),
-                                        borderRadius: BorderRadius.circular(6),
+                                        borderRadius: AppRadius.smMd,
                                         border: Border.all(color: const Color(0xFFE0E0E0)),
                                       ),
                                       child: Text(
                                         skill,
                                         style: const TextStyle(
-                                          fontFamily: 'Instrument Sans',
                                           fontSize: 14,
                                           fontWeight: FontWeight.w500,
                                         ),
@@ -324,19 +319,17 @@ class _TaskerDetailsScreenState extends ConsumerState<TaskerDetailsScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
+                                Text(
                                   'About',
                                   style: TextStyle(
-                                    fontFamily: 'Instrument Sans',
                                     fontSize: 18,
                                     fontWeight: FontWeight.w700,
                                   ),
                                 ),
-                                const SizedBox(height: 12),
+                                SizedBox(height: AppSpacing.md),
                                 Text(
                                   _taskerProfile!.about ?? _taskerProfile!.bio ?? '',
                                   style: const TextStyle(
-                                    fontFamily: 'Instrument Sans',
                                     fontSize: 14,
                                     color: Color(0xFF000000),
                                     height: 1.5,
@@ -353,17 +346,17 @@ class _TaskerDetailsScreenState extends ConsumerState<TaskerDetailsScreen> {
                   loading: () => const Center(child: CircularProgressIndicator()),
                   error: (error, _) => Center(
                     child: Padding(
-                      padding: const EdgeInsets.all(16.0),
+                      padding: EdgeInsets.all(AppSpacing.lg),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           const Icon(Icons.error_outline, size: 64, color: Colors.red),
-                          const SizedBox(height: 16),
+                          SizedBox(height: AppSpacing.lg),
                           Text(
                             'Error loading task',
                             style: theme.textTheme.titleLarge,
                           ),
-                          const SizedBox(height: 8),
+                          SizedBox(height: AppSpacing.sm),
                           Text(
                             error.toString(),
                             textAlign: TextAlign.center,
@@ -378,10 +371,10 @@ class _TaskerDetailsScreenState extends ConsumerState<TaskerDetailsScreen> {
           ? Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.white,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: AppColors.textPrimary.withOpacity(0.1),
                     blurRadius: 20,
                     offset: const Offset(0, -4),
                   ),
@@ -410,13 +403,12 @@ class _TaskerDetailsScreenState extends ConsumerState<TaskerDetailsScreen> {
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           elevation: 0,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: AppRadius.md,
                           ),
                         ),
-                        child: const Text(
+                        child: Text(
                           'Contact Tasker',
                           style: TextStyle(
-                            fontFamily: 'Instrument Sans',
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
                             letterSpacing: 0.3,
@@ -424,7 +416,7 @@ class _TaskerDetailsScreenState extends ConsumerState<TaskerDetailsScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: AppSpacing.md),
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton(
@@ -442,13 +434,12 @@ class _TaskerDetailsScreenState extends ConsumerState<TaskerDetailsScreen> {
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           side: BorderSide(color: Colors.grey.shade300),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: AppRadius.md,
                           ),
                         ),
-                        child: const Text(
+                        child: Text(
                           'Back to My Tasks',
                           style: TextStyle(
-                            fontFamily: 'Instrument Sans',
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
                             letterSpacing: 0.3,
@@ -479,7 +470,6 @@ class _TaskerDetailsScreenState extends ConsumerState<TaskerDetailsScreen> {
         child: Text(
           initials,
           style: const TextStyle(
-            fontFamily: 'Instrument Sans',
             fontSize: 32,
             fontWeight: FontWeight.w600,
             color: Color(0xFF666666),

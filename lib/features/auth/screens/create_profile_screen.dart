@@ -9,6 +9,10 @@ import '../../../core/widgets/numpad_overlay.dart';
 import '../../../core/widgets/qwerty_overlay.dart';
 import '../controllers/auth_controller.dart';
 import '../models/profile.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_radius.dart';
 import 'dart:developer' as dev;
 
 class CreateProfileScreen extends ConsumerStatefulWidget {
@@ -187,7 +191,7 @@ class _CreateProfileScreenState extends ConsumerState<CreateProfileScreen> {
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.all(24.0),
+            padding: EdgeInsets.all(AppSpacing.xxl),
             child: Form(
               key: _formKey,
               child: Column(
@@ -201,10 +205,10 @@ class _CreateProfileScreenState extends ConsumerState<CreateProfileScreen> {
                         .headlineMedium
                         ?.copyWith(
                           fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                          color: AppColors.textPrimary,
                         ),
                   ),
-                  const SizedBox(height: 24),
+                  SizedBox(height: AppSpacing.xxl),
                   // Correctly place the calls to field builder methods
 
                   // First name
@@ -212,7 +216,7 @@ class _CreateProfileScreenState extends ConsumerState<CreateProfileScreen> {
                     'First name',
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: AppSpacing.sm),
                   GestureDetector(
                     onTap: () {
                       _firstNameFocusNode.requestFocus();
@@ -235,13 +239,13 @@ class _CreateProfileScreenState extends ConsumerState<CreateProfileScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: AppSpacing.lg),
                   // Last name
                   Text(
                     'Last name',
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: AppSpacing.sm),
                   GestureDetector(
                     onTap: () {
                       _lastNameFocusNode.requestFocus();
@@ -264,13 +268,13 @@ class _CreateProfileScreenState extends ConsumerState<CreateProfileScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: AppSpacing.lg),
                   // Date of birth
                   Text(
                     'Date of birth',
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: AppSpacing.sm),
                   TextFormField(
                     controller: _dobController,
                     decoration: const InputDecoration(
@@ -285,13 +289,13 @@ class _CreateProfileScreenState extends ConsumerState<CreateProfileScreen> {
                       return null;
                     },
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: AppSpacing.lg),
                   // Postcode
                   Text(
                     'Postcode',
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: AppSpacing.sm),
                   GestureDetector(
                     onTap: () {
                       _postcodeFocusNode.requestFocus();
@@ -314,7 +318,7 @@ class _CreateProfileScreenState extends ConsumerState<CreateProfileScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  SizedBox(height: AppSpacing.xxl),
                   // What is your goal
                   Text(
                     'What is your goal here on Taskaway?',
@@ -325,7 +329,7 @@ class _CreateProfileScreenState extends ConsumerState<CreateProfileScreen> {
                           fontWeight: FontWeight.bold,
                         ),
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: AppSpacing.lg),
                   // Role selection
                   Row(
                     children: [
@@ -337,17 +341,17 @@ class _CreateProfileScreenState extends ConsumerState<CreateProfileScreen> {
                             });
                           },
                           child: Container(
-                            padding: const EdgeInsets.all(16),
+                            padding: EdgeInsets.all(AppSpacing.lg),
                             decoration: BoxDecoration(
                               color: _selectedRole == 'poster'
                                   ? StyleConstants.posterColorLight
-                                  : Colors.white,
+                                  : AppColors.white,
                               border: Border.all(
                                 color: _selectedRole == 'poster'
                                     ? StyleConstants.posterColorPrimary
                                     : Colors.grey.shade300,
                               ),
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: AppRadius.md,
                             ),
                             child: Column(
                               mainAxisAlignment:
@@ -365,18 +369,18 @@ class _CreateProfileScreenState extends ConsumerState<CreateProfileScreen> {
                                   child: Icon(
                                     Icons.check,
                                     color: _selectedRole == 'poster'
-                                        ? Colors.white
+                                        ? AppColors.white
                                         : Colors.grey.shade400,
                                   ),
                                 ),
-                                const SizedBox(height: 8),
-                                const Text('Give away tasks'),
+                                SizedBox(height: AppSpacing.sm),
+                                Text('Give away tasks'),
                               ],
                             ),
                           ),
                         ),
                       ),
-                      const SizedBox(width: 16),
+                      SizedBox(width: AppSpacing.lg),
                       Expanded(
                         child: GestureDetector(
                           onTap: () {
@@ -385,17 +389,17 @@ class _CreateProfileScreenState extends ConsumerState<CreateProfileScreen> {
                             });
                           },
                           child: Container(
-                            padding: const EdgeInsets.all(16),
+                            padding: EdgeInsets.all(AppSpacing.lg),
                             decoration: BoxDecoration(
                               color: _selectedRole == 'tasker'
                                   ? StyleConstants.taskerColorLight
-                                  : Colors.white,
+                                  : AppColors.white,
                               border: Border.all(
                                 color: _selectedRole == 'tasker'
                                     ? StyleConstants.taskerColorPrimary
                                     : Colors.grey.shade300,
                               ),
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: AppRadius.md,
                             ),
                             child: Column(
                               mainAxisAlignment:
@@ -413,12 +417,12 @@ class _CreateProfileScreenState extends ConsumerState<CreateProfileScreen> {
                                   child: Icon(
                                     Icons.attach_money,
                                     color: _selectedRole == 'tasker'
-                                        ? Colors.white
+                                        ? AppColors.white
                                         : Colors.grey.shade400,
                                   ),
                                 ),
-                                const SizedBox(height: 8),
-                                const Text('Earn money'),
+                                SizedBox(height: AppSpacing.sm),
+                                Text('Earn money'),
                               ],
                             ),
                           ),
@@ -426,7 +430,7 @@ class _CreateProfileScreenState extends ConsumerState<CreateProfileScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 24),
+                  SizedBox(height: AppSpacing.xxl),
                   // Marketing consent
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.center, // Changed to center
@@ -441,7 +445,7 @@ class _CreateProfileScreenState extends ConsumerState<CreateProfileScreen> {
                           });
                         },
                       ),
-                      const SizedBox(width: 8), // Optional: Add a small horizontal gap
+                      SizedBox(width: AppSpacing.sm), // Optional: Add a small horizontal gap
                       Expanded(
                         // Removed Padding with top: 12
                         child: Text(
@@ -466,7 +470,7 @@ class _CreateProfileScreenState extends ConsumerState<CreateProfileScreen> {
                           });
                         },
                       ),
-                      const SizedBox(width: 8), // Optional: Add a small horizontal gap
+                      SizedBox(width: AppSpacing.sm), // Optional: Add a small horizontal gap
                       Expanded(
                         // Removed Padding with top: 12
                         child: RichText(
@@ -475,7 +479,7 @@ class _CreateProfileScreenState extends ConsumerState<CreateProfileScreen> {
                                 .textTheme
                                 .bodySmall
                                 ?.copyWith(
-                                  color: Colors.black87,
+                                  color: AppColors.textPrimary,
                                 ),
                             children: const [
                               TextSpan(
@@ -497,7 +501,7 @@ class _CreateProfileScreenState extends ConsumerState<CreateProfileScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 24),
+                  SizedBox(height: AppSpacing.xxl),
                   SizedBox(
                     width: double.infinity,
                     height: 50,
@@ -579,11 +583,11 @@ class _CreateProfileScreenState extends ConsumerState<CreateProfileScreen> {
                               height: 20,
                               width: 20,
                               child: CircularProgressIndicator(
-                                color: Colors.white,
+                                color: AppColors.white,
                                 strokeWidth: 2,
                               ),
                             )
-                          : const Text('Complete'),
+                          : Text('Complete'),
                     ),
                   ),
                 ],

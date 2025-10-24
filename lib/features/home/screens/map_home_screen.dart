@@ -15,11 +15,17 @@ import '../../auth/controllers/auth_controller.dart';
 import '../../profile/controllers/profile_controller.dart';
 import '../../../core/services/location_service.dart';
 import '../../tasks/screens/my_task_screen.dart' as my_tasks; // Import providers for poster filters
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_radius.dart';
 import 'dart:developer' as dev;
+
+// Independent status provider for MapHomeScreen (separate from MyTaskScreen)
+// Defaults to 'Upcoming tasks' to show only active tasks, not completed ones
+final mapHomeStatusProvider = StateProvider<String>((ref) => 'Upcoming tasks');
 
 // Provider to filter posted tasks by status for MapHomeScreen
 final filteredPostedTasksProvider = Provider.autoDispose<AsyncValue<List<Task>>>((ref) {
-  final status = ref.watch(my_tasks.statusProvider);
+  final status = ref.watch(mapHomeStatusProvider);
 
   return ref.watch(my_tasks.myPostedTasksProvider).when(
     data: (tasks) {
@@ -67,7 +73,7 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
   final MapController _mapController = MapController();
   LatLng _currentLocation = const LatLng(3.1390, 101.6869); // KL default
   bool _isTaskerMode = true;
-  bool _isMapView = true; // Toggle between map and list view
+  bool _isMapView = false; // Toggle between map and list view
   final PageController _cardPageController = PageController(viewportFraction: 0.85);
   int _currentCardIndex = 0;
   final _locationService = LocationService();
@@ -133,7 +139,7 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Please enable location services'),
-              backgroundColor: AppColors.warningOrange,
+              backgroundColor: AppColors.warning,
             ),
           );
         }
@@ -151,7 +157,7 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Location permission is required to show nearby tasks'),
-                backgroundColor: AppColors.errorRed,
+                backgroundColor: AppColors.error,
               ),
             );
           }
@@ -165,7 +171,7 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Please enable location permission in app settings'),
-              backgroundColor: AppColors.errorRed,
+              backgroundColor: AppColors.error,
             ),
           );
         }
@@ -203,7 +209,7 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Could not get your location: $e'),
-            backgroundColor: AppColors.errorRed,
+            backgroundColor: AppColors.error,
           ),
         );
       }
@@ -220,7 +226,7 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
           print('Building filter bottom sheet in MapHomeScreen');
           return StatefulBuilder(
             builder: (context, setState) => Container(
-              color: AppColors.backgroundWhite,
+              color: AppColors.backgroundPrimary,
               padding: EdgeInsets.only(
                 left: 16,
                 right: 16,
@@ -233,7 +239,7 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
+                      Text(
                         'Filters',
                         style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                       ),
@@ -246,7 +252,7 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
                               '${tasks.length} results',
                               style: const TextStyle(
                                 fontSize: 14,
-                                color: AppColors.textLight,
+                                color: AppColors.textSecondary,
                               ),
                             ),
                             orElse: () => const SizedBox.shrink(),
@@ -255,22 +261,22 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: AppSpacing.lg),
                   // Category filter
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     decoration: BoxDecoration(
-                      color: AppColors.backgroundWhite,
-                      borderRadius: BorderRadius.circular(6),
+                      color: AppColors.backgroundPrimary,
+                      borderRadius: AppRadius.smMd,
                       border: Border.all(color: AppColors.borderDefault),
                     ),
                     child: DropdownButton<String>(
                       value: ref.watch(categoryFilterProvider),
-                      hint: const Text('Category'),
+                      hint: Text('Category'),
                       underline: Container(),
                       icon: const Icon(Icons.arrow_drop_down),
                       isExpanded: true,
-                      dropdownColor: AppColors.backgroundWhite,
+                      dropdownColor: AppColors.backgroundPrimary,
                       onChanged: (String? newValue) {
                         if (newValue != null) {
                           ref.read(categoryFilterProvider.notifier).state = newValue;
@@ -296,22 +302,22 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
                       }).toList(),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: AppSpacing.lg),
                   // Sort filter
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     decoration: BoxDecoration(
-                      color: AppColors.backgroundWhite,
-                      borderRadius: BorderRadius.circular(6),
+                      color: AppColors.backgroundPrimary,
+                      borderRadius: AppRadius.smMd,
                       border: Border.all(color: AppColors.borderDefault),
                     ),
                     child: DropdownButton<String>(
                       value: ref.watch(sortFilterProvider),
-                      hint: const Text('Sort by'),
+                      hint: Text('Sort by'),
                       underline: Container(),
                       icon: const Icon(Icons.arrow_drop_down),
                       isExpanded: true,
-                      dropdownColor: AppColors.backgroundWhite,
+                      dropdownColor: AppColors.backgroundPrimary,
                       onChanged: (String? newValue) {
                         if (newValue != null) {
                           ref.read(sortFilterProvider.notifier).state = newValue;
@@ -327,7 +333,7 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
                       }).toList(),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  SizedBox(height: AppSpacing.xxl),
                   // Clear All Filters button
                   if (ref.watch(categoryFilterProvider) != 'All Categories' ||
                       ref.watch(sortFilterProvider) != 'Latest')
@@ -343,13 +349,13 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
                           minimumSize: const Size(double.infinity, 44),
                           side: const BorderSide(color: AppColors.borderDefault),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: AppRadius.smMd,
                           ),
                         ),
-                        child: const Text(
+                        child: Text(
                           'Clear All Filters',
                           style: TextStyle(
-                            color: AppColors.textLight,
+                            color: AppColors.textSecondary,
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
                           ),
@@ -361,23 +367,20 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
                     onPressed: () => Navigator.of(context).pop(),
                     style: ElevatedButton.styleFrom(
                       minimumSize: const Size(double.infinity, 48),
-                      backgroundColor: AppColors.primaryYellow,
-                      foregroundColor: AppColors.primaryBlack,
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: AppColors.textPrimary,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(6),
+                        borderRadius: AppRadius.smMd,
                         side: const BorderSide(
-                          color: AppColors.primaryYellowDark,
+                          color: AppColors.primaryDark,
                           width: 1,
                         ),
                       ),
                     ),
-                    child: const Text(
+                    child: Text(
                       'Apply Filters',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: AppTypography.labelMedium,
                     ),
                   ),
                 ],
@@ -399,7 +402,7 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
         : ref.watch(filteredPostedTasksProvider);    // Show user's posted tasks filtered by status
 
     return Scaffold(
-      backgroundColor: _isMapView ? AppColors.backgroundWhite : AppColors.backgroundDisabled,
+      backgroundColor: _isMapView ? AppColors.backgroundPrimary : AppColors.white,
       floatingActionButton: _isMapView && _isTaskerMode
           ? Padding(
               padding: const EdgeInsets.only(bottom: 200), // Above the task cards
@@ -429,7 +432,7 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
                     }
                   }
                 },
-                backgroundColor: AppColors.backgroundWhite,
+                backgroundColor: AppColors.backgroundPrimary,
                 foregroundColor: Colors.blue,
                 elevation: 4,
                 child: _isLoadingLocation
@@ -516,12 +519,12 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
                           },
                           child: Container(
                             decoration: const BoxDecoration(
-                              color: AppColors.primaryYellow,
+                              color: AppColors.primary,
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(
                               Icons.location_on,
-                              color: AppColors.primaryBlack87,
+                              color: AppColors.textPrimary87,
                               size: 24,
                             ),
                           ),
@@ -553,12 +556,12 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
                               width: 36,
                               height: 36,
                               decoration: BoxDecoration(
-                                color: AppColors.backgroundWhite,
+                                color: AppColors.backgroundPrimary,
                                 shape: BoxShape.circle,
                                 border: Border.all(color: Colors.blue, width: 3),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: AppColors.primaryBlack.withOpacity(0.3),
+                                    color: AppColors.textPrimary.withOpacity(0.3),
                                     blurRadius: 6,
                                     offset: const Offset(0, 2),
                                   ),
@@ -580,13 +583,14 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
             else if (!_isMapView || !_isTaskerMode)
               // List view (shown when not in map view or when in Poster mode)
               Positioned.fill(
-                top: _isTaskerMode ? 140 : 150, // Adjusted space for "List" title without search bar
+                top: 410, // Adjusted to start right below tabs
                 bottom: _isTaskerMode ? 48 : 0, // Space for VIEW MAP button only in Tasker mode
                 child: Container(
-                  color: AppColors.backgroundLight, // Light gray background
-                  child: ListView.builder(
-                    padding: const EdgeInsets.only(top: 24), // Increased padding to prevent overlap with tabs
+                  color: AppColors.white, // White background
+                  child: ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                     itemCount: sortedTasks.length,
+                    separatorBuilder: (context, index) => const SizedBox(height: 12),
                     itemBuilder: (context, index) {
                       return _TaskListItem(
                         task: sortedTasks[index],
@@ -601,103 +605,183 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
             top: 0,
             left: 0,
             right: 0,
-            child: Container(
-              color: AppColors.backgroundWhite,
-              child: SafeArea(
-                bottom: false,
-                child: Column(
-                  children: [
-                    // Show "List" title when in Poster mode
-                    if (!_isTaskerMode)
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        color: AppColors.backgroundWhite,
-                        child: const Center(
-                          child: Text(
-                            'List',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.primaryBlack,
-                            ),
-                          ),
-                        ),
-                      ),
-                    // Show Taskaway logo and search bar in Tasker mode
-                    if (_isTaskerMode) ...[
-                      Padding(
-                        padding: const EdgeInsets.only(top: 16, bottom: 8),
-                        child: Image.asset(
-                          'assets/images/taskaway_logo.png',
-                          height: 40,
-                          fit: BoxFit.contain,
-                        ),
-                      ),
-                      MapSearchBar(
-                        isTaskerMode: _isTaskerMode,
-                        onFilterTap: () {
-                          print('Filter tap received in MapHomeScreen');
-                          _showFilterBottomSheet(context);
-                        },
-                        onToggle: (isTasker) {
-                          setState(() {
-                            _isTaskerMode = isTasker;
-                            // When switching to Poster mode, automatically switch to list view
-                            if (!isTasker) {
-                              _isMapView = false;
-                            } else {
-                              // When switching back to Tasker mode, show map view
-                              _isMapView = true;
-                            }
-                          });
-                        },
-                        onSearch: (query) {
-                          // Handle search
-                        },
-                      ),
-                    ] else
-                      // Show only tabs in Poster mode
-                      Column(
+            child: Column(
+              children: [
+                // Yellow background section
+                Container(
+                  color: const Color(0xFFFFDB5B),
+                  child: SafeArea(
+                    bottom: false,
+                    child: Column(
+                      children: [
+                    // Profile section with availability switch
+                    Container(
+                      padding: EdgeInsets.all(AppSpacing.md),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Container(
-                            color: AppColors.backgroundWhite,
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: _TabButton(
-                                    label: 'TASKER',
-                                    isSelected: _isTaskerMode,
-                                    onTap: () => setState(() {
-                                      _isTaskerMode = true;
-                                      _isMapView = true; // Switch to map view when going to Tasker
-                                    }),
+                          // Profile avatar
+                          ref.watch(currentProfileProvider).when(
+                            data: (profile) => CircleAvatar(
+                              radius: 24,
+                              backgroundColor: AppColors.gray200,
+                              backgroundImage: profile?.avatarUrl != null
+                                ? NetworkImage(profile!.avatarUrl!)
+                                : null,
+                              child: profile?.avatarUrl == null
+                                ? Text(
+                                    profile?.fullName.isNotEmpty == true
+                                      ? profile!.fullName[0].toUpperCase()
+                                      : '?',
+                                    style: AppTypography.titleMedium.copyWith(
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  )
+                                : null,
+                            ),
+                            loading: () => CircleAvatar(radius: 24, backgroundColor: AppColors.gray200),
+                            error: (_, __) => CircleAvatar(radius: 24, backgroundColor: AppColors.gray200),
+                          ),
+                          SizedBox(width: AppSpacing.md),
+                          // Profile name, role, and availability switch
+                          Expanded(
+                            child: ref.watch(currentProfileProvider).when(
+                              data: (profile) => Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Welcome back,',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w400,
+                                      color: AppColors.textPrimary,
+                                    ),
                                   ),
-                                ),
-                                Expanded(
-                                  child: _TabButton(
-                                    label: 'POSTER',
-                                    isSelected: !_isTaskerMode,
-                                    onTap: () => setState(() {
-                                      _isTaskerMode = false;
-                                      _isMapView = false; // Switch to list view when going to Poster
-                                    }),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    profile?.fullName ?? 'User',
+                                    style: const TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.textPrimary,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
+                              loading: () => Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Welcome back,',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w400,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  const Text(
+                                    'User',
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              error: (_, __) => Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Welcome back,',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w400,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  const Text(
+                                    'User',
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                  SizedBox(height: 4),
+                                  _buildAvailabilitySwitchCompact(),
+                                ],
+                              ),
                             ),
                           ),
-                          // Status filter tabs - only show in POSTER mode
-                          if (!_isTaskerMode)
-                            _buildStatusFilter(),
+                          // Availability badge on the right
+                          _buildAvailabilityBadge(),
                         ],
                       ),
-                    // Availability Switch - Show only in TASKER mode
-                    if (_isTaskerMode)
-                      _buildAvailabilitySwitch(),
-                  ],
+                    ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
+                // White rounded container with search and content
+                Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(24),
+                      topRight: Radius.circular(24),
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      // Show search bar in Tasker mode
+                      if (_isTaskerMode) ...[
+                        MapSearchBar(
+                          isTaskerMode: _isTaskerMode,
+                          onFilterTap: () {
+                            print('Filter tap received in MapHomeScreen');
+                            _showFilterBottomSheet(context);
+                          },
+                          onToggle: (isTasker) {
+                            setState(() {
+                              _isTaskerMode = isTasker;
+                              // When switching to Poster mode, automatically switch to list view
+                              if (!isTasker) {
+                                _isMapView = false;
+                              } else {
+                                // When switching back to Tasker mode, show map view
+                                _isMapView = true;
+                              }
+                            });
+                          },
+                          onSearch: (query) {
+                            // Handle search
+                          },
+                        ),
+                      ] else
+                        // Show search bar in Poster mode (MapSearchBar already includes tabs)
+                        MapSearchBar(
+                          isTaskerMode: _isTaskerMode,
+                          onFilterTap: () {
+                            print('Filter tap received in MapHomeScreen');
+                            _showFilterBottomSheet(context);
+                          },
+                          onToggle: (isTasker) {
+                            setState(() {
+                              _isTaskerMode = isTasker;
+                              // Keep current view preference when switching modes
+                            });
+                          },
+                          onSearch: (query) {
+                            // Handle search
+                          },
+                        ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
           
@@ -710,7 +794,7 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
                 child: Column(
                   children: [
                     Container(
-                      height: 245,
+                      height: 180,
                       margin: const EdgeInsets.only(bottom: 8),
                       child: PageView.builder(
                         controller: _cardPageController,
@@ -739,7 +823,7 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
                           final distance = _calculateDistance(_currentLocation, position);
 
                           return Container(
-                            width: MediaQuery.of(context).size.width * 0.8,
+                            width: MediaQuery.of(context).size.width * 0.55,
                             padding: const EdgeInsets.symmetric(horizontal: 8),
                             child: ServiceCard(
                               task: task,
@@ -756,24 +840,24 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
                   
                   Container(
                     width: double.infinity,
-                    color: AppColors.backgroundWhite,
+                    color: AppColors.backgroundPrimary,
                     child: TextButton.icon(
                       onPressed: () {
                         setState(() {
                           _isMapView = false;
                         });
                       },
-                      icon: const Icon(Icons.view_list, size: 18, color: AppColors.primaryBlack),
-                      label: const Text(
+                      icon: const Icon(Icons.view_list, size: 18, color: AppColors.textPrimary),
+                      label: Text(
                         'VIEW LIST',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.primaryBlack,
+                          color: AppColors.textPrimary,
                         ),
                       ),
                       style: TextButton.styleFrom(
-                        foregroundColor: AppColors.primaryBlack,
+                        foregroundColor: AppColors.textPrimary,
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: const RoundedRectangleBorder(),
                       ),
@@ -791,24 +875,24 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
               right: 0,
               child: Container(
                 width: double.infinity,
-                color: AppColors.backgroundWhite,
+                color: AppColors.backgroundPrimary,
                 child: TextButton.icon(
                   onPressed: () {
                     setState(() {
                       _isMapView = true;
                     });
                   },
-                  icon: const Icon(Icons.map_outlined, size: 18, color: AppColors.primaryBlack),
-                  label: const Text(
+                  icon: const Icon(Icons.map_outlined, size: 18, color: AppColors.textPrimary),
+                  label: Text(
                     'VIEW MAP',
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.primaryBlack,
+                      color: AppColors.textPrimary,
                     ),
                   ),
                   style: TextButton.styleFrom(
-                    foregroundColor: AppColors.primaryBlack,
+                    foregroundColor: AppColors.textPrimary,
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: const RoundedRectangleBorder(),
                   ),
@@ -878,9 +962,9 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
               color: isAvailable ? AppColors.successLight : AppColors.warningLight,
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: AppRadius.xxl,
               border: Border.all(
-                color: isAvailable ? AppColors.successGreen : AppColors.warningOrange,
+                color: isAvailable ? AppColors.success : AppColors.warning,
                 width: 1,
               ),
             ),
@@ -890,13 +974,12 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
                 Text(
                   isAvailable ? 'Available' : 'Offline',
                   style: TextStyle(
-                    fontFamily: 'Instrument Sans',
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: isAvailable ? AppColors.successGreen : AppColors.warningOrange,
+                    color: isAvailable ? AppColors.success : AppColors.warning,
                   ),
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: AppSpacing.sm),
                 SizedBox(
                   width: 40,
                   height: 20,
@@ -917,9 +1000,8 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
                               const SnackBar(
                                 content: Text(
                                   'Location permission is required to be available for tasks',
-                                  style: TextStyle(fontFamily: 'Instrument Sans'),
                                 ),
-                                backgroundColor: AppColors.errorRed,
+                                backgroundColor: AppColors.error,
                               ),
                             );
                           }
@@ -944,9 +1026,8 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
                             const SnackBar(
                               content: Text(
                                 'You are now available! Your location will update every 30 minutes',
-                                style: TextStyle(fontFamily: 'Instrument Sans'),
                               ),
-                              backgroundColor: AppColors.successGreen,
+                              backgroundColor: AppColors.success,
                               duration: Duration(seconds: 3),
                             ),
                           );
@@ -971,19 +1052,224 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
                             const SnackBar(
                               content: Text(
                                 'You are now offline',
-                                style: TextStyle(fontFamily: 'Instrument Sans'),
                               ),
-                              backgroundColor: AppColors.warningOrange,
+                              backgroundColor: AppColors.warning,
                             ),
                           );
                         }
                       }
                     },
-                    activeColor: AppColors.successGreen,
+                    activeColor: AppColors.success,
                     activeTrackColor: AppColors.successLight,
-                    inactiveThumbColor: AppColors.warningOrange,
+                    inactiveThumbColor: AppColors.warning,
                     inactiveTrackColor: AppColors.warningLight,
                     materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+    );
+  }
+
+  /// Build compact availability switch for profile section
+  Widget _buildAvailabilitySwitchCompact() {
+    final currentUser = ref.watch(currentUserProvider);
+    final profileAsync = ref.watch(currentProfileProvider);
+
+    return profileAsync.when(
+      data: (profile) {
+        final isAvailable = profile?.isAvailable ?? false;
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: isAvailable ? AppColors.successLight : AppColors.warningLight,
+            borderRadius: AppRadius.xxl,
+            border: Border.all(
+              color: isAvailable ? AppColors.success : AppColors.warning,
+              width: 1,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                isAvailable ? 'Available' : 'Offline',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: isAvailable ? AppColors.success : AppColors.warning,
+                ),
+              ),
+              SizedBox(width: AppSpacing.sm),
+              SizedBox(
+                width: 40,
+                height: 20,
+                child: Switch(
+                  value: isAvailable,
+                  onChanged: (value) async {
+                    if (currentUser == null) return;
+
+                    if (value) {
+                      // Turning availability ON
+                      final hasPermission = await _locationService.requestPermissions();
+                      if (!hasPermission) {
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Location permission is required to be available for tasks'),
+                              backgroundColor: AppColors.error,
+                            ),
+                          );
+                        }
+                        return;
+                      }
+
+                      await ref.read(profileControllerProvider).updateAvailability(
+                        userId: currentUser.id,
+                        isAvailable: true,
+                      );
+
+                      await _locationService.startTracking(currentUser.id);
+                      ref.invalidate(currentProfileProvider);
+
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('You are now available!'),
+                            backgroundColor: AppColors.success,
+                            duration: Duration(seconds: 3),
+                          ),
+                        );
+                      }
+                    } else {
+                      // Turning availability OFF
+                      await ref.read(profileControllerProvider).updateAvailability(
+                        userId: currentUser.id,
+                        isAvailable: false,
+                      );
+
+                      _locationService.stopTracking();
+                      ref.invalidate(currentProfileProvider);
+
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('You are now offline'),
+                            backgroundColor: AppColors.warning,
+                          ),
+                        );
+                      }
+                    }
+                  },
+                  activeColor: AppColors.success,
+                  activeTrackColor: AppColors.successLight,
+                  inactiveThumbColor: AppColors.warning,
+                  inactiveTrackColor: AppColors.warningLight,
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+    );
+  }
+
+  /// Build availability badge (Offline/Online with dot)
+  Widget _buildAvailabilityBadge() {
+    final currentUser = ref.watch(currentUserProvider);
+    final profileAsync = ref.watch(currentProfileProvider);
+
+    return profileAsync.when(
+      data: (profile) {
+        final isAvailable = profile?.isAvailable ?? false;
+        return GestureDetector(
+          onTap: () async {
+            if (currentUser == null) return;
+
+            final newValue = !isAvailable;
+
+            if (newValue) {
+              // Turning availability ON
+              final hasPermission = await _locationService.requestPermissions();
+              if (!hasPermission) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Location permission is required to enable availability'),
+                      backgroundColor: Color(0xFFFF9800),
+                    ),
+                  );
+                }
+                return;
+              }
+              _locationService.startTracking(currentUser.id);
+            } else {
+              // Turning availability OFF
+              _locationService.stopTracking();
+            }
+
+            // Update availability in database
+            try {
+              await ref.read(profileControllerProvider).updateAvailability(
+                userId: currentUser.id,
+                isAvailable: newValue,
+              );
+              ref.invalidate(currentProfileProvider);
+            } catch (e) {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Failed to update availability: $e'),
+                    backgroundColor: const Color(0xFFFF9800),
+                  ),
+                );
+              }
+            }
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: isAvailable
+                  ? const Color(0xFFE8F5E9)
+                  : const Color(0xFFFFF3E0),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: isAvailable
+                    ? const Color(0xFF4CAF50)
+                    : const Color(0xFFFFB74D),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  isAvailable ? 'Online' : 'Offline',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: isAvailable
+                        ? const Color(0xFF2E7D32)
+                        : const Color(0xFFE65100),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: isAvailable
+                        ? const Color(0xFF4CAF50)
+                        : const Color(0xFFFFB74D),
                   ),
                 ),
               ],
@@ -1035,10 +1321,10 @@ class _TabButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: AppColors.backgroundWhite,
+          color: AppColors.backgroundPrimary,
           border: Border(
             bottom: BorderSide(
-              color: isSelected ? AppColors.primaryYellow : Colors.transparent,
+              color: isSelected ? AppColors.primary : Colors.transparent,
               width: 2,
             ),
           ),
@@ -1049,7 +1335,7 @@ class _TabButton extends StatelessWidget {
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: isSelected ? AppColors.primaryBlack : AppColors.textSecondary,
+              color: isSelected ? AppColors.textPrimary : AppColors.textSecondary,
               letterSpacing: 0.5,
             ),
           ),
@@ -1072,11 +1358,11 @@ class _TaskListItem extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Status color mapping
     final statusColors = {
-      'open': AppColors.warningOrange,
-      'accepted': AppColors.infoBlue,
+      'open': AppColors.warning,
+      'accepted': AppColors.info,
       'in_progress': Colors.purple,
-      'completed': AppColors.successGreen,
-      'cancelled': AppColors.errorRed,
+      'completed': AppColors.success,
+      'cancelled': AppColors.error,
     };
 
     final statusColor = statusColors[task.status.toLowerCase()] ?? AppColors.textTertiary;
@@ -1088,14 +1374,13 @@ class _TaskListItem extends ConsumerWidget {
         context.go('/home/tasks/${task.id}');
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.backgroundWhite,
-          border: Border(
-            bottom: BorderSide(
-              color: AppColors.borderDefault,
-              width: 1,
-            ),
+          color: AppColors.backgroundPrimary,
+          borderRadius: AppRadius.md,
+          border: Border.all(
+            color: AppColors.borderDefault,
+            width: 1,
           ),
         ),
         child: Row(
@@ -1111,7 +1396,7 @@ class _TaskListItem extends ConsumerWidget {
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.primaryBlack,
+                      color: AppColors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -1128,7 +1413,7 @@ class _TaskListItem extends ConsumerWidget {
                         posterName,
                         style: const TextStyle(
                           fontSize: 13,
-                          color: AppColors.primaryBlack87,
+                          color: AppColors.textPrimary87,
                         ),
                       ),
                     ],
@@ -1161,7 +1446,7 @@ class _TaskListItem extends ConsumerWidget {
                   'RM ${task.price.toStringAsFixed(0)}',
                   style: AppTypography.titleMedium.copyWith(
                     fontWeight: AppTypography.bold,
-                    color: AppColors.primaryBlack,
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -1169,7 +1454,7 @@ class _TaskListItem extends ConsumerWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: statusColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: AppRadius.lg,
                   ),
                   child: Text(
                     task.status.toUpperCase(),

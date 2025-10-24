@@ -3,7 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/constants/style_constants.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../controllers/auth_controller.dart';
+import '../../../core/theme/app_radius.dart';
 
 class CreateAccountScreen extends ConsumerStatefulWidget {
   const CreateAccountScreen({super.key});
@@ -144,26 +148,18 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
                   const SizedBox(height: 20),
 
                   // Create Account heading
-                  const Text(
+                  Text(
                     'Create your account',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF202020),
-                      letterSpacing: 0.24,
-                    ),
+                    style: AppTypography.headlineMedium,
                   ),
 
                   const SizedBox(height: 5),
 
                   // Subtitle
-                  const Text(
+                  Text(
                     'Sign up to get started with Taskaway',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w400,
-                      color: Color(0xFF717680),
-                      letterSpacing: 0.11,
+                    style: AppTypography.bodySmall.copyWith(
+                      color: AppColors.textSecondary,
                     ),
                   ),
 
@@ -173,33 +169,22 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Email',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: Color(0xFF414651),
-                        ),
+                        style: AppTypography.inputLabel,
                       ),
                       const SizedBox(height: 6),
                       TextFormField(
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
+                        style: AppTypography.bodyMedium,
                         decoration: InputDecoration(
                           hintText: 'Enter your email...',
-                          hintStyle: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: Color(0xFF717680),
-                          ),
-                          prefixIcon: const Icon(
+                          hintStyle: AppTypography.inputHint,
+                          prefixIcon: Icon(
                             Icons.mail_outline,
-                            color: Color(0xFFA4A7AE),
-                            size: 20,
+                            color: AppColors.textTertiary,
+                            size: AppSpacing.iconMd,
                           ),
                           filled: true,
                           fillColor: Colors.white,
@@ -208,35 +193,35 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
                             vertical: 10,
                           ),
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: AppRadius.smMd,
                             borderSide: const BorderSide(
                               color: Color(0xFFE4E4E4),
                               width: 1,
                             ),
                           ),
                           enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: AppRadius.smMd,
                             borderSide: const BorderSide(
                               color: Color(0xFFE4E4E4),
                               width: 1,
                             ),
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: AppRadius.smMd,
                             borderSide: const BorderSide(
                               color: Color(0xFFFFC333),
                               width: 1,
                             ),
                           ),
                           errorBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: AppRadius.smMd,
                             borderSide: const BorderSide(
                               color: Colors.red,
                               width: 1,
                             ),
                           ),
                           focusedErrorBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: AppRadius.smMd,
                             borderSide: const BorderSide(
                               color: Colors.red,
                               width: 1,
@@ -262,22 +247,15 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Password',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: Color(0xFF414651),
-                        ),
+                        style: AppTypography.inputLabel,
                       ),
-                      const SizedBox(height: 6),
+                      SizedBox(height: 6),
                       TextFormField(
                         controller: _passwordController,
                         obscureText: _obscurePassword,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
+                        style: AppTypography.bodyMedium,
                         decoration: InputDecoration(
                           hintText: 'Enter your password...',
                           hintStyle: const TextStyle(
@@ -311,35 +289,35 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
                             vertical: 10,
                           ),
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: AppRadius.smMd,
                             borderSide: const BorderSide(
                               color: Color(0xFFE4E4E4),
                               width: 1,
                             ),
                           ),
                           enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: AppRadius.smMd,
                             borderSide: const BorderSide(
                               color: Color(0xFFE4E4E4),
                               width: 1,
                             ),
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: AppRadius.smMd,
                             borderSide: const BorderSide(
                               color: Color(0xFFFFC333),
                               width: 1,
                             ),
                           ),
                           errorBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: AppRadius.smMd,
                             borderSide: const BorderSide(
                               color: Colors.red,
                               width: 1,
                             ),
                           ),
                           focusedErrorBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: AppRadius.smMd,
                             borderSide: const BorderSide(
                               color: Colors.red,
                               width: 1,
@@ -365,22 +343,15 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Confirm Password',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: Color(0xFF414651),
-                        ),
+                        style: AppTypography.inputLabel,
                       ),
-                      const SizedBox(height: 6),
+                      SizedBox(height: 6),
                       TextFormField(
                         controller: _confirmPasswordController,
                         obscureText: _obscureConfirmPassword,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
+                        style: AppTypography.bodyMedium,
                         decoration: InputDecoration(
                           hintText: 'Confirm your password...',
                           hintStyle: const TextStyle(
@@ -414,35 +385,35 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
                             vertical: 10,
                           ),
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: AppRadius.smMd,
                             borderSide: const BorderSide(
                               color: Color(0xFFE4E4E4),
                               width: 1,
                             ),
                           ),
                           enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: AppRadius.smMd,
                             borderSide: const BorderSide(
                               color: Color(0xFFE4E4E4),
                               width: 1,
                             ),
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: AppRadius.smMd,
                             borderSide: const BorderSide(
                               color: Color(0xFFFFC333),
                               width: 1,
                             ),
                           ),
                           errorBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: AppRadius.smMd,
                             borderSide: const BorderSide(
                               color: Colors.red,
                               width: 1,
                             ),
                           ),
                           focusedErrorBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: AppRadius.smMd,
                             borderSide: const BorderSide(
                               color: Colors.red,
                               width: 1,
@@ -465,12 +436,10 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
                   const SizedBox(height: 8),
 
                   // Password requirements
-                  const Text(
+                  Text(
                     'Must include at least 8 characters',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w400,
-                      color: Color(0xFF717680),
+                    style: AppTypography.captionSmall.copyWith(
+                      color: AppColors.textSecondary,
                     ),
                   ),
 
@@ -536,7 +505,7 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
                         foregroundColor: Colors.black,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(6),
+                          borderRadius: AppRadius.smMd,
                           side: const BorderSide(
                             color: Color(0xFFFFC333),
                             width: 1,
@@ -544,21 +513,17 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
                         ),
                       ),
                       child: _isLoading
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
+                          ? SizedBox(
+                              height: AppSpacing.xl,
+                              width: AppSpacing.xl,
                               child: CircularProgressIndicator(
-                                color: Colors.black,
+                                color: AppColors.textPrimary,
                                 strokeWidth: 2,
                               ),
                             )
-                          : const Text(
+                          : Text(
                               'Create Account',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 0.14,
-                              ),
+                              style: AppTypography.labelMedium,
                             ),
                     ),
                   ),
@@ -574,14 +539,12 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
                           color: const Color(0xFFE4E4E4),
                         ),
                       ),
-                      const Padding(
+                      Padding(
                         padding: EdgeInsets.symmetric(horizontal: 12),
                         child: Text(
                           'Or continue with',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: Color(0xFF6C7280),
+                          style: AppTypography.bodySmall.copyWith(
+                            color: AppColors.textSecondary,
                           ),
                         ),
                       ),
@@ -610,7 +573,7 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
                           width: 1,
                         ),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(6),
+                          borderRadius: AppRadius.smMd,
                         ),
                       ),
                       child: Row(
@@ -621,13 +584,10 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
                             width: 18,
                             height: 18,
                           ),
-                          const SizedBox(width: 12),
-                          const Text(
+                          SizedBox(width: AppSpacing.md),
+                          Text(
                             'Continue with Google',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                            ),
+                            style: AppTypography.labelMedium,
                           ),
                         ],
                       ),
@@ -641,24 +601,18 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Text(
+                        Text(
                           'Already have an account? ',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w400,
-                            color: Colors.black,
-                          ),
+                          style: AppTypography.bodyMedium,
                         ),
                         GestureDetector(
                           onTap: () {
                             context.go('/login');
                           },
-                          child: const Text(
+                          child: Text(
                             'Login',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w400,
-                              color: Color(0xFFFFC333),
+                            style: AppTypography.bodyMedium.copyWith(
+                              color: AppColors.primary,
                               decoration: TextDecoration.underline,
                             ),
                           ),

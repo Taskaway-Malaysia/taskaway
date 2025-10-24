@@ -10,6 +10,10 @@ import 'package:taskaway/features/tasks/models/task.dart';
 import 'package:taskaway/features/applications/repositories/application_repository.dart';
 import 'package:taskaway/features/applications/models/application.dart';
 import 'package:taskaway/features/tasks/repositories/task_repository.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_radius.dart';
 import 'dart:developer' as dev;
 
 // Provider for managing the role filter state (UI-only, not stored in profile)
@@ -87,28 +91,28 @@ final taskerAssignedTasksProvider =
 
 // Provider to get ALL tasks posted by the current user (for poster's "My Tasks" view)
 // Returns tasks with ALL statuses: open, accepted, in_progress, pending_approval, completed, cancelled
+// Now using StreamProvider for real-time updates
 final myPostedTasksProvider =
-    FutureProvider.autoDispose<List<Task>>((ref) async {
+    StreamProvider.autoDispose<List<Task>>((ref) {
   final currentUser = ref.watch(currentUserProvider);
 
   print('[MyPostedTasks] Provider called');
   print('[MyPostedTasks] Current user: ${currentUser?.id}');
 
   if (currentUser == null) {
-    print('[MyPostedTasks] No current user, returning empty list');
-    return [];
+    print('[MyPostedTasks] No current user, returning empty stream');
+    return Stream.value([]);
   }
 
-  // Fetch ALL tasks posted by this user
+  // Watch ALL tasks posted by this user with real-time updates
   final taskRepo = ref.read(taskRepositoryProvider);
-  final myTasks = await taskRepo.getMyPostedTasks(currentUser.id);
-
-  print('[MyPostedTasks] Found ${myTasks.length} tasks posted by user');
-  for (var task in myTasks) {
-    print('[MyPostedTasks] - Task: ${task.title}, Status: ${task.status}');
-  }
-
-  return myTasks;
+  return taskRepo.watchMyPostedTasks(currentUser.id).map((myTasks) {
+    print('[MyPostedTasks] Real-time update: Found ${myTasks.length} tasks posted by user');
+    for (var task in myTasks) {
+      print('[MyPostedTasks] - Task: ${task.title}, Status: ${task.status}');
+    }
+    return myTasks;
+  });
 });
 
 // Provider to filter tasks based on the current role filter and status filter
@@ -239,12 +243,18 @@ class MyTaskScreen extends ConsumerWidget {
         final primaryColor = currentRoleFilter == 'As Tasker' ? const Color(0xFFF39C12) : const Color(0xFF7B61FF);
 
         return Scaffold(
-          backgroundColor: Colors.white,
+          backgroundColor: AppColors.white,
           appBar: AppBar(
-            title: Text('My Tasks', style: TextStyle(fontWeight: FontWeight.bold, color: primaryColor)),
+            title: Text(
+              'My Tasks',
+              style: AppTypography.headlineMedium.copyWith(
+                fontWeight: AppTypography.bold,
+                color: primaryColor,
+              ),
+            ),
             centerTitle: true,
             elevation: 0,
-            backgroundColor: Colors.white,
+            backgroundColor: AppColors.white,
             iconTheme: IconThemeData(color: primaryColor),
             actions: [
               IconButton(
@@ -258,28 +268,42 @@ class MyTaskScreen extends ConsumerWidget {
           body: Column(
             children: [
               _buildRoleFilter(context, ref, primaryColor),
-              const SizedBox(height: 16),
+              SizedBox(height: AppSpacing.lg),
               _buildStatusFilter(context, ref, primaryColor),
-              const SizedBox(height: 16),
+              SizedBox(height: AppSpacing.lg),
               Expanded(
                 child: ref.watch(selectedTasksProvider).when(
                       data: (tasks) {
                         if (tasks.isEmpty) {
-                          return const Center(child: Text('No tasks for this category.'));
+                          return Center(
+                            child: Text(
+                              'No tasks for this category.',
+                              style: AppTypography.bodyLarge.copyWith(
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          );
                         }
                         return ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                           itemCount: tasks.length,
                           itemBuilder: (context, index) {
                             return Padding(
-                              padding: const EdgeInsets.only(bottom: 16.0),
+                              padding: EdgeInsets.only(bottom: AppSpacing.lg),
                               child: TaskCardWithMessage(task: tasks[index]),
                             );
                           },
                         );
                       },
                       loading: () => const Center(child: CircularProgressIndicator()),
-                      error: (error, stack) => Center(child: Text('Error: $error')),
+                      error: (error, stack) => Center(
+                        child: Text(
+                          'Error: $error',
+                          style: AppTypography.bodyLarge.copyWith(
+                            color: AppColors.error,
+                          ),
+                        ),
+                      ),
                     ),
               ),
             ],
@@ -300,7 +324,7 @@ class MyTaskScreen extends ConsumerWidget {
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: Colors.grey[200],
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: AppRadius.mdLg,
       ),
       child: Row(
         children: roles.map((role) {
@@ -315,14 +339,14 @@ class MyTaskScreen extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 decoration: BoxDecoration(
                   color: isSelected ? primaryColor : Colors.transparent,
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: AppRadius.md,
                 ),
                 child: Center(
                   child: Text(
                     role,
-                    style: TextStyle(
-                      color: isSelected ? Colors.white : Colors.black,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    style: AppTypography.labelLarge.copyWith(
+                      color: isSelected ? AppColors.white : AppColors.textPrimary,
+                      fontWeight: isSelected ? AppTypography.semiBold : AppTypography.regular,
                     ),
                   ),
                 ),
@@ -343,7 +367,7 @@ class MyTaskScreen extends ConsumerWidget {
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: Colors.grey[200],
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: AppRadius.mdLg,
       ),
       child: Row(
         children: statuses.map((status) {
@@ -355,15 +379,14 @@ class MyTaskScreen extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 decoration: BoxDecoration(
                   color: isSelected ? primaryColor : Colors.transparent,
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: AppRadius.md,
                 ),
                 child: Center(
                   child: Text(
                     status,
-                    style: TextStyle(
-                      color: isSelected ? Colors.white : Colors.grey[600],
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                      fontSize: 12,
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: isSelected ? AppColors.white : AppColors.textSecondary,
+                      fontWeight: isSelected ? AppTypography.semiBold : AppTypography.regular,
                     ),
                   ),
                 ),

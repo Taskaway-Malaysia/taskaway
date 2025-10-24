@@ -4,6 +4,10 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../payments/models/payment.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_radius.dart';
 
 // Provider for poster payments stream (payments where user is the payer)
 final posterPaymentsProvider = StreamProvider<List<Payment>>((ref) {
@@ -67,12 +71,12 @@ class _PaymentHistoryScreenState extends ConsumerState<PaymentHistoryScreen>
           Container(
             padding: const EdgeInsets.fromLTRB(16, 48, 16, 16),
             decoration: const BoxDecoration(
-              color: Color(0xFF6C5CE7), // Purple color
+              color: AppColors.posterPrimary, // Purple color
             ),
             child: Row(
               children: [
                 IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Colors.white),
+                  icon: Icon(Icons.arrow_back_ios, color: AppColors.white),
                   onPressed: () {
                     if (context.canPop()) {
                       context.pop();
@@ -82,13 +86,9 @@ class _PaymentHistoryScreenState extends ConsumerState<PaymentHistoryScreen>
                   },
                 ),
                 const Spacer(),
-                const Text(
+                Text(
                   'Payment history',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: AppTypography.headlineSmall.copyWith(color: AppColors.white),
                 ),
                 const Spacer(),
                 const SizedBox(width: 48), // Balance the back button
@@ -98,12 +98,12 @@ class _PaymentHistoryScreenState extends ConsumerState<PaymentHistoryScreen>
 
           // Tab bar
           Container(
-            padding: const EdgeInsets.all(16),
-            color: Colors.white,
+            padding: EdgeInsets.all(AppSpacing.lg),
+            color: AppColors.white,
             child: Container(
               decoration: BoxDecoration(
                 color: Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: AppRadius.md,
               ),
               child: TabBar(
                 controller: _tabController,
@@ -111,12 +111,12 @@ class _PaymentHistoryScreenState extends ConsumerState<PaymentHistoryScreen>
                   Tab(text: 'As Poster'),
                   Tab(text: 'As Tasker'),
                 ],
-                labelColor: Colors.white,
+                labelColor: AppColors.white,
                 unselectedLabelColor: Colors.grey.shade600,
                 indicatorSize: TabBarIndicatorSize.tab,
                 indicator: BoxDecoration(
-                  color: const Color(0xFF6C5CE7),
-                  borderRadius: BorderRadius.circular(8),
+                  color: AppColors.posterPrimary,
+                  borderRadius: AppRadius.md,
                 ),
                 labelStyle: const TextStyle(
                   fontWeight: FontWeight.w600,
@@ -158,7 +158,7 @@ class _PaymentHistoryScreenState extends ConsumerState<PaymentHistoryScreen>
                     size: 64,
                     color: Colors.grey.shade400,
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: AppSpacing.lg),
                   Text(
                     'No payment history',
                     style: TextStyle(
@@ -167,7 +167,7 @@ class _PaymentHistoryScreenState extends ConsumerState<PaymentHistoryScreen>
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: AppSpacing.sm),
                   Text(
                     isPoster 
                         ? 'You haven\'t made any payments yet'
@@ -182,13 +182,13 @@ class _PaymentHistoryScreenState extends ConsumerState<PaymentHistoryScreen>
               ),
             )
           : ListView.separated(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(AppSpacing.lg),
               itemCount: payments.length,
               itemBuilder: (context, index) {
                 final payment = payments[index];
                 return _buildPaymentItem(payment, isPoster: isPoster);
               },
-              separatorBuilder: (context, index) => const SizedBox(height: 16),
+              separatorBuilder: (context, index) => SizedBox(height: AppSpacing.lg),
             ),
       loading: () => const Center(
         child: CircularProgressIndicator(),
@@ -202,10 +202,10 @@ class _PaymentHistoryScreenState extends ConsumerState<PaymentHistoryScreen>
               style: TextStyle(color: Theme.of(context).colorScheme.error),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: AppSpacing.lg),
             ElevatedButton(
               onPressed: () => ref.invalidate(provider),
-              child: const Text('Retry'),
+              child: Text('Retry'),
             ),
           ],
         ),
@@ -233,7 +233,7 @@ class _PaymentHistoryScreenState extends ConsumerState<PaymentHistoryScreen>
             ),
           ),
         ),
-        const SizedBox(width: 16),
+        SizedBox(width: AppSpacing.lg),
         
         // Payment details
         Expanded(
@@ -249,12 +249,12 @@ class _PaymentHistoryScreenState extends ConsumerState<PaymentHistoryScreen>
                 ),
               ),
               const SizedBox(height: 4),
-              const Text(
+              Text(
                 'Task payment', // Simplified for now
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
-                  color: Colors.black87,
+                  color: AppColors.textPrimary,
                 ),
               ),
               const SizedBox(height: 4),

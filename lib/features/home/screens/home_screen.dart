@@ -7,6 +7,9 @@ import 'package:taskaway/features/auth/controllers/auth_controller.dart';
 import 'package:taskaway/features/home/screens/poster_home_screen.dart';
 import 'package:taskaway/features/home/screens/tasker_home_screen.dart';
 import 'package:taskaway/features/home/screens/map_home_screen.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_radius.dart';
 
 final currentIndexProvider = StateProvider<int>((ref) => 0);
 
@@ -65,11 +68,11 @@ class HomeScreen extends ConsumerWidget {
       body: body,
       bottomNavigationBar: showBottomNav
           ? Container(
-              color: AppColors.backgroundWhite,
+              color: AppColors.backgroundPrimary,
               child: SafeArea(
                 child: Container(
                   height: 64,
-                  color: AppColors.backgroundWhite,
+                  color: AppColors.backgroundPrimary,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
@@ -163,7 +166,6 @@ class HomeScreen extends ConsumerWidget {
             label,
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontFamily: 'Roboto',
               color: isSelected ? AppColors.navActive : AppColors.navInactive,
               fontSize: 12,
               fontWeight: FontWeight.w500,
@@ -191,29 +193,28 @@ class HomeScreen extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppColors.primaryYellow,
+              color: AppColors.primary,
               border: Border.all(
-                color: AppColors.primaryYellowDark,
+                color: AppColors.primaryDark,
                 width: 1,
               ),
-              borderRadius: BorderRadius.circular(2),
+              borderRadius: AppRadius.xs,
             ),
             child: SvgPicture.asset(
               'assets/icons/nav_taskaway.svg',
               width: 15,
               height: 15,
               colorFilter: const ColorFilter.mode(
-                AppColors.primaryBlack,
+                AppColors.textPrimary,
                 BlendMode.srcIn,
               ),
             ),
           ),
           const SizedBox(height: 3),
-          const Text(
+          Text(
             'Taskaway',
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontFamily: 'Roboto',
               color: AppColors.navInactive,
               fontSize: 12,
               fontWeight: FontWeight.w500,

@@ -3,6 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../payments/controllers/payment_method_controller.dart';
 import '../../payments/models/payment_method.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_radius.dart';
 
 class AddPaymentMethodScreen extends ConsumerStatefulWidget {
   final PaymentMethodType type;
@@ -48,22 +52,18 @@ class _AddPaymentMethodScreenState extends ConsumerState<AddPaymentMethodScreen>
           Container(
             padding: const EdgeInsets.fromLTRB(16, 48, 16, 16),
             decoration: const BoxDecoration(
-              color: Color(0xFF6C5CE7), // Purple color
+              color: AppColors.posterPrimary, // Purple color
             ),
             child: Row(
               children: [
                 IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Colors.white),
+                  icon: Icon(Icons.arrow_back_ios, color: AppColors.white),
                   onPressed: () => Navigator.pop(context),
                 ),
                 const Spacer(),
-                const Text(
+                Text(
                   'Payment methods',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: AppTypography.headlineSmall.copyWith(color: AppColors.white),
                 ),
                 const Spacer(),
                 const SizedBox(width: 48), // Balance the back button
@@ -74,7 +74,7 @@ class _AddPaymentMethodScreenState extends ConsumerState<AddPaymentMethodScreen>
           // Form content
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(AppSpacing.lg),
               child: Form(
                 key: _formKey,
                 child: Column(
@@ -88,7 +88,7 @@ class _AddPaymentMethodScreenState extends ConsumerState<AddPaymentMethodScreen>
                       _buildEWalletForm(),
                     ],
                     
-                    const SizedBox(height: 24),
+                    SizedBox(height: AppSpacing.xxl),
                     
                     // Terms and conditions
                     if (widget.type == PaymentMethodType.creditCard) ...[
@@ -102,7 +102,7 @@ class _AddPaymentMethodScreenState extends ConsumerState<AddPaymentMethodScreen>
                                 _agreedToTerms = value ?? false;
                               });
                             },
-                            activeColor: const Color(0xFF6C5CE7),
+                            activeColor: AppColors.posterPrimary,
                           ),
                           Expanded(
                             child: GestureDetector(
@@ -111,7 +111,7 @@ class _AddPaymentMethodScreenState extends ConsumerState<AddPaymentMethodScreen>
                                   _agreedToTerms = !_agreedToTerms;
                                 });
                               },
-                              child: const Text(
+                              child: Text(
                                 'Your card details will be saved securely. By Adding a card you have read and agree to our terms and conditions.',
                                 style: TextStyle(
                                   fontSize: 14,
@@ -122,7 +122,7 @@ class _AddPaymentMethodScreenState extends ConsumerState<AddPaymentMethodScreen>
                           ),
                         ],
                       ),
-                      const SizedBox(height: 24),
+                      SizedBox(height: AppSpacing.xxl),
                     ],
                     
                     // Save button
@@ -134,20 +134,17 @@ class _AddPaymentMethodScreenState extends ConsumerState<AddPaymentMethodScreen>
                             ? null
                             : _savePaymentMethod,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF6C5CE7),
-                          foregroundColor: Colors.white,
+                          backgroundColor: AppColors.posterPrimary,
+                          foregroundColor: AppColors.white,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: AppRadius.md,
                           ),
                         ),
                         child: _isLoading
-                            ? const CircularProgressIndicator(color: Colors.white)
-                            : const Text(
+                            ? CircularProgressIndicator(color: AppColors.white)
+                            : Text(
                                 'Securely Save Card',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                ),
+                                style: AppTypography.labelLarge,
                               ),
                       ),
                     ),
@@ -165,30 +162,30 @@ class _AddPaymentMethodScreenState extends ConsumerState<AddPaymentMethodScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Name',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w500,
-            color: Colors.black87,
+            color: AppColors.textPrimary,
           ),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: AppSpacing.sm),
         TextFormField(
           controller: _nameController,
           decoration: InputDecoration(
             hintText: 'Ibrahim bin Razali',
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: AppRadius.md,
               borderSide: BorderSide(color: Colors.grey.shade300),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: AppRadius.md,
               borderSide: BorderSide(color: Colors.grey.shade300),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFF6C5CE7)),
+              borderRadius: AppRadius.md,
+              borderSide: const BorderSide(color: AppColors.posterPrimary),
             ),
           ),
           validator: (value) {
@@ -198,17 +195,17 @@ class _AddPaymentMethodScreenState extends ConsumerState<AddPaymentMethodScreen>
             return null;
           },
         ),
-        const SizedBox(height: 20),
+        SizedBox(height: AppSpacing.xl),
 
-        const Text(
+        Text(
           'Card Number',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w500,
-            color: Colors.black87,
+            color: AppColors.textPrimary,
           ),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: AppSpacing.sm),
         TextFormField(
           controller: _cardNumberController,
           decoration: InputDecoration(
@@ -220,13 +217,13 @@ class _AddPaymentMethodScreenState extends ConsumerState<AddPaymentMethodScreen>
                 height: 20,
                 decoration: BoxDecoration(
                   color: Colors.blue.shade700,
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: AppRadius.sm,
                 ),
                 child: const Center(
                   child: Text(
                     'VISA',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: AppColors.white,
                       fontWeight: FontWeight.bold,
                       fontSize: 10,
                     ),
@@ -235,16 +232,16 @@ class _AddPaymentMethodScreenState extends ConsumerState<AddPaymentMethodScreen>
               ),
             ),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: AppRadius.md,
               borderSide: BorderSide(color: Colors.grey.shade300),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: AppRadius.md,
               borderSide: BorderSide(color: Colors.grey.shade300),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFF6C5CE7)),
+              borderRadius: AppRadius.md,
+              borderSide: const BorderSide(color: AppColors.posterPrimary),
             ),
           ),
           keyboardType: TextInputType.number,
@@ -262,7 +259,7 @@ class _AddPaymentMethodScreenState extends ConsumerState<AddPaymentMethodScreen>
             return null;
           },
         ),
-        const SizedBox(height: 20),
+        SizedBox(height: AppSpacing.xl),
 
         Row(
           children: [
@@ -270,30 +267,30 @@ class _AddPaymentMethodScreenState extends ConsumerState<AddPaymentMethodScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Expiry date',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
-                      color: Colors.black87,
+                      color: AppColors.textPrimary,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: AppSpacing.sm),
                   TextFormField(
                     controller: _expiryController,
                     decoration: InputDecoration(
                       hintText: '01/03/2026',
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: AppRadius.md,
                         borderSide: BorderSide(color: Colors.grey.shade300),
                       ),
                       enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: AppRadius.md,
                         borderSide: BorderSide(color: Colors.grey.shade300),
                       ),
                       focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: Color(0xFF6C5CE7)),
+                        borderRadius: AppRadius.md,
+                        borderSide: const BorderSide(color: AppColors.posterPrimary),
                       ),
                     ),
                     keyboardType: TextInputType.number,
@@ -311,35 +308,35 @@ class _AddPaymentMethodScreenState extends ConsumerState<AddPaymentMethodScreen>
                 ],
               ),
             ),
-            const SizedBox(width: 16),
+            SizedBox(width: AppSpacing.lg),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'CVV',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
-                      color: Colors.black87,
+                      color: AppColors.textPrimary,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: AppSpacing.sm),
                   TextFormField(
                     controller: _cvvController,
                     decoration: InputDecoration(
                       hintText: '123',
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: AppRadius.md,
                         borderSide: BorderSide(color: Colors.grey.shade300),
                       ),
                       enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: AppRadius.md,
                         borderSide: BorderSide(color: Colors.grey.shade300),
                       ),
                       focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: Color(0xFF6C5CE7)),
+                        borderRadius: AppRadius.md,
+                        borderSide: const BorderSide(color: AppColors.posterPrimary),
                       ),
                     ),
                     keyboardType: TextInputType.number,
@@ -370,30 +367,30 @@ class _AddPaymentMethodScreenState extends ConsumerState<AddPaymentMethodScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Bank Name',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w500,
-            color: Colors.black87,
+            color: AppColors.textPrimary,
           ),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: AppSpacing.sm),
         TextFormField(
           controller: _bankNameController,
           decoration: InputDecoration(
             hintText: 'Select your bank',
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: AppRadius.md,
               borderSide: BorderSide(color: Colors.grey.shade300),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: AppRadius.md,
               borderSide: BorderSide(color: Colors.grey.shade300),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFF6C5CE7)),
+              borderRadius: AppRadius.md,
+              borderSide: const BorderSide(color: AppColors.posterPrimary),
             ),
           ),
           validator: (value) {
@@ -411,30 +408,30 @@ class _AddPaymentMethodScreenState extends ConsumerState<AddPaymentMethodScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'E-Wallet Provider',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w500,
-            color: Colors.black87,
+            color: AppColors.textPrimary,
           ),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: AppSpacing.sm),
         TextFormField(
           controller: _eWalletController,
           decoration: InputDecoration(
             hintText: 'Select your e-wallet provider',
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: AppRadius.md,
               borderSide: BorderSide(color: Colors.grey.shade300),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: AppRadius.md,
               borderSide: BorderSide(color: Colors.grey.shade300),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFF6C5CE7)),
+              borderRadius: AppRadius.md,
+              borderSide: const BorderSide(color: AppColors.posterPrimary),
             ),
           ),
           validator: (value) {

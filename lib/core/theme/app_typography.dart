@@ -66,37 +66,37 @@ class AppTypography {
   // ============= DISPLAY STYLES (Hero Text) =============
   // Optimized for impact while maintaining readability
 
-  /// Display Large - 48px, Bold
+  /// Display Large - 40px, Bold
   /// Use for: Hero sections, splash screens, marketing headlines
   static const TextStyle displayLarge = TextStyle(
     fontFamily: fontFamily,
-    fontSize: size48,
+    fontSize: size40,  // Updated to 40px
     fontWeight: bold,
-    height: 1.1,  // Tighter for large displays
+    height: 1.2,
     color: AppColors.textPrimary,
-    letterSpacing: -1.0,  // Tighter tracking for large text
+    letterSpacing: -0.8,
   );
 
-  /// Display Medium - 40px, Bold
+  /// Display Medium - 40px, Bold (same as displayLarge per guideline)
   /// Use for: Large feature headings, onboarding titles
   static const TextStyle displayMedium = TextStyle(
     fontFamily: fontFamily,
     fontSize: size40,
     fontWeight: bold,
-    height: 1.15,
+    height: 1.2,
     color: AppColors.textPrimary,
     letterSpacing: -0.8,
   );
 
-  /// Display Small - 32px, SemiBold
+  /// Display Small - 28px, Bold (promoted to match headlineLarge)
   /// Use for: Section hero text, modal titles
   static const TextStyle displaySmall = TextStyle(
     fontFamily: fontFamily,
-    fontSize: size32,
-    fontWeight: semiBold,
-    height: 1.2,
+    fontSize: size28,  // Updated to 28px
+    fontWeight: bold,  // Updated to bold
+    height: 1.3,
     color: AppColors.textPrimary,
-    letterSpacing: -0.5,
+    letterSpacing: -0.3,
   );
 
   // ============= HEADLINE STYLES (Page Titles) =============
@@ -108,7 +108,7 @@ class AppTypography {
     fontFamily: fontFamily,
     fontSize: size28,
     fontWeight: bold,
-    height: 1.25,  // Slightly more breathing room
+    height: 1.3,
     color: AppColors.textPrimary,
     letterSpacing: -0.3,
   );
@@ -124,13 +124,13 @@ class AppTypography {
     letterSpacing: -0.2,
   );
 
-  /// Headline Small - 22px, SemiBold
+  /// Headline Small - 20px, SemiBold
   /// Use for: Subpage titles, card headers, list headers
   static const TextStyle headlineSmall = TextStyle(
     fontFamily: fontFamily,
-    fontSize: size22,
+    fontSize: size20,  // Updated to 20px
     fontWeight: semiBold,
-    height: 1.3,
+    height: 1.4,  // Updated to 1.4
     color: AppColors.textPrimary,
     letterSpacing: -0.1,
   );
@@ -180,29 +180,29 @@ class AppTypography {
     fontFamily: fontFamily,
     fontSize: size16,
     fontWeight: regular,
-    height: 1.6,  // More comfortable for reading
+    height: 1.5,  // Updated to 1.5
     color: AppColors.textPrimary,
-    letterSpacing: 0.15,  // Slight letter spacing for better legibility
+    letterSpacing: 0.15,
   );
 
-  /// Body Medium - 15px, Regular
+  /// Body Medium - 14px, Regular
   /// Use for: Standard body text, list items, descriptions
   static const TextStyle bodyMedium = TextStyle(
     fontFamily: fontFamily,
-    fontSize: size15,
+    fontSize: size14,  // Updated to 14px
     fontWeight: regular,
-    height: 1.6,
+    height: 1.4,  // Updated to 1.4
     color: AppColors.textPrimary,
     letterSpacing: 0.1,
   );
 
-  /// Body Small - 13px, Regular
+  /// Body Small - 12px, Regular
   /// Use for: Small body text, secondary information, metadata
   static const TextStyle bodySmall = TextStyle(
     fontFamily: fontFamily,
-    fontSize: size13,
+    fontSize: size12,  // Updated to 12px
     fontWeight: regular,
-    height: 1.5,
+    height: 1.3,  // Updated to 1.3
     color: AppColors.textSecondary,
     letterSpacing: 0.1,
   );
@@ -216,29 +216,29 @@ class AppTypography {
     fontFamily: fontFamily,
     fontSize: size16,
     fontWeight: semiBold,
-    height: 1.2,
+    height: 1.3,  // Updated to 1.3
     color: AppColors.textPrimary,
-    letterSpacing: 0.3,  // Better tracking for buttons
+    letterSpacing: 0.3,
   );
 
-  /// Label Medium - 15px, Medium
+  /// Label Medium - 13px, Medium
   /// Use for: Standard buttons, tabs, chips
   static const TextStyle labelMedium = TextStyle(
     fontFamily: fontFamily,
-    fontSize: size15,
+    fontSize: size13,  // Updated to 13px
     fontWeight: medium,
-    height: 1.2,
+    height: 1.3,  // Updated to 1.3
     color: AppColors.textPrimary,
     letterSpacing: 0.25,
   );
 
-  /// Label Small - 13px, Medium
+  /// Label Small - 12px, Medium
   /// Use for: Small buttons, badges, tags
   static const TextStyle labelSmall = TextStyle(
     fontFamily: fontFamily,
-    fontSize: size13,
+    fontSize: size12,  // Updated to 12px
     fontWeight: medium,
-    height: 1.2,
+    height: 1.3,
     color: AppColors.textPrimary,
     letterSpacing: 0.2,
   );

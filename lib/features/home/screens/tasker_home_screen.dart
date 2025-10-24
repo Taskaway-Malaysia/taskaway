@@ -14,6 +14,10 @@ import 'package:taskaway/features/auth/controllers/auth_controller.dart';
 import 'package:taskaway/features/profile/controllers/profile_controller.dart';
 import 'package:taskaway/core/services/location_service.dart';
 import 'package:taskaway/core/widgets/bank_verification_banner.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_radius.dart';
 import 'dart:developer' as dev;
 
 // Provider for browse page region filter
@@ -190,12 +194,13 @@ class _TaskerHomeScreenState extends ConsumerState<TaskerHomeScreen> {
 
           return Column(
             children: [
-              const SizedBox(height: 200), // Space for header
+              const SizedBox(height: 140), // Space for header
 
               // Bank verification banner
               BankVerificationBanner(
                 verificationStatus: currentProfile?.bankVerificationStatus,
               ),
+
 
               Expanded(
                 child: tasks.isEmpty
@@ -203,7 +208,7 @@ class _TaskerHomeScreenState extends ConsumerState<TaskerHomeScreen> {
                         child: Text('No available tasks found'),
                       )
                     : ListView.builder(
-                        padding: const EdgeInsets.all(16),
+                        padding: EdgeInsets.all(AppSpacing.lg),
                         itemCount: tasks.length,
                         itemBuilder: (context, index) {
                           final task = tasks[index];
@@ -234,14 +239,14 @@ class _TaskerHomeScreenState extends ConsumerState<TaskerHomeScreen> {
           print('Building filter bottom sheet');
           return StatefulBuilder(
             builder: (context, setState) => Container(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.all(AppSpacing.lg),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'Filters',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
@@ -263,7 +268,7 @@ class _TaskerHomeScreenState extends ConsumerState<TaskerHomeScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: AppSpacing.lg),
               // Add filter options here
               Row(
                 children: [
@@ -271,7 +276,7 @@ class _TaskerHomeScreenState extends ConsumerState<TaskerHomeScreen> {
                     child: _buildDropdownContainer(
                       child: DropdownButton<String>(
                         value: ref.watch(regionFilterProvider),
-                        hint: const Text('Region'),
+                        hint: Text('Region'),
                         underline: Container(),
                         icon: const Icon(Icons.arrow_drop_down),
                         isExpanded: true,
@@ -290,12 +295,12 @@ class _TaskerHomeScreenState extends ConsumerState<TaskerHomeScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: AppSpacing.sm),
                   Expanded(
                     child: _buildDropdownContainer(
                       child: DropdownButton<String>(
                         value: ref.watch(categoryFilterProvider),
-                        hint: const Text('Category'),
+                        hint: Text('Category'),
                         underline: Container(),
                         icon: const Icon(Icons.arrow_drop_down),
                         isExpanded: true,
@@ -327,11 +332,11 @@ class _TaskerHomeScreenState extends ConsumerState<TaskerHomeScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: AppSpacing.lg),
               _buildDropdownContainer(
                 child: DropdownButton<String>(
                   value: ref.watch(sortFilterProvider),
-                  hint: const Text('Sort by'),
+                  hint: Text('Sort by'),
                   underline: Container(),
                   icon: const Icon(Icons.arrow_drop_down),
                   isExpanded: true,
@@ -350,7 +355,7 @@ class _TaskerHomeScreenState extends ConsumerState<TaskerHomeScreen> {
                   }).toList(),
                 ),
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: AppSpacing.xxl),
               // Clear All Filters button
               if (_getActiveFilterCount(ref) > 0)
                 Padding(
@@ -366,10 +371,10 @@ class _TaskerHomeScreenState extends ConsumerState<TaskerHomeScreen> {
                       minimumSize: const Size(double.infinity, 44),
                       side: const BorderSide(color: Color(0xFFE4E4E4)),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(6),
+                        borderRadius: AppRadius.smMd,
                       ),
                     ),
-                    child: const Text(
+                    child: Text(
                       'Clear All Filters',
                       style: TextStyle(
                         color: Color(0xFF788494),
@@ -388,19 +393,16 @@ class _TaskerHomeScreenState extends ConsumerState<TaskerHomeScreen> {
                   foregroundColor: Colors.black,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(6),
+                    borderRadius: AppRadius.smMd,
                     side: const BorderSide(
                       color: Color(0xFFFFC333),
                       width: 1,
                     ),
                   ),
                 ),
-                child: const Text(
+                child: Text(
                   'Apply Filters',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: AppTypography.labelMedium,
                 ),
               ),
             ],
@@ -490,7 +492,7 @@ class _TaskerHomeScreenState extends ConsumerState<TaskerHomeScreen> {
             ref.read(categoryFilterProvider.notifier).state = 'All Categories';
             ref.read(sortFilterProvider.notifier).state = 'Latest';
           },
-          child: const Text(
+          child: Text(
             'Clear all',
             style: TextStyle(
               fontSize: 12,
@@ -524,333 +526,336 @@ class _TaskerHomeScreenState extends ConsumerState<TaskerHomeScreen> {
       right: 0,
       child: Column(
         children: [
-          Container(
-            width: 394,
-            height: 151,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border.all(color: Colors.white, width: 1),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.25),
-                  blurRadius: 4,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Stack(
-              children: [
-                // Yellow accent line at bottom
-                Positioned(
-                  left: 0,
-                  top: 149,
-                  child: Container(
-                    width: 197,
-                    height: 2,
-                    color: const Color(0xFFFFC333),
+          SafeArea(
+            bottom: false,
+            child: Container(
+              padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
+              decoration: BoxDecoration(
+                color: AppColors.white,
+                border: Border(
+                  bottom: BorderSide(
+                    color: AppColors.borderDefault,
+                    width: 1,
                   ),
                 ),
+              ),
+              child: Column(
+                children: [
+                  // User profile row with availability badge
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Avatar
+                        Container(
+                          width: 64,
+                          height: 64,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: const Color(0xFFE8E9F1),
+                          ),
+                          child: profileAsync.when(
+                            data: (profile) {
+                              final name = profile?.fullName ?? 'User';
+                              final avatarUrl = profile?.avatarUrl;
 
-                // Search area at position (25.5, 62)
-                Positioned(
-                  left: 25.5,
-                  top: 62,
-                  child: Row(
-                    children: [
-                      // Search bar (292px width, exact Figma sizing)
-                      Container(
-                        width: 292,
-                        height: 44, // Match filter button height
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          border: Border.all(color: const Color(0xFFE4E4E4), width: 1),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Row(
-                          children: [
-                            // Search icon (24x24 frame with 11x11 icon)
-                            Container(
-                              width: 24,
-                              height: 24,
-                              alignment: Alignment.center,
-                              child: const Icon(
-                                Icons.search,
-                                size: 11,
-                                color: Color(0xFF202020),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            // Search text
-                            Expanded(
-                              child: TextField(
-                                controller: _searchController,
-                                focusNode: _searchFocusNode,
-                                decoration: const InputDecoration(
-                                  hintText: 'Search for any service',
-                                  border: InputBorder.none,
-                                  enabledBorder: InputBorder.none,
-                                  focusedBorder: InputBorder.none,
-                                  filled: false,
-                                  hintStyle: TextStyle(
-                                    fontFamily: 'Instrument Sans',
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                    color: Color(0xFF202020),
-                                  ),
-                                  contentPadding: EdgeInsets.zero,
-                                ),
-                                style: const TextStyle(
-                                  fontFamily: 'Instrument Sans',
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                  color: Color(0xFF202020),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(width: 8), // 8px gap
-
-                      // Filter button - Simplified implementation
-                      Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          onTap: () {
-                            print('Filter button tapped!');
-                            print('Current context: $context');
-                            _showFilterBottomSheet(context, ref);
-                          },
-                          borderRadius: BorderRadius.circular(6),
-                          child: Container(
-                            width: 44,
-                            height: 44,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              border: Border.all(color: const Color(0xFFD9D9D9), width: 1),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Stack(
-                              children: [
-                                const Center(
-                                  child: Icon(
-                                    Icons.tune,
-                                    size: 20,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                                // Filter count badge
-                                if (_getActiveFilterCount(ref) > 0)
-                                  Positioned(
-                                    right: 0,
-                                    top: 0,
-                                    child: Container(
-                                      padding: const EdgeInsets.all(4),
-                                      decoration: const BoxDecoration(
-                                        color: Color(0xFFFFC333),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      constraints: const BoxConstraints(
-                                        minWidth: 16,
-                                        minHeight: 16,
-                                      ),
-                                      child: Text(
-                                        '${_getActiveFilterCount(ref)}',
-                                        style: const TextStyle(
-                                          color: Colors.black,
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.bold,
+                              if (avatarUrl != null) {
+                                return ClipOval(
+                                  child: Image.network(
+                                    avatarUrl,
+                                    fit: BoxFit.cover,
+                                    width: 64,
+                                    height: 64,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Center(
+                                        child: Text(
+                                          name.isNotEmpty ? name.substring(0, 1).toUpperCase() : 'U',
+                                          style: const TextStyle(
+                                            fontSize: 28,
+                                            fontWeight: FontWeight.w600,
+                                            color: Color(0xFF788494),
+                                          ),
                                         ),
-                                        textAlign: TextAlign.center,
+                                      );
+                                    },
+                                  ),
+                                );
+                              }
+
+                              return Center(
+                                child: Text(
+                                  name.isNotEmpty ? name.substring(0, 1).toUpperCase() : 'U',
+                                  style: const TextStyle(
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF788494),
+                                  ),
+                                ),
+                              );
+                            },
+                            loading: () => const SizedBox.shrink(),
+                            error: (_, __) => const Icon(Icons.person, color: Color(0xFF788494), size: 32),
+                          ),
+                        ),
+                        SizedBox(width: AppSpacing.md),
+                        // Name with greeting
+                        Expanded(
+                          child: profileAsync.when(
+                            data: (profile) => Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Welcome back,',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w400,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  profile?.fullName ?? 'User',
+                                  style: const TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                            loading: () => const SizedBox.shrink(),
+                            error: (_, __) => const Text('User'),
+                          ),
+                        ),
+                        // Availability badge
+                        profileAsync.when(
+                          data: (profile) {
+                            final isAvailable = profile?.isAvailable ?? false;
+                            return GestureDetector(
+                              onTap: () async {
+                                if (currentUser == null) return;
+
+                                final newValue = !isAvailable;
+
+                                if (newValue) {
+                                  // Turning availability ON
+                                  dev.log('[TaskerHome] Enabling availability, requesting location permission');
+
+                                  final hasPermission = await _locationService.requestPermissions();
+                                  if (!hasPermission) {
+                                    if (mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('Location permission is required to enable availability'),
+                                          backgroundColor: Color(0xFFFF9800),
+                                        ),
+                                      );
+                                    }
+                                    return;
+                                  }
+
+                                  dev.log('[TaskerHome] Location permission granted, starting tracking');
+                                  _locationService.startTracking(currentUser.id);
+                                } else {
+                                  // Turning availability OFF
+                                  dev.log('[TaskerHome] Disabling availability, stopping location tracking');
+                                  _locationService.stopTracking();
+                                }
+
+                                // Update availability in database
+                                try {
+                                  await ref
+                                      .read(profileControllerProvider)
+                                      .updateAvailability(
+                                        userId: currentUser.id,
+                                        isAvailable: newValue,
+                                      );
+
+                                  // Invalidate the profile provider to refresh the UI
+                                  ref.invalidate(currentProfileProvider);
+                                } catch (e) {
+                                  dev.log('[TaskerHome] Error updating availability: $e');
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('Failed to update availability: $e'),
+                                        backgroundColor: const Color(0xFFFF9800),
+                                      ),
+                                    );
+                                  }
+                                }
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: isAvailable
+                                      ? const Color(0xFFE8F5E9)
+                                      : const Color(0xFFFFF3E0),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: isAvailable
+                                        ? const Color(0xFF4CAF50)
+                                        : const Color(0xFFFFB74D),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      isAvailable ? 'Online' : 'Offline',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                        color: isAvailable
+                                            ? const Color(0xFF2E7D32)
+                                            : const Color(0xFFE65100),
                                       ),
                                     ),
+                                    const SizedBox(width: 6),
+                                    Container(
+                                      width: 8,
+                                      height: 8,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: isAvailable
+                                            ? const Color(0xFF4CAF50)
+                                            : const Color(0xFFFFB74D),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                          loading: () => const SizedBox.shrink(),
+                          error: (_, __) => const SizedBox.shrink(),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: AppSpacing.md),
+                  // Search and filter row
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                    child: Row(
+                      children: [
+                        // Search bar
+                        Expanded(
+                          child: Container(
+                            height: 44,
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                            decoration: BoxDecoration(
+                              color: AppColors.white,
+                              border: Border.all(color: const Color(0xFFE4E4E4), width: 1),
+                              borderRadius: AppRadius.smMd,
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 24,
+                                  height: 24,
+                                  alignment: Alignment.center,
+                                  child: const Icon(
+                                    Icons.search,
+                                    size: 11,
+                                    color: Color(0xFF202020),
                                   ),
+                                ),
+                                SizedBox(width: AppSpacing.sm),
+                                Expanded(
+                                  child: TextField(
+                                    controller: _searchController,
+                                    focusNode: _searchFocusNode,
+                                    decoration: const InputDecoration(
+                                      hintText: 'Search for any service',
+                                      border: InputBorder.none,
+                                      enabledBorder: InputBorder.none,
+                                      focusedBorder: InputBorder.none,
+                                      filled: false,
+                                      hintStyle: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                        color: Color(0xFF202020),
+                                      ),
+                                      contentPadding: EdgeInsets.zero,
+                                    ),
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                      color: Color(0xFF202020),
+                                    ),
+                                  ),
+                                ),
                               ],
                             ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // TASKER toggle at position (78, 123)
-                Positioned(
-                  left: 78,
-                  top: 123,
-                  child: GestureDetector(
-                    onTap: () {
-                      ref.read(userModeProvider.notifier).state = UserMode.tasker;
-                    },
-                    child: Text(
-                      'TASKER',
-                      style: TextStyle(
-                        fontFamily: 'Instrument Sans',
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.1,
-                        color: userMode == UserMode.tasker
-                            ? const Color(0xFF000000)
-                            : const Color(0xFF788494),
-                      ),
-                    ),
-                  ),
-                ),
-
-                // POSTER toggle at position (251, 123)
-                Positioned(
-                  left: 251,
-                  top: 123,
-                  child: GestureDetector(
-                    onTap: () {
-                      ref.read(userModeProvider.notifier).state = UserMode.poster;
-                    },
-                    child: Text(
-                      'POSTER',
-                      style: TextStyle(
-                        fontFamily: 'Instrument Sans',
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.1,
-                        color: userMode == UserMode.poster
-                            ? const Color(0xFF000000)
-                            : const Color(0xFF788494),
-                      ),
-                    ),
-                  ),
-                ),
-
-                // Availability Switch - positioned on the right side
-                if (userMode == UserMode.tasker)
-                  Positioned(
-                    right: 16,
-                    top: 16,
-                    child: profileAsync.when(
-                      data: (profile) {
-                        final isAvailable = profile?.isAvailable ?? false;
-                        return Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: isAvailable ? const Color(0xFFE8F5E9) : const Color(0xFFFFF3E0),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: isAvailable ? const Color(0xFF4CAF50) : const Color(0xFFFF9800),
-                              width: 1,
+                        SizedBox(width: AppSpacing.sm),
+                        // Filter button
+                        Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () {
+                              print('Filter button tapped!');
+                              print('Current context: $context');
+                              _showFilterBottomSheet(context, ref);
+                            },
+                            borderRadius: AppRadius.smMd,
+                            child: Container(
+                              width: 44,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                color: AppColors.white,
+                                border: Border.all(color: const Color(0xFFD9D9D9), width: 1),
+                                borderRadius: AppRadius.smMd,
+                              ),
+                              child: Stack(
+                                children: [
+                                  const Center(
+                                    child: Icon(
+                                      Icons.tune,
+                                      size: 20,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                  if (_getActiveFilterCount(ref) > 0)
+                                    Positioned(
+                                      right: 0,
+                                      top: 0,
+                                      child: Container(
+                                        padding: const EdgeInsets.all(4),
+                                        decoration: const BoxDecoration(
+                                          color: Color(0xFFFFC333),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        constraints: const BoxConstraints(
+                                          minWidth: 16,
+                                          minHeight: 16,
+                                        ),
+                                        child: Text(
+                                          '${_getActiveFilterCount(ref)}',
+                                          style: const TextStyle(
+                                            color: AppColors.textPrimary,
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
                             ),
                           ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                isAvailable ? 'Available' : 'Offline',
-                                style: TextStyle(
-                                  fontFamily: 'Instrument Sans',
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: isAvailable ? const Color(0xFF2E7D32) : const Color(0xFFE65100),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              SizedBox(
-                                width: 40,
-                                height: 20,
-                                child: Switch(
-                                  value: isAvailable,
-                                  onChanged: (value) async {
-                                    if (currentUser == null) return;
-
-                                    if (value) {
-                                      // Turning availability ON - request location permission and start tracking
-                                      dev.log('[TaskerHome] Enabling availability, requesting location permission');
-
-                                      final hasPermission = await _locationService.requestPermissions();
-                                      if (!hasPermission) {
-                                        // Show permission denied message
-                                        if (mounted) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            const SnackBar(
-                                              content: Text(
-                                                'Location permission is required to be available for tasks',
-                                                style: TextStyle(fontFamily: 'Instrument Sans'),
-                                              ),
-                                              backgroundColor: Colors.red,
-                                            ),
-                                          );
-                                        }
-                                        return;
-                                      }
-
-                                      // Update availability in database
-                                      await ref.read(profileControllerProvider).updateAvailability(
-                                        userId: currentUser.id,
-                                        isAvailable: true,
-                                      );
-
-                                      // Start location tracking
-                                      dev.log('[TaskerHome] Starting location tracking');
-                                      await _locationService.startTracking(currentUser.id);
-
-                                      // Refresh profile to update UI
-                                      ref.invalidate(currentProfileProvider);
-
-                                      if (mounted) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(
-                                            content: Text(
-                                              'You are now available! Your location will update every 30 minutes',
-                                              style: TextStyle(fontFamily: 'Instrument Sans'),
-                                            ),
-                                            backgroundColor: Color(0xFF4CAF50),
-                                            duration: Duration(seconds: 3),
-                                          ),
-                                        );
-                                      }
-                                    } else {
-                                      // Turning availability OFF - stop tracking
-                                      dev.log('[TaskerHome] Disabling availability, stopping location tracking');
-
-                                      await ref.read(profileControllerProvider).updateAvailability(
-                                        userId: currentUser.id,
-                                        isAvailable: false,
-                                      );
-
-                                      // Stop location tracking
-                                      _locationService.stopTracking();
-
-                                      // Refresh profile to update UI
-                                      ref.invalidate(currentProfileProvider);
-
-                                      if (mounted) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(
-                                            content: Text(
-                                              'You are now offline',
-                                              style: TextStyle(fontFamily: 'Instrument Sans'),
-                                            ),
-                                            backgroundColor: Color(0xFFFF9800),
-                                          ),
-                                        );
-                                      }
-                                    }
-                                  },
-                                  activeColor: const Color(0xFF4CAF50),
-                                  activeTrackColor: const Color(0xFFC8E6C9),
-                                  inactiveThumbColor: const Color(0xFFFF9800),
-                                  inactiveTrackColor: const Color(0xFFFFE0B2),
-                                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                      loading: () => const SizedBox.shrink(),
-                      error: (_, __) => const SizedBox.shrink(),
+                        ),
+                      ],
                     ),
                   ),
-              ],
+                ],
+              ),
             ),
           ),
           // Active filters chips
@@ -865,8 +870,8 @@ class _TaskerHomeScreenState extends ConsumerState<TaskerHomeScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        color: AppColors.white,
+        borderRadius: AppRadius.xxl,
       ),
       child: child,
     );

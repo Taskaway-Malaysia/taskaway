@@ -7,6 +7,9 @@ import 'package:taskaway/core/constants/asset_constants.dart';
 import 'package:taskaway/features/auth/controllers/auth_controller.dart';
 import 'package:taskaway/features/onboarding/controllers/onboarding_controller.dart';
 import 'package:taskaway/core/utils/debug_logger.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -283,14 +286,14 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     // Show white screen for first 0.5 seconds
     if (_showInitialWhiteScreen) {
       return const Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.white,
         body: SizedBox.expand(),
       );
     }
     
     // Then show the actual splash screen content for 2.5 seconds
     return const Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.white,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

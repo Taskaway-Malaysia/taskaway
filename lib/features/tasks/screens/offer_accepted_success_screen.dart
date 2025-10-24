@@ -3,6 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:taskaway/core/constants/style_constants.dart';
 import 'package:taskaway/features/messages/controllers/message_controller.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_radius.dart';
 
 class OfferAcceptedSuccessScreen extends ConsumerWidget {
   final double price;
@@ -18,12 +22,12 @@ class OfferAcceptedSuccessScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My tasks'),
+        title: Text('My tasks'),
         automaticallyImplyLeading: false, // To remove back button
       ),
       body: Center(
         child: Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: EdgeInsets.all(AppSpacing.xxl),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -33,31 +37,25 @@ class OfferAcceptedSuccessScreen extends ConsumerWidget {
                 color: StyleConstants.primaryColor,
                 size: 80,
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: AppSpacing.xxl),
               Text(
                 'Offer Accepted & Payment Secured',
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: AppTypography.headlineSmall.copyWith(color: AppColors.white),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: AppSpacing.lg),
               Text(
                 'You have successfully accepted an offer for MYR ${price.toStringAsFixed(2)} and your payment has been authorized and secured.',
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                ),
+                style: AppTypography.labelLarge,
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: AppSpacing.md),
               // Payment Secured badge
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
                   color: Colors.green.shade50,
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: AppRadius.xxl,
                   border: Border.all(color: Colors.green.shade200),
                 ),
                 child: Row(
@@ -68,7 +66,7 @@ class OfferAcceptedSuccessScreen extends ConsumerWidget {
                       color: Colors.green.shade700,
                       size: 16,
                     ),
-                    const SizedBox(width: 8),
+                    SizedBox(width: AppSpacing.sm),
                     Text(
                       'Payment Secured',
                       style: TextStyle(
@@ -80,8 +78,8 @@ class OfferAcceptedSuccessScreen extends ConsumerWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
-              const Text(
+              SizedBox(height: AppSpacing.lg),
+              Text(
                 'You can find this task under "Upcoming Task" section and start communicating with your tasker.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
@@ -118,18 +116,18 @@ class OfferAcceptedSuccessScreen extends ConsumerWidget {
                       }
                     },
                     icon: const Icon(Icons.message),
-                    label: const Text('Message Tasker'),
+                    label: Text('Message Tasker'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue,
-                      foregroundColor: Colors.white,
+                      foregroundColor: AppColors.white,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: AppRadius.md,
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: AppSpacing.md),
               ],
               SizedBox(
                 width: double.infinity,
@@ -139,16 +137,16 @@ class OfferAcceptedSuccessScreen extends ConsumerWidget {
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: StyleConstants.primaryColor,
-                    foregroundColor: Colors.white,
+                    foregroundColor: AppColors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: AppRadius.md,
                     ),
                   ),
-                  child: const Text('Go to upcoming tasks'),
+                  child: Text('Go to upcoming tasks'),
                 ),
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: AppSpacing.xxl),
             ],
           ),
         ),

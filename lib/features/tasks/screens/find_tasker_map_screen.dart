@@ -9,6 +9,10 @@ import 'package:taskaway/features/tasks/controllers/tasker_controller.dart';
 import 'package:taskaway/features/auth/models/profile.dart';
 import 'package:taskaway/features/applications/controllers/application_controller.dart';
 import 'package:taskaway/features/applications/models/application.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_radius.dart';
 import 'dart:developer' as dev;
 
 /// FindTaskerMapScreen
@@ -58,8 +62,8 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Find Tasker'),
-        backgroundColor: Colors.white,
+        title: Text('Find Tasker'),
+        backgroundColor: AppColors.white,
         foregroundColor: Colors.black,
         elevation: 0,
         leading: IconButton(
@@ -149,11 +153,11 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
+                        color: AppColors.white,
+                        borderRadius: AppRadius.xxl,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
+                            color: AppColors.textPrimary.withOpacity(0.1),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),
@@ -182,7 +186,7 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: Colors.red.shade50,
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: AppRadius.md,
                     ),
                     child: Text(
                       'Error loading taskers: $error',
@@ -209,10 +213,10 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
                     color: const Color(0xFFFFDB5B),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: AppRadius.md,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
+                        color: AppColors.textPrimary.withOpacity(0.1),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -225,7 +229,6 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
                       Text(
                         task.category.toUpperCase(),
                         style: const TextStyle(
-                          fontFamily: 'Instrument Sans',
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
                           letterSpacing: 0.5,
@@ -235,7 +238,6 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
                       Text(
                         'RM ${task.price.toStringAsFixed(2)}',
                         style: const TextStyle(
-                          fontFamily: 'Instrument Sans',
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
                         ),
@@ -253,11 +255,11 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
+                      color: AppColors.white,
+                      borderRadius: AppRadius.xxl,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
+                          color: AppColors.textPrimary.withOpacity(0.1),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
@@ -271,7 +273,6 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
                         Text(
                           '${taskers.length} available',
                           style: const TextStyle(
-                            fontFamily: 'Instrument Sans',
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                           ),
@@ -292,17 +293,17 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stackTrace) => Center(
           child: Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: EdgeInsets.all(AppSpacing.lg),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Icon(Icons.error_outline, size: 64, color: Colors.red),
-                const SizedBox(height: 16),
+                SizedBox(height: AppSpacing.lg),
                 Text(
                   'Error loading task',
                   style: theme.textTheme.titleLarge,
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: AppSpacing.sm),
                 Text(
                   error.toString(),
                   textAlign: TextAlign.center,
@@ -322,7 +323,7 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
       decoration: BoxDecoration(
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: AppColors.textPrimary.withOpacity(0.2),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -343,7 +344,7 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
       height: 40,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: Colors.white,
+        color: AppColors.white,
         border: Border.all(
           color: _selectedTasker?.id == tasker.id
               ? const Color(0xFFFFDB5B)
@@ -352,7 +353,7 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: AppColors.textPrimary.withOpacity(0.2),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -379,7 +380,6 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
         child: Text(
           initials,
           style: const TextStyle(
-            fontFamily: 'Instrument Sans',
             fontSize: 14,
             fontWeight: FontWeight.w600,
             color: Color(0xFF666666),
@@ -392,14 +392,14 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
   /// Build tasker preview card
   Widget _buildTaskerPreviewCard(Profile tasker) {
     return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(16),
+      margin: EdgeInsets.all(AppSpacing.lg),
+      padding: EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        color: AppColors.white,
+        borderRadius: AppRadius.lg,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: AppColors.textPrimary.withOpacity(0.1),
             blurRadius: 20,
             offset: const Offset(0, -4),
           ),
@@ -414,10 +414,10 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
             height: 4,
             decoration: BoxDecoration(
               color: Colors.grey.shade300,
-              borderRadius: BorderRadius.circular(2),
+              borderRadius: AppRadius.xs,
             ),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: AppSpacing.lg),
 
           // Tasker info
           Row(
@@ -440,7 +440,7 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
                       : _buildDefaultAvatar(tasker),
                 ),
               ),
-              const SizedBox(width: 16),
+              SizedBox(width: AppSpacing.lg),
 
               // Details
               Expanded(
@@ -450,7 +450,6 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
                     Text(
                       tasker.fullName,
                       style: const TextStyle(
-                        fontFamily: 'Instrument Sans',
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
                       ),
@@ -463,7 +462,6 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
                         Text(
                           '${tasker.rating.toStringAsFixed(1)} (${tasker.totalTasks} tasks)',
                           style: const TextStyle(
-                            fontFamily: 'Instrument Sans',
                             fontSize: 14,
                             color: Color(0xFF788494),
                           ),
@@ -471,7 +469,7 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
                       ],
                     ),
                     if (tasker.skills != null && tasker.skills!.isNotEmpty) ...[
-                      const SizedBox(height: 8),
+                      SizedBox(height: AppSpacing.sm),
                       Wrap(
                         spacing: 4,
                         runSpacing: 4,
@@ -480,12 +478,11 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
                               color: const Color(0xFFF5F5F5),
-                              borderRadius: BorderRadius.circular(4),
+                              borderRadius: AppRadius.sm,
                             ),
                             child: Text(
                               skill,
                               style: const TextStyle(
-                                fontFamily: 'Instrument Sans',
                                 fontSize: 11,
                                 color: Color(0xFF000000),
                               ),
@@ -500,7 +497,7 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
             ],
           ),
 
-          const SizedBox(height: 16),
+          SizedBox(height: AppSpacing.lg),
 
           // Action buttons
           Row(
@@ -516,10 +513,10 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     side: const BorderSide(color: Color(0xFFE0E0E0)),
                   ),
-                  child: const Text('Close'),
+                  child: Text('Close'),
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: AppSpacing.md),
               Expanded(
                 flex: 2,
                 child: ElevatedButton(
@@ -539,10 +536,9 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     elevation: 0,
                   ),
-                  child: const Text(
+                  child: Text(
                     'View Profile',
                     style: TextStyle(
-                      fontFamily: 'Instrument Sans',
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                     ),
@@ -573,14 +569,14 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
             width: double.infinity,
             constraints: const BoxConstraints(maxHeight: 280),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.white,
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(20),
                 topRight: Radius.circular(20),
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: AppColors.textPrimary.withOpacity(0.1),
                   blurRadius: 20,
                   offset: const Offset(0, -4),
                 ),
@@ -596,7 +592,7 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
                   height: 4,
                   decoration: BoxDecoration(
                     color: Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(2),
+                    borderRadius: AppRadius.xs,
                   ),
                 ),
 
@@ -606,11 +602,10 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
                   child: Row(
                     children: [
                       const Icon(Icons.person_outline, size: 20),
-                      const SizedBox(width: 8),
+                      SizedBox(width: AppSpacing.sm),
                       Text(
                         'Received Offers (${applications.length})',
                         style: const TextStyle(
-                          fontFamily: 'Instrument Sans',
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
                         ),
@@ -678,7 +673,7 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
                     ),
             ),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: AppSpacing.md),
 
           // Tasker info
           Expanded(
@@ -688,7 +683,6 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
                 Text(
                   taskerName,
                   style: const TextStyle(
-                    fontFamily: 'Instrument Sans',
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                   ),
@@ -701,16 +695,14 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
                     Text(
                       rating.toStringAsFixed(1),
                       style: const TextStyle(
-                        fontFamily: 'Instrument Sans',
                         fontSize: 12,
                         color: Color(0xFF788494),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    SizedBox(width: AppSpacing.md),
                     Text(
                       'RM ${application.offerPrice.toStringAsFixed(2)}',
                       style: const TextStyle(
-                        fontFamily: 'Instrument Sans',
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
                         color: Color(0xFF000000),
@@ -736,13 +728,12 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   elevation: 0,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: AppRadius.sm,
                   ),
                 ),
-                child: const Text(
+                child: Text(
                   'View',
                   style: TextStyle(
-                    fontFamily: 'Instrument Sans',
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
@@ -756,12 +747,11 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
                 color: application.status == ApplicationStatus.accepted
                     ? Colors.green.shade50
                     : Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: AppRadius.lg,
               ),
               child: Text(
                 application.status.name.toUpperCase(),
                 style: TextStyle(
-                  fontFamily: 'Instrument Sans',
                   fontSize: 10,
                   fontWeight: FontWeight.w600,
                   color: application.status == ApplicationStatus.accepted
@@ -790,7 +780,7 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
       builder: (context) => Container(
         height: MediaQuery.of(context).size.height * 0.75,
         decoration: const BoxDecoration(
-          color: Colors.white,
+          color: AppColors.white,
           borderRadius: BorderRadius.only(
             topLeft: Radius.circular(20),
             topRight: Radius.circular(20),
@@ -805,7 +795,7 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
               height: 4,
               decoration: BoxDecoration(
                 color: Colors.grey.shade300,
-                borderRadius: BorderRadius.circular(2),
+                borderRadius: AppRadius.xs,
               ),
             ),
 
@@ -837,7 +827,7 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
                             ),
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  SizedBox(width: AppSpacing.lg),
 
                   // Tasker info
                   Expanded(
@@ -847,7 +837,6 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
                         Text(
                           taskerName,
                           style: const TextStyle(
-                            fontFamily: 'Instrument Sans',
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
                           ),
@@ -860,16 +849,14 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
                             Text(
                               rating.toStringAsFixed(1),
                               style: const TextStyle(
-                                fontFamily: 'Instrument Sans',
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
-                            const SizedBox(width: 12),
+                            SizedBox(width: AppSpacing.md),
                             Text(
                               '$totalTasks tasks completed',
                               style: TextStyle(
-                                fontFamily: 'Instrument Sans',
                                 fontSize: 14,
                                 color: Colors.grey.shade600,
                               ),
@@ -883,9 +870,9 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
               ),
             ),
 
-            const SizedBox(height: 24),
+            SizedBox(height: AppSpacing.xxl),
             const Divider(height: 1),
-            const SizedBox(height: 24),
+            SizedBox(height: AppSpacing.xxl),
 
             // Offer details section
             Expanded(
@@ -898,10 +885,9 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
+                        Text(
                           'Offer Price',
                           style: TextStyle(
-                            fontFamily: 'Instrument Sans',
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
                           ),
@@ -909,7 +895,6 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
                         Text(
                           'RM ${application.offerPrice.toStringAsFixed(2)}',
                           style: const TextStyle(
-                            fontFamily: 'Instrument Sans',
                             fontSize: 24,
                             fontWeight: FontWeight.w700,
                             color: Color(0xFFFFDB5B),
@@ -918,48 +903,45 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
                       ],
                     ),
 
-                    const SizedBox(height: 24),
+                    SizedBox(height: AppSpacing.xxl),
 
                     // Message/Description
-                    const Text(
+                    Text(
                       'Message',
                       style: TextStyle(
-                        fontFamily: 'Instrument Sans',
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: AppSpacing.sm),
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.all(16),
+                      padding: EdgeInsets.all(AppSpacing.lg),
                       decoration: BoxDecoration(
                         color: Colors.grey.shade50,
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: AppRadius.lg,
                         border: Border.all(color: Colors.grey.shade200),
                       ),
                       child: Text(
                         application.message ?? 'No message provided',
                         style: TextStyle(
-                          fontFamily: 'Instrument Sans',
                           fontSize: 14,
-                          color: application.message != null ? Colors.black87 : Colors.grey.shade500,
+                          color: application.message != null ? AppColors.textPrimary : Colors.grey.shade500,
                           height: 1.5,
                         ),
                       ),
                     ),
 
-                    const SizedBox(height: 24),
+                    SizedBox(height: AppSpacing.xxl),
 
                     // Application date
                     Row(
                       children: [
                         Icon(Icons.calendar_today, size: 16, color: Colors.grey.shade600),
-                        const SizedBox(width: 8),
+                        SizedBox(width: AppSpacing.sm),
                         Text(
                           'Applied ${_formatDate(application.createdAt)}',
                           style: TextStyle(
-                            fontFamily: 'Instrument Sans',
                             fontSize: 14,
                             color: Colors.grey.shade600,
                           ),
@@ -975,10 +957,10 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.white,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: AppColors.textPrimary.withOpacity(0.05),
                     blurRadius: 10,
                     offset: const Offset(0, -4),
                   ),
@@ -997,18 +979,18 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
                         );
                       },
                       icon: const Icon(Icons.chat_bubble_outline, size: 20),
-                      label: const Text('Message'),
+                      label: Text('Message'),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.black,
                         side: BorderSide(color: Colors.grey.shade300),
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: AppRadius.md,
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: AppSpacing.md),
 
                   // Accept button
                   Expanded(
@@ -1018,14 +1000,14 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
                         _handleAcceptOffer(application, context);
                       },
                       icon: const Icon(Icons.check_circle_outline, size: 20),
-                      label: const Text('Accept Offer'),
+                      label: Text('Accept Offer'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFFFDB5B),
                         foregroundColor: Colors.black,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         elevation: 0,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: AppRadius.md,
                         ),
                       ),
                     ),
@@ -1177,7 +1159,7 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
         barrierDismissible: false,
         builder: (dialogContext) => AlertDialog(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: AppRadius.xl,
           ),
           title: Row(
             children: [
@@ -1189,16 +1171,15 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
                 ),
                 child: const Icon(
                   Icons.check_circle,
-                  color: Colors.white,
+                  color: AppColors.white,
                   size: 32,
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: AppSpacing.md),
               const Expanded(
                 child: Text(
                   'Tasker Assigned!',
                   style: TextStyle(
-                    fontFamily: 'Instrument Sans',
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
                   ),
@@ -1230,18 +1211,17 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
                       : _buildDefaultAvatar(taskerProfile),
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: AppSpacing.lg),
               // Tasker name
               Text(
                 taskerProfile.fullName,
                 style: const TextStyle(
-                  fontFamily: 'Instrument Sans',
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: AppSpacing.sm),
               // Tasker rating
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -1251,19 +1231,17 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
                   Text(
                     '${taskerProfile.rating.toStringAsFixed(1)} (${taskerProfile.totalTasks} tasks)',
                     style: const TextStyle(
-                      fontFamily: 'Instrument Sans',
                       fontSize: 14,
                       color: Color(0xFF788494),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: AppSpacing.lg),
               // Message
-              const Text(
+              Text(
                 'has accepted your task. View their profile to get started.',
                 style: TextStyle(
-                  fontFamily: 'Instrument Sans',
                   fontSize: 14,
                   color: Color(0xFF788494),
                 ),
@@ -1292,13 +1270,12 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   elevation: 0,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: AppRadius.md,
                   ),
                 ),
-                child: const Text(
+                child: Text(
                   'View Tasker Profile',
                   style: TextStyle(
-                    fontFamily: 'Instrument Sans',
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     letterSpacing: 0.3,
@@ -1319,10 +1296,10 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
         barrierDismissible: false,
         builder: (dialogContext) => AlertDialog(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: AppRadius.xl,
           ),
-          title: const Text('Tasker Assigned!'),
-          content: const Text('A tasker has accepted your task.'),
+          title: Text('Tasker Assigned!'),
+          content: Text('A tasker has accepted your task.'),
           actions: [
             ElevatedButton(
               onPressed: () {
@@ -1335,7 +1312,7 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
                   },
                 );
               },
-              child: const Text('View Profile'),
+              child: Text('View Profile'),
             ),
           ],
         ),

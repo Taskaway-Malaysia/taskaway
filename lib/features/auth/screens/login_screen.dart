@@ -60,7 +60,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         if (mounted) {
           scaffoldMessenger.showSnackBar(
             SnackBar(
-              content: const Text('An unexpected error occurred.'),
+              content: Text('An unexpected error occurred.'),
               backgroundColor: AppColors.error,
             ),
           );

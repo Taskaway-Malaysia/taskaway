@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+import '../../../core/theme/app_radius.dart';
 
-class MapSearchBar extends StatelessWidget {
+class MapSearchBar extends StatefulWidget {
   final bool isTaskerMode;
   final Function(bool) onToggle;
   final Function(String) onSearch;
@@ -15,12 +17,26 @@ class MapSearchBar extends StatelessWidget {
   });
 
   @override
+  State<MapSearchBar> createState() => _MapSearchBarState();
+}
+
+class _MapSearchBarState extends State<MapSearchBar> {
+  final PageController _pageController = PageController();
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -32,7 +48,7 @@ class MapSearchBar extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: Colors.white,
                       border: Border.all(color: Colors.grey.shade300),
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: AppRadius.md,
                     ),
                     child: Row(
                       children: [
@@ -46,7 +62,7 @@ class MapSearchBar extends StatelessWidget {
                         ),
                         Expanded(
                           child: TextField(
-                            onChanged: onSearch,
+                            onChanged: widget.onSearch,
                             style: const TextStyle(
                               fontSize: 15,
                               color: Colors.black,
@@ -77,12 +93,12 @@ class MapSearchBar extends StatelessWidget {
                   width: 44,
                   decoration: BoxDecoration(
                     border: Border.all(color: Colors.grey.shade300),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: AppRadius.md,
                   ),
                   child: IconButton(
                     onPressed: () {
                       print('Filter button tapped in MapSearchBar!');
-                      onFilterTap?.call();
+                      widget.onFilterTap?.call();
                     },
                     icon: const Icon(Icons.tune, size: 20),
                     color: Colors.grey.shade700,
@@ -92,22 +108,97 @@ class MapSearchBar extends StatelessWidget {
               ],
             ),
           ),
-          
-          
+
+          // Banner Carousel Section with background layer
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+            child: Column(
+              children: [
+                Stack(
+                  children: [
+                    // Background layer (white rounded container)
+                    Container(
+                      margin: const EdgeInsets.only(top: 4, left: 4, right: 4),
+                      height: 120,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF5F5F5),
+                        borderRadius: AppRadius.md,
+                      ),
+                    ),
+                    // Main banner with shadow
+                    Container(
+                      decoration: BoxDecoration(
+                        borderRadius: AppRadius.md,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: AppRadius.md,
+                        child: SizedBox(
+                          width: double.infinity,
+                          height: 120,
+                          child: PageView(
+                            controller: _pageController,
+                            children: [
+                              Image.asset(
+                                'assets/images/my-11134258-820lh-mf2fi3npb2tn0f.webp',
+                                width: double.infinity,
+                                height: 120,
+                                fit: BoxFit.cover,
+                              ),
+                              Image.asset(
+                                'assets/images/my-11134258-820lh-mf2fi3npb2tn0f.webp',
+                                width: double.infinity,
+                                height: 120,
+                                fit: BoxFit.cover,
+                              ),
+                              Image.asset(
+                                'assets/images/my-11134258-820lh-mf2fi3npb2tn0f.webp',
+                                width: double.infinity,
+                                height: 120,
+                                fit: BoxFit.cover,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                SmoothPageIndicator(
+                  controller: _pageController,
+                  count: 3,
+                  effect: WormEffect(
+                    dotHeight: 8,
+                    dotWidth: 8,
+                    activeDotColor: const Color(0xFFFFDB5B),
+                    dotColor: Colors.grey.shade300,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
           Row(
             children: [
               Expanded(
                 child: _TabButton(
                   label: 'TASKER',
-                  isSelected: isTaskerMode,
-                  onTap: () => onToggle(true),
+                  isSelected: widget.isTaskerMode,
+                  onTap: () => widget.onToggle(true),
                 ),
               ),
               Expanded(
                 child: _TabButton(
                   label: 'POSTER',
-                  isSelected: !isTaskerMode,
-                  onTap: () => onToggle(false),
+                  isSelected: !widget.isTaskerMode,
+                  onTap: () => widget.onToggle(false),
                 ),
               ),
             ],
