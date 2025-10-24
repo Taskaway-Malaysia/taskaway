@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:taskaway/features/auth/controllers/auth_controller.dart';
 import 'package:taskaway/features/auth/screens/change_password_screen.dart';
 import 'package:taskaway/features/auth/screens/change_password_success_screen.dart';
@@ -14,7 +15,9 @@ import 'package:taskaway/core/providers/deep_link_provider.dart';
 import 'package:taskaway/core/providers/router_refresh_notifier.dart';
 import 'dart:developer' as dev; // For logging
 import '../features/splash/screens/splash_screen.dart';
+import '../features/landing/screens/landing_screen.dart';
 import '../features/auth/screens/auth_screen.dart';
+import '../features/auth/screens/login_screen.dart';
 import '../features/auth/screens/create_account_screen.dart';
 import '../features/auth/screens/otp_verification_screen.dart';
 import '../features/auth/screens/create_profile_screen.dart';
@@ -22,16 +25,18 @@ import '../features/auth/screens/signup_success_screen.dart';
 import '../features/home/screens/home_screen.dart';
 import '../features/tasks/screens/my_task_screen.dart';
 import '../features/tasks/screens/create_task_screen.dart';
-import '../features/tasks/screens/task_details_screen.dart';
+import '../features/tasks/screens/create_task_single_page_screen.dart';
+import '../features/tasks/screens/task_details_screen_new.dart';
 import '../features/tasks/screens/apply_task_screen.dart';
 import '../features/tasks/screens/offer_accepted_success_screen.dart';
-import '../features/payments/screens/payment_completion_screen.dart';
-import '../features/payments/screens/payment_authorization_screen.dart';
+import '../features/tasks/screens/map_location_picker_screen.dart';
+import '../features/tasks/screens/waiting_for_tasker_screen.dart';
 import '../features/payments/screens/payment_success_screen.dart';
-import '../features/payments/screens/payment_method_selection_screen.dart';
-import '../features/payments/screens/fpx_bank_selection_screen.dart';
-import '../features/payments/screens/grabpay_payment_screen.dart';
-import '../features/payments/screens/payment_return_handler.dart';
+import '../features/payments/screens/chip_payment_screen.dart';
+import '../features/payments/screens/chip_success_screen.dart';
+import '../features/tasks/screens/find_tasker_map_screen.dart';
+import '../features/tasks/screens/tasker_details_screen.dart';
+import '../features/home/screens/activity_screen.dart';
 import '../features/notifications/screens/notifications_screen.dart';
 import '../features/admin/screens/admin_tools_screen.dart';
 import '../core/services/analytics_service.dart';
@@ -53,26 +58,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     redirect: (BuildContext context, GoRouterState state) async {
       final String location = state.uri.toString(); // Use full URI
       
-      // Handle web payment returns where Stripe puts parameters before the hash
-      // Example: http://localhost:56844/?payment_intent=pi_xxx#/payment-return
-      if (kIsWeb && state.uri.queryParameters.containsKey('payment_intent') && 
-          state.uri.queryParameters.containsKey('redirect_status')) {
-        print('GoRouter Redirect: Detected Stripe payment return parameters on web');
-        final paymentIntent = state.uri.queryParameters['payment_intent'];
-        final redirectStatus = state.uri.queryParameters['redirect_status'];
-        final clientSecret = state.uri.queryParameters['payment_intent_client_secret'];
-        
-        // Build the proper payment-return path with parameters
-        final queryParams = <String, String>{};
-        if (paymentIntent != null) queryParams['payment_intent'] = paymentIntent;
-        if (redirectStatus != null) queryParams['redirect_status'] = redirectStatus;
-        if (clientSecret != null) queryParams['payment_intent_client_secret'] = clientSecret;
-        
-        final queryString = Uri(queryParameters: queryParams).query;
-        final redirectPath = '/payment-return?$queryString';
-        print('GoRouter Redirect: Redirecting to $redirectPath');
-        return redirectPath;
-      }
+      // CHIPP payment returns are handled via deep links (taskaway://payment-return)
+      // No special redirect handling needed for web
       
       // Handle taskaway:// deep links that come directly (mobile)
       if (location.startsWith('taskaway://payment-return')) {
@@ -109,6 +96,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // Base public routes accessible to anyone, including guests if not specifically redirected elsewhere
       final basePublicRoutes = [
         '/',
+        '/landing',
         '/login',
         '/create-account',
         '/otp-verification',
@@ -218,15 +206,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             !profileEditingRoutes.contains(location) &&
             location != '/guest-prompt') {
           print(
-              'GoRouter Redirect: Not logged in (and not guest), trying to access $location. Redirecting to /login.');
-          return '/login';
+              'GoRouter Redirect: Not logged in (and not guest), trying to access $location. Redirecting to /landing.');
+          return '/landing';
         }
 
-        // If not logged in but trying to access profile editing routes, redirect to login
+        // If not logged in but trying to access profile editing routes, redirect to landing
         if (profileEditingRoutes.contains(location)) {
           print(
-              'GoRouter Redirect: Not logged in, trying to access profile editing route $location. Redirecting to /login.');
-          return '/login';
+              'GoRouter Redirect: Not logged in, trying to access profile editing route $location. Redirecting to /landing.');
+          return '/landing';
         }
       }
       print('GoRouter Redirect: No redirect needed for $location.');
@@ -247,6 +235,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
         routes: [
           GoRoute(
+            path: '/landing',
+            name: 'landing',
+            builder: (context, state) => const LandingScreen(),
+          ),
+          GoRoute(
             path: '/guest-prompt',
             name: 'guest-prompt',
             builder: (context, state) => const GuestPromptOverlay(),
@@ -254,7 +247,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/login',
             name: 'login',
-            builder: (context, state) => const AuthScreen(),
+            builder: (context, state) => const LoginScreen(),
           ),
           GoRoute(
             path: '/create-account',
@@ -306,26 +299,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const OnboardingScreen(),
           ),
           GoRoute(
-            path: '/payment/authorize',
-            name: 'payment-authorize',
-            builder: (context, state) {
-              final extra = (state.extra as Map?) ?? {};
-              return PaymentAuthorizationScreen(
-                paymentId: extra['paymentId'] as String,
-                clientSecret: extra['clientSecret'] as String,
-                amount: (extra['amount'] as num).toDouble(),
-                taskTitle: extra['taskTitle'] as String,
-                paymentType: extra['paymentType'] as String? ?? 'task_completion',
-                applicationId: extra['applicationId'] as String?,
-                taskId: extra['taskId'] as String?,
-                taskerId: extra['taskerId'] as String?,
-                offerPrice: extra['offerPrice'] != null 
-                  ? (extra['offerPrice'] as num).toDouble() 
-                  : null,
-              );
-            },
-          ),
-          GoRoute(
             path: '/payment/success',
             name: 'payment-success',
             builder: (context, state) {
@@ -336,92 +309,43 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               );
             },
           ),
+          // CHIP payment success - must be before wildcard /payment/:id
           GoRoute(
-            path: '/payment/method-selection',
-            name: 'payment-method-selection',
+            path: '/payment/chip-success',
+            name: 'chip-success',
             builder: (context, state) {
-              final extra = (state.extra as Map?) ?? {};
-              return PaymentMethodSelectionScreen(
-                paymentId: extra['paymentId'] as String,
-                clientSecret: extra['clientSecret'] as String,
-                amount: (extra['amount'] as num).toDouble(),
+              final extra = state.extra as Map<String, dynamic>;
+              return ChipSuccessScreen(
+                taskId: extra['taskId'] as String,
+                amount: extra['amount'] as double,
                 taskTitle: extra['taskTitle'] as String,
-                paymentType: extra['paymentType'] as String? ?? 'task_completion',
-                applicationId: extra['applicationId'] as String?,
-                taskId: extra['taskId'] as String?,
-                taskerId: extra['taskerId'] as String?,
-                offerPrice: extra['offerPrice'] != null 
-                  ? (extra['offerPrice'] as num).toDouble() 
-                  : null,
+                paymentType: extra['paymentType'] as String?,
               );
             },
           ),
+          // Find tasker map screen
           GoRoute(
-            path: '/payment/fpx-banks',
-            name: 'payment-fpx-banks',
+            path: '/tasks/:taskId/find-tasker',
+            name: 'find-tasker',
             builder: (context, state) {
-              final extra = (state.extra as Map?) ?? {};
-              return FPXBankSelectionScreen(
-                paymentId: extra['paymentId'] as String,
-                amount: (extra['amount'] as num).toDouble(),
-                taskTitle: extra['taskTitle'] as String,
-                paymentType: extra['paymentType'] as String? ?? 'task_completion',
-                applicationId: extra['applicationId'] as String?,
-                taskId: extra['taskId'] as String?,
-                taskerId: extra['taskerId'] as String?,
-                offerPrice: extra['offerPrice'] != null 
-                  ? (extra['offerPrice'] as num).toDouble() 
-                  : null,
-              );
+              final taskId = state.pathParameters['taskId']!;
+              return FindTaskerMapScreen(taskId: taskId);
             },
           ),
+          // Tasker details screen
           GoRoute(
-            path: '/payment/grabpay',
-            name: 'payment-grabpay',
+            path: '/tasks/:taskId/tasker/:taskerId',
+            name: 'tasker-details',
             builder: (context, state) {
-              final extra = (state.extra as Map?) ?? {};
-              return GrabPayPaymentScreen(
-                paymentId: extra['paymentId'] as String,
-                amount: (extra['amount'] as num).toDouble(),
-                taskTitle: extra['taskTitle'] as String,
-                paymentType: extra['paymentType'] as String? ?? 'task_completion',
-                applicationId: extra['applicationId'] as String?,
-                taskId: extra['taskId'] as String?,
-                taskerId: extra['taskerId'] as String?,
-                offerPrice: extra['offerPrice'] != null 
-                  ? (extra['offerPrice'] as num).toDouble() 
-                  : null,
+              final taskId = state.pathParameters['taskId']!;
+              final taskerId = state.pathParameters['taskerId']!;
+              return TaskerDetailsScreen(
+                taskId: taskId,
+                taskerId: taskerId,
               );
             },
           ),
-          GoRoute(
-            path: '/payment/:id',
-            name: 'payment-callback',
-            builder: (context, state) {
-              final paymentId = state.pathParameters['id']!;
-              final queryParams =
-                  Map<String, String>.from(state.uri.queryParameters);
-              return PaymentCompletionScreen(
-                paymentId: paymentId,
-                billplzParams: queryParams,
-              );
-            },
-          ),
-          GoRoute(
-            path: '/payment-return',
-            name: 'payment-return',
-            builder: (context, state) {
-              // Extract Stripe redirect parameters
-              final paymentIntent = state.uri.queryParameters['payment_intent'];
-              final redirectStatus = state.uri.queryParameters['redirect_status'];
-              
-              // Use our PaymentReturnHandler to process the return
-              return PaymentReturnHandler(
-                paymentIntent: paymentIntent,
-                redirectStatus: redirectStatus,
-              );
-            },
-          ),
+          // Payment callback routes removed - using CHIPP payment flow with deep links instead
           GoRoute(
             path: '/admin-tools',
             name: 'admin-tools',
@@ -443,7 +367,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                   GoRoute(
                     path: ':id',
                     name: 'task-details',
-                    builder: (context, state) => TaskDetailsScreen(
+                    builder: (context, state) => TaskDetailsScreenNew(
                       taskId: state.pathParameters['id']!,
                     ),
                     routes: [
@@ -473,6 +397,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 ],
               ),
               GoRoute(
+                path: '/home/activity',
+                name: 'activity',
+                builder: (context, state) => const ActivityScreen(),
+              ),
+              GoRoute(
                 path: '/home/tasks',
                 name: 'tasks',
                 builder: (context, state) => const MyTaskScreen(),
@@ -480,7 +409,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                   GoRoute(
                     path: ':id',
                     name: 'task-details-from-tasks',
-                    builder: (context, state) => TaskDetailsScreen(
+                    builder: (context, state) => TaskDetailsScreenNew(
                       taskId: state.pathParameters['id']!,
                     ),
                     routes: [
@@ -498,7 +427,50 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/create-task',
                 name: 'create-task',
-                builder: (context, state) => const CreateTaskScreen(),
+                builder: (context, state) => const CreateTaskSinglePageScreen(),
+              ),
+              GoRoute(
+                path: '/map-picker',
+                name: 'map-picker',
+                builder: (context, state) {
+                  final initialLocation = state.extra as LatLng?;
+                  return MapLocationPickerScreen(
+                    initialLocation: initialLocation,
+                  );
+                },
+              ),
+              GoRoute(
+                path: '/waiting-for-tasker/:taskId',
+                name: 'waiting-for-tasker',
+                builder: (context, state) {
+                  final taskId = state.pathParameters['taskId']!;
+                  return WaitingForTaskerScreen(taskId: taskId);
+                },
+              ),
+              GoRoute(
+                path: '/chip-payment',
+                name: 'chip-payment',
+                builder: (context, state) {
+                  if (state.extra == null) {
+                    return Scaffold(
+                      appBar: AppBar(title: const Text('Error')),
+                      body: const Center(
+                        child: Text('Missing payment data. Please try again.'),
+                      ),
+                    );
+                  }
+                  final extra = state.extra as Map<String, dynamic>;
+                  return ChipPaymentScreen(
+                    checkoutUrl: extra['checkoutUrl'] as String,
+                    taskId: extra['taskId'] as String,
+                    amount: extra['amount'] as double,
+                    taskTitle: extra['taskTitle'] as String,
+                    paymentType: extra['paymentType'] as String?,
+                    applicationId: extra['applicationId'] as String?,
+                    taskerId: extra['taskerId'] as String?,
+                    chipPaymentId: extra['chipPaymentId'] as String?,
+                  );
+                },
               ),
               ...ProfileRouter.routes,
               ...ChatRouter.routes,

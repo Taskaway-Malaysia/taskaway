@@ -66,6 +66,35 @@ final profileProvider = StreamProvider.family.autoDispose<Profile?, String>((ref
   }
 });
 
+/// Provider to fetch user's auth metadata including last sign-in time
+final userAuthMetadataProvider = FutureProvider.family<Map<String, dynamic>?, String>((ref, userId) async {
+  if (userId.isEmpty) {
+    return null;
+  }
+
+  try {
+    // Query the auth.users table through a Supabase function or RPC call
+    // Note: Direct access to auth.users requires admin privileges
+    // We'll try to get the user's metadata from the authenticated user if it's the current user
+    final currentUser = ref.read(currentUserProvider);
+    if (currentUser != null && currentUser.id == userId) {
+      // For current user, we can access their metadata directly
+      return {
+        'last_sign_in_at': currentUser.lastSignInAt,
+        'created_at': currentUser.createdAt,
+        'email': currentUser.email,
+      };
+    }
+
+    // For other users, we'll need to fetch from profiles or use an RPC function
+    // For now, we'll return null and can enhance this with an Edge Function later
+    return null;
+  } catch (e) {
+    print('Error fetching user auth metadata for userId: $userId - Error: $e');
+    return null;
+  }
+});
+
 class AuthController extends StateNotifier<bool> {
   final SupabaseClient supabase;
   final AnalyticsService analytics;
@@ -126,13 +155,22 @@ class AuthController extends StateNotifier<bool> {
         email: email,
         password: password,
       );
-      
-      // Log analytics event
+
+      // Log analytics event and update last sign-in time
       if (response.user != null) {
         await analytics.logLogin(loginMethod: 'email');
         await analytics.setUserId(response.user!.id);
+
+        // Update profile with last sign-in time
+        try {
+          await supabase.from('taskaway_profiles').update({
+            'last_sign_in_at': DateTime.now().toIso8601String(),
+          }).eq('id', response.user!.id);
+        } catch (e) {
+          print('Failed to update last_sign_in_at: $e');
+        }
       }
-      
+
       return response;
     } finally {
       state = false;

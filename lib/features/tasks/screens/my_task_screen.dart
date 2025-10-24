@@ -10,7 +10,14 @@ import 'package:taskaway/features/tasks/models/task.dart';
 import 'package:taskaway/features/applications/repositories/application_repository.dart';
 import 'package:taskaway/features/applications/models/application.dart';
 import 'package:taskaway/features/tasks/repositories/task_repository.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_radius.dart';
 import 'dart:developer' as dev;
+
+// Provider for managing the role filter state (UI-only, not stored in profile)
+final roleFilterProvider = StateProvider<String>((ref) => 'As Poster');
 
 // Provider for managing the status filter state
 final statusProvider = StateProvider<String>((ref) => 'Upcoming tasks');
@@ -52,52 +59,92 @@ final tasksWithUserApplicationsProvider =
 });
 
 // Provider to get tasks where user is the assigned tasker (for accepted/in-progress tasks)
-final taskerAssignedTasksProvider = 
+final taskerAssignedTasksProvider =
     FutureProvider.autoDispose<List<Task>>((ref) async {
   final currentUser = ref.watch(currentUserProvider);
-  
+
   print('taskerAssignedTasksProvider called');
   print('currentUser: ${currentUser?.id}');
-  
+
   if (currentUser == null) {
     print('currentUser is null, returning empty list');
     return [];
   }
-  
+
   // Fetch all tasks where the user is the assigned tasker
   final taskRepo = ref.read(taskRepositoryProvider);
   final allTasks = await taskRepo.getTasks();
-  
+
   // Filter for tasks where user is the tasker
-  final taskerTasks = allTasks.where((task) => 
+  final taskerTasks = allTasks.where((task) =>
     task.taskerId == currentUser.id &&
     ['accepted', 'in_progress', 'pending_approval'].contains(task.status.toLowerCase())
   ).toList();
-  
+
   print('Found ${taskerTasks.length} assigned tasks for tasker');
   for (var task in taskerTasks) {
     print('  - ${task.title}: ${task.status}');
   }
-  
+
   return taskerTasks;
 });
 
-// Provider to filter tasks based on the current profile's role and status filter
+// Provider to get ALL tasks posted by the current user (for poster's "My Tasks" view)
+// Returns tasks with ALL statuses: open, accepted, in_progress, pending_approval, completed, cancelled
+// Now using StreamProvider for real-time updates
+final myPostedTasksProvider =
+    StreamProvider.autoDispose<List<Task>>((ref) {
+  final currentUser = ref.watch(currentUserProvider);
+
+  print('[MyPostedTasks] Provider called');
+  print('[MyPostedTasks] Current user: ${currentUser?.id}');
+
+  if (currentUser == null) {
+    print('[MyPostedTasks] No current user, returning empty stream');
+    return Stream.value([]);
+  }
+
+  // Watch ALL tasks posted by this user with real-time updates
+  final taskRepo = ref.read(taskRepositoryProvider);
+  return taskRepo.watchMyPostedTasks(currentUser.id).map((myTasks) {
+    print('[MyPostedTasks] Real-time update: Found ${myTasks.length} tasks posted by user');
+    for (var task in myTasks) {
+      print('[MyPostedTasks] - Task: ${task.title}, Status: ${task.status}');
+    }
+    return myTasks;
+  });
+});
+
+// Provider to filter tasks based on the current role filter and status filter
 final selectedTasksProvider = Provider.autoDispose<AsyncValue<List<Task>>>((ref) {
   final tasksAsync = ref.watch(taskStreamProvider);
   final status = ref.watch(statusProvider);
-  final profileAsync = ref.watch(currentProfileProvider);
+  final role = ref.watch(roleFilterProvider); // Use UI filter instead of profile.role
+  final currentUser = ref.watch(currentUserProvider);
 
-  return profileAsync.when(
-    data: (profile) {
-      final currentUser = ref.watch(currentUserProvider);
-      if (currentUser == null || profile == null) {
-        return const AsyncValue.loading();
-      }
+  if (currentUser == null) {
+    return const AsyncValue.loading();
+  }
 
-      final role = profile.role == 'tasker' ? 'As Tasker' : 'As Poster';
+      if (role == 'As Poster') {
+        // For posters, use dedicated provider that fetches ALL posted tasks (all statuses)
+        return ref.watch(myPostedTasksProvider).when(
+          data: (tasks) {
+            // Filter by status
+            final filteredTasks = tasks.where((task) {
+              final mappedStatus = _mapTaskStatusToUiStatus(task.status);
+              return mappedStatus == status;
+            }).toList();
 
-      if (role == 'As Tasker' && status == 'Awaiting offers') {
+            print('[MyTaskScreen] Poster view - Total posted tasks: ${tasks.length}');
+            print('[MyTaskScreen] Poster view - Filtered by "$status": ${filteredTasks.length}');
+
+            return AsyncValue.data(filteredTasks);
+          },
+          loading: () => const AsyncValue.loading(),
+          error: (err, stack) => AsyncValue.error(err, stack),
+        );
+      } else if (role == 'As Tasker' && status == 'Awaiting offers') {
         // For taskers viewing "Awaiting offers", show tasks they have applied to
         return ref.watch(tasksWithUserApplicationsProvider).when(
           data: (tasks) => AsyncValue.data(tasks),
@@ -121,7 +168,7 @@ final selectedTasksProvider = Provider.autoDispose<AsyncValue<List<Task>>>((ref)
           },
         );
       } else {
-        // Original logic for other cases
+        // Fallback logic for other cases
         return tasksAsync.whenData((tasks) {
           // Debug logging
           print('[MyTaskScreen] Total tasks available: ${tasks.length}');
@@ -157,10 +204,6 @@ final selectedTasksProvider = Provider.autoDispose<AsyncValue<List<Task>>>((ref)
           }).toList();
         });
       }
-    },
-    loading: () => const AsyncValue.loading(),
-    error: (err, stack) => AsyncValue.error(err, stack),
-  );
 });
 
 // Helper to map database status to UI filter category
@@ -186,6 +229,7 @@ class MyTaskScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final profileAsync = ref.watch(currentProfileProvider);
+    final currentRoleFilter = ref.watch(roleFilterProvider);
 
     return profileAsync.when(
       data: (profile) {
@@ -195,15 +239,22 @@ class MyTaskScreen extends ConsumerWidget {
           );
         }
 
-        final primaryColor = profile.role == 'tasker' ? const Color(0xFFF39C12) : const Color(0xFF7B61FF);
+        // Derive color from UI role filter, not from profile.role
+        final primaryColor = currentRoleFilter == 'As Tasker' ? const Color(0xFFF39C12) : const Color(0xFF7B61FF);
 
         return Scaffold(
-          backgroundColor: Colors.white,
+          backgroundColor: AppColors.white,
           appBar: AppBar(
-            title: Text('My Tasks', style: TextStyle(fontWeight: FontWeight.bold, color: primaryColor)),
+            title: Text(
+              'My Tasks',
+              style: AppTypography.headlineMedium.copyWith(
+                fontWeight: AppTypography.bold,
+                color: primaryColor,
+              ),
+            ),
             centerTitle: true,
             elevation: 0,
-            backgroundColor: Colors.white,
+            backgroundColor: AppColors.white,
             iconTheme: IconThemeData(color: primaryColor),
             actions: [
               IconButton(
@@ -216,29 +267,43 @@ class MyTaskScreen extends ConsumerWidget {
           ),
           body: Column(
             children: [
-              _buildRoleFilter(context, ref, profile, primaryColor),
-              const SizedBox(height: 16),
+              _buildRoleFilter(context, ref, primaryColor),
+              SizedBox(height: AppSpacing.lg),
               _buildStatusFilter(context, ref, primaryColor),
-              const SizedBox(height: 16),
+              SizedBox(height: AppSpacing.lg),
               Expanded(
                 child: ref.watch(selectedTasksProvider).when(
                       data: (tasks) {
                         if (tasks.isEmpty) {
-                          return const Center(child: Text('No tasks for this category.'));
+                          return Center(
+                            child: Text(
+                              'No tasks for this category.',
+                              style: AppTypography.bodyLarge.copyWith(
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          );
                         }
                         return ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                           itemCount: tasks.length,
                           itemBuilder: (context, index) {
                             return Padding(
-                              padding: const EdgeInsets.only(bottom: 16.0),
+                              padding: EdgeInsets.only(bottom: AppSpacing.lg),
                               child: TaskCardWithMessage(task: tasks[index]),
                             );
                           },
                         );
                       },
                       loading: () => const Center(child: CircularProgressIndicator()),
-                      error: (error, stack) => Center(child: Text('Error: $error')),
+                      error: (error, stack) => Center(
+                        child: Text(
+                          'Error: $error',
+                          style: AppTypography.bodyLarge.copyWith(
+                            color: AppColors.error,
+                          ),
+                        ),
+                      ),
                     ),
               ),
             ],
@@ -250,10 +315,8 @@ class MyTaskScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildRoleFilter(BuildContext context, WidgetRef ref, Profile profile, Color primaryColor) {
-    final profileController = ref.read(profileControllerProvider);
-    final currentUser = ref.watch(currentUserProvider);
-    final currentRole = profile.role == 'tasker' ? 'As Tasker' : 'As Poster';
+  Widget _buildRoleFilter(BuildContext context, WidgetRef ref, Color primaryColor) {
+    final currentRole = ref.watch(roleFilterProvider);
     final roles = ['As Poster', 'As Tasker'];
 
     return Container(
@@ -261,7 +324,7 @@ class MyTaskScreen extends ConsumerWidget {
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: Colors.grey[200],
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: AppRadius.mdLg,
       ),
       child: Row(
         children: roles.map((role) {
@@ -269,25 +332,21 @@ class MyTaskScreen extends ConsumerWidget {
           return Expanded(
             child: GestureDetector(
               onTap: () {
-                if (currentUser != null) {
-                  profileController.updateUserRole(
-                    userId: currentUser.id,
-                    role: role,
-                  );
-                }
+                // Update UI-only role filter state
+                ref.read(roleFilterProvider.notifier).state = role;
               },
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 decoration: BoxDecoration(
                   color: isSelected ? primaryColor : Colors.transparent,
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: AppRadius.md,
                 ),
                 child: Center(
                   child: Text(
                     role,
-                    style: TextStyle(
-                      color: isSelected ? Colors.white : Colors.black,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    style: AppTypography.labelLarge.copyWith(
+                      color: isSelected ? AppColors.white : AppColors.textPrimary,
+                      fontWeight: isSelected ? AppTypography.semiBold : AppTypography.regular,
                     ),
                   ),
                 ),
@@ -308,7 +367,7 @@ class MyTaskScreen extends ConsumerWidget {
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: Colors.grey[200],
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: AppRadius.mdLg,
       ),
       child: Row(
         children: statuses.map((status) {
@@ -320,15 +379,14 @@ class MyTaskScreen extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 decoration: BoxDecoration(
                   color: isSelected ? primaryColor : Colors.transparent,
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: AppRadius.md,
                 ),
                 child: Center(
                   child: Text(
                     status,
-                    style: TextStyle(
-                      color: isSelected ? Colors.white : Colors.grey[600],
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                      fontSize: 12,
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: isSelected ? AppColors.white : AppColors.textSecondary,
+                      fontWeight: isSelected ? AppTypography.semiBold : AppTypography.regular,
                     ),
                   ),
                 ),

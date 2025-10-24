@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'payment_history_screen.dart';
 import 'payment_methods_screen.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 
 class PaymentOptionsScreen extends StatelessWidget {
   const PaymentOptionsScreen({super.key});
@@ -15,12 +18,12 @@ class PaymentOptionsScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.fromLTRB(16, 48, 16, 16),
             decoration: const BoxDecoration(
-              color: Color(0xFF6C5CE7), // Purple color
+              color: AppColors.posterPrimary, // Purple color
             ),
             child: Row(
               children: [
                 IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Colors.white),
+                  icon: Icon(Icons.arrow_back_ios, color: AppColors.white),
                   onPressed: () {
                     if (context.canPop()) {
                       context.pop();
@@ -30,13 +33,9 @@ class PaymentOptionsScreen extends StatelessWidget {
                   },
                 ),
                 const Spacer(),
-                const Text(
+                Text(
                   'Payment options',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: AppTypography.headlineSmall.copyWith(color: AppColors.white),
                 ),
                 const Spacer(),
                 const SizedBox(width: 48), // Balance the back button
@@ -47,10 +46,10 @@ class PaymentOptionsScreen extends StatelessWidget {
           // Content area
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(AppSpacing.lg),
               child: Column(
                 children: [
-                  const SizedBox(height: 24),
+                  SizedBox(height: AppSpacing.xxl),
                   
                   // Payment history option
                   _buildMenuItem(
@@ -65,7 +64,7 @@ class PaymentOptionsScreen extends StatelessWidget {
                     },
                   ),
                   
-                  const SizedBox(height: 16),
+                  SizedBox(height: AppSpacing.lg),
                   
                   // Update payment method option
                   _buildMenuItem(
@@ -103,7 +102,7 @@ class PaymentOptionsScreen extends StatelessWidget {
                 title,
                 style: const TextStyle(
                   fontSize: 16,
-                  color: Colors.black87,
+                  color: AppColors.textPrimary,
                 ),
               ),
             ),

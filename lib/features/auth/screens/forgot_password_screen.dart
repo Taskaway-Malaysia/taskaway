@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:taskaway/core/constants/style_constants.dart';
 import 'package:taskaway/features/auth/controllers/auth_controller.dart';
-import 'package:taskaway/core/widgets/qwerty_overlay.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_radius.dart';
 
 class ForgotPasswordScreen extends ConsumerStatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -28,7 +30,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     if (_formKey.currentState?.validate() ?? false) {
       setState(() => _isLoading = true);
       final authController = ref.read(authControllerProvider.notifier);
-      
+
       try {
         await authController.sendPasswordResetEmail(_emailController.text.trim());
         if (mounted) {
@@ -57,111 +59,208 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.white,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => context.pop(),
+          icon: const Icon(Icons.arrow_back_ios, color: AppColors.textPrimary),
+          onPressed: () => context.go('/login'),
         ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+            padding: const EdgeInsets.symmetric(horizontal: 33),
             child: Form(
               key: _formKey,
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 40),
+                  SizedBox(height: AppSpacing.huge),
+
+                  // Title
                   Text(
                     'Forgot Password?',
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF202020),
+                      letterSpacing: 0.24,
+                    ),
                   ),
-                  const SizedBox(height: 12),
+
+                  SizedBox(height: AppSpacing.md),
+
+                  // Subtitle
                   Text(
                     'No worries, we\'ve got you covered.',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: Colors.black54,
-                        ),
-                  ),
-                  const SizedBox(height: 40),
-                  TextFormField(
-                    controller: _emailController,
-                      readOnly: true,
-                      onTap: () {
-                        showModalBottomSheet(
-                          context: context,
-                          isScrollControlled: true,
-                          backgroundColor: Colors.transparent,
-                          builder: (context) => QwertyOverlay(
-                            previewController: _emailController,
-                            onCharacterPressed: (char) {
-                              _emailController.text += char;
-                            },
-                            onBackspacePressed: () {
-                              if (_emailController.text.isNotEmpty) {
-                                _emailController.text = _emailController.text
-                                    .substring(0, _emailController.text.length - 1);
-                              }
-                            },
-                            onConfirmPressed: () {
-                              Navigator.pop(context); // Close the overlay
-                            },
-                            confirmButtonText: 'Done',
-                          ),
-                        );
-                      },
-                    decoration: const InputDecoration(
-                      labelText: 'Email',
-                      prefixIcon: Icon(Icons.email_outlined),
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      color: Color(0xFF717680),
+                      letterSpacing: 0.14,
                     ),
-                    keyboardType: TextInputType.emailAddress,
-                    validator: (value) {
-                      if (value == null || value.isEmpty || !value.contains('@')) {
-                        return 'Please enter a valid email';
-                      }
-                      return null;
-                    },
                   ),
-                  const SizedBox(height: 16),
+
+                  SizedBox(height: AppSpacing.huge),
+
+                  // Email field
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Email',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: Color(0xFF414651),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      TextFormField(
+                        controller: _emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        style: AppTypography.labelMedium,
+                        decoration: InputDecoration(
+                          hintText: 'Enter your email...',
+                          hintStyle: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: Color(0xFF717680),
+                          ),
+                          prefixIcon: const Icon(
+                            Icons.mail_outline,
+                            color: Color(0xFFA4A7AE),
+                            size: 20,
+                          ),
+                          filled: true,
+                          fillColor: AppColors.white,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 10,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: AppRadius.smMd,
+                            borderSide: const BorderSide(
+                              color: Color(0xFFE4E4E4),
+                              width: 1,
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: AppRadius.smMd,
+                            borderSide: const BorderSide(
+                              color: Color(0xFFE4E4E4),
+                              width: 1,
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: AppRadius.smMd,
+                            borderSide: const BorderSide(
+                              color: Color(0xFFFFC333),
+                              width: 1,
+                            ),
+                          ),
+                          errorBorder: OutlineInputBorder(
+                            borderRadius: AppRadius.smMd,
+                            borderSide: const BorderSide(
+                              color: Colors.red,
+                              width: 1,
+                            ),
+                          ),
+                          focusedErrorBorder: OutlineInputBorder(
+                            borderRadius: AppRadius.smMd,
+                            borderSide: const BorderSide(
+                              color: Colors.red,
+                              width: 1,
+                            ),
+                          ),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter your email';
+                          }
+                          if (!value.contains('@')) {
+                            return 'Please enter a valid email';
+                          }
+                          return null;
+                        },
+                      ),
+                    ],
+                  ),
+
+                  SizedBox(height: AppSpacing.lg),
+
+                  // Info text
                   Text(
                     'We will send you a code to reset your password. If you have any issues, contact admin@taskawayasia.com',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.black54,
-                        ),
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                      color: Color(0xFF717680),
+                      letterSpacing: 0.12,
+                    ),
                   ),
+
                   const SizedBox(height: 350),
-                  ElevatedButton(
-                    onPressed: _isLoading ? null : _sendResetLink,
-                    child: _isLoading
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
+
+                  // Confirm button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton(
+                      onPressed: _isLoading ? null : _sendResetLink,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFFFDB5B),
+                        foregroundColor: Colors.black,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: AppRadius.smMd,
+                          side: const BorderSide(
+                            color: Color(0xFFFFC333),
+                            width: 1,
+                          ),
+                        ),
+                      ),
+                      child: _isLoading
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                color: AppColors.textPrimary,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : Text(
+                              'Confirm',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.14,
+                              ),
                             ),
-                          )
-                        : const Text('Confirm'),
+                    ),
                   ),
-                  const SizedBox(height: 24),
+
+                  SizedBox(height: AppSpacing.xxl),
+
+                  // Back to login link
                   Center(
-                    child: TextButton(
-                      onPressed: () => context.pop(),
-                      child: const Text(
+                    child: GestureDetector(
+                      onTap: () => context.go('/login'),
+                      child: Text(
                         'Back to login',
                         style: TextStyle(
-                          color: StyleConstants.taskerColorPrimary,
-                          fontWeight: FontWeight.w500,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
+                          color: Color(0xFFFFC333),
+                          decoration: TextDecoration.underline,
                         ),
                       ),
                     ),
                   ),
+
+                  const SizedBox(height: 50),
                 ],
               ),
             ),

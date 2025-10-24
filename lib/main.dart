@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter_stripe/flutter_stripe.dart';
 import 'firebase_options.dart';
 // Only import web plugins when needed
 import 'core/constants/api_constants.dart';
@@ -33,38 +32,9 @@ void main() async {
     );
     // ignore: avoid_print
     print('[MAIN] Firebase initialized successfully');
-    
-    // Initialize Stripe (only if not in mock mode and not on unsupported platforms)
-    if (!ApiConstants.mockPayments) {
-      try {
-        // Set publishable key for both web and mobile
-        Stripe.publishableKey = ApiConstants.stripePublishableKey;
-        
-        // ignore: avoid_print
-        print('[MAIN] Stripe publishable key set: ${ApiConstants.stripePublishableKey.substring(0, 20)}...');
-        
-        // Apply Stripe settings for all platforms
-        // The applySettings method initializes the Stripe SDK
-        await Stripe.instance.applySettings();
-        
-        // ignore: avoid_print
-        print('[MAIN] Stripe settings applied for ${kIsWeb ? 'web' : 'mobile'}');
-        
-        // Verify initialization
-        // ignore: avoid_print
-        print('[MAIN] Stripe initialized successfully for ${kIsWeb ? 'web' : 'mobile'}');
-        print('[MAIN] Stripe instance: ${Stripe.instance}');
-      } catch (e, stack) {
-        // ignore: avoid_print
-        print('[MAIN] Stripe initialization error: $e');
-        print('[MAIN] Stack trace: $stack');
-        // Don't rethrow - let the app continue but log the error
-      }
-    } else {
-      // ignore: avoid_print
-      print('[MAIN] Stripe initialization skipped (mock mode enabled)');
-    }
-    
+
+    // Stripe removed - using CHIPP Gateway for payments
+
     // Initialize Supabase
     // ignore: avoid_print
     print('[MAIN] Initializing Supabase with URL: ${ApiConstants.supabaseUrl}');

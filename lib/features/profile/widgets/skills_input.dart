@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/app_radius.dart';
 
 class SkillsInput extends StatefulWidget {
   final List<String> initialSkills;
@@ -68,15 +71,15 @@ class _SkillsInputState extends State<SkillsInput> {
                     color: widget.enabled ? Colors.grey.shade500 : Colors.grey.shade400,
                   ),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: AppRadius.md,
                     borderSide: BorderSide(color: Colors.grey.shade400),
                   ),
                   focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Color(0xFF6C5CE7)),
+                    borderRadius: AppRadius.md,
+                    borderSide: BorderSide(color: AppColors.posterPrimary),
                   ),
                   disabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: AppRadius.md,
                     borderSide: BorderSide(color: Colors.grey.shade300),
                   ),
                   contentPadding: const EdgeInsets.symmetric(
@@ -104,14 +107,14 @@ class _SkillsInputState extends State<SkillsInput> {
             ElevatedButton(
               onPressed: widget.enabled && _skills.length < 10 ? _addSkill : null,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF6C5CE7),
+                backgroundColor: AppColors.posterPrimary,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: AppRadius.md,
                 ),
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               ),
-              child: const Text('Add'),
+              child: Text('Add'),
             ),
           ],
         ),
@@ -142,7 +145,7 @@ class _SkillsInputState extends State<SkillsInput> {
             padding: const EdgeInsets.symmetric(vertical: 32),
             decoration: BoxDecoration(
               border: Border.all(color: Colors.grey.shade300),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: AppRadius.md,
             ),
             child: Text(
               'No skills added yet',
@@ -162,12 +165,12 @@ class _SkillsInputState extends State<SkillsInput> {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: widget.enabled 
-            ? const Color(0xFF6C5CE7).withValues(alpha: 0.1)
+            ? AppColors.posterPrimary.withValues(alpha: 0.1)
             : Colors.grey.shade200,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: AppRadius.xxl,
         border: Border.all(
           color: widget.enabled 
-              ? const Color(0xFF6C5CE7).withValues(alpha: 0.3)
+              ? AppColors.posterPrimary.withValues(alpha: 0.3)
               : Colors.grey.shade300,
         ),
       ),
@@ -178,7 +181,7 @@ class _SkillsInputState extends State<SkillsInput> {
             skill,
             style: TextStyle(
               color: widget.enabled 
-                  ? const Color(0xFF6C5CE7)
+                  ? AppColors.posterPrimary
                   : Colors.grey.shade600,
               fontWeight: FontWeight.w500,
             ),

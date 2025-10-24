@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:taskaway/core/constants/style_constants.dart';
+import 'package:taskaway/core/theme/app_colors.dart';
 import 'package:taskaway/features/tasks/controllers/task_controller.dart';
 import 'package:taskaway/features/auth/controllers/auth_controller.dart';
+import 'package:taskaway/features/profile/controllers/profile_controller.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_radius.dart';
 
 final offerAmountProvider = StateProvider.autoDispose<double?>((ref) => null);
 final offerMessageProvider = StateProvider.autoDispose<String>((ref) => '');
@@ -40,6 +44,45 @@ class _ApplyTaskScreenState extends ConsumerState<ApplyTaskScreen> {
     });
 
     try {
+      // Check bank verification status first
+      final currentProfileAsync = ref.read(currentProfileProvider);
+      final currentProfile = currentProfileAsync.asData?.value;
+
+      if (currentProfile?.bankVerificationStatus != 'verified') {
+        setState(() {
+          _errorMessage = 'Bank account verification required. Please verify your bank account in your profile settings to submit offers.';
+          _isLoading = false;
+        });
+
+        // Show dialog with navigation option
+        if (mounted) {
+          await showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('Bank Verification Required'),
+              content: const Text(
+                'You must verify your bank account before applying for tasks. '
+                'This ensures you can receive payments safely.',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    context.push('/profile/bank-details');
+                  },
+                  child: const Text('Verify Now'),
+                ),
+              ],
+            ),
+          );
+        }
+        return;
+      }
+
       final taskController = ref.read(taskControllerProvider);
       final currentUser = ref.read(currentUserProvider);
       final offerId = DateTime.now().millisecondsSinceEpoch.toString();
@@ -48,7 +91,7 @@ class _ApplyTaskScreenState extends ConsumerState<ApplyTaskScreen> {
 
       // Get the task to check if the user is the poster
       final task = await taskController.getTaskById(widget.taskId);
-      
+
       // Prevent users from applying to their own tasks
       if (task.posterId == currentUser?.id) {
         setState(() {
@@ -58,10 +101,24 @@ class _ApplyTaskScreenState extends ConsumerState<ApplyTaskScreen> {
         return;
       }
 
+      // Check if user has already submitted an offer
+      final existingApplication = await taskController.checkExistingApplication(
+        widget.taskId,
+        currentUser!.id,
+      );
+
+      if (existingApplication != null) {
+        setState(() {
+          _errorMessage = 'You have already submitted an offer for this task.';
+          _isLoading = false;
+        });
+        return;
+      }
+
       // Create the offer object
       final offer = {
         'id': offerId,
-        'tasker_id': currentUser?.id,
+        'tasker_id': currentUser.id,
         'amount': amount,
         'message': message,
         'status': 'pending',
@@ -96,11 +153,12 @@ class _ApplyTaskScreenState extends ConsumerState<ApplyTaskScreen> {
     final task = ref.watch(taskProvider(widget.taskId));
 
     return Scaffold(
+      backgroundColor: AppColors.backgroundPrimary,
       appBar: AppBar(
-        title: const Text('Apply for Task'),
+        title: Text('Apply for Task'),
         elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: AppColors.backgroundPrimary,
+        foregroundColor: AppColors.textPrimary,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.pop(),
@@ -109,7 +167,7 @@ class _ApplyTaskScreenState extends ConsumerState<ApplyTaskScreen> {
       body: task.when(
         data: (taskData) {
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
+            padding: EdgeInsets.all(AppSpacing.lg),
             child: Form(
               key: _formKey,
               child: Column(
@@ -118,63 +176,119 @@ class _ApplyTaskScreenState extends ConsumerState<ApplyTaskScreen> {
                   // Task title and details
                   Text(
                     taskData.title,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                    style: AppTypography.titleMedium,
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: AppSpacing.sm),
                   Text(
                     'Budget: RM${taskData.budget.toStringAsFixed(2)}',
-                    style: Theme.of(context).textTheme.bodyMedium,
+                    style: AppTypography.bodyMedium.copyWith(color: AppColors.textSecondary),
                   ),
-                  const SizedBox(height: 24),
+                  SizedBox(height: AppSpacing.xxl),
                   
                   // Amount field
                   Text(
-                    'Your Offer Amount (RM)',
-                    style: Theme.of(context).textTheme.titleMedium,
+                    'Your Offer Amount',
+                    style: AppTypography.labelMedium,
                   ),
-                  const SizedBox(height: 8),
-                  TextFormField(
-                    controller: _amountController,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      hintText: 'Enter your offer amount',
-                      prefixText: 'RM ',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                      ),
+                  SizedBox(height: AppSpacing.md),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.backgroundTertiary,
+                      border: Border.all(color: AppColors.borderDefault),
+                      borderRadius: AppRadius.md,
                     ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter an amount';
-                      }
-                      try {
-                        final amount = double.parse(value);
-                        if (amount <= 0) {
-                          return 'Amount must be greater than 0';
-                        }
-                      } catch (e) {
-                        return 'Please enter a valid amount';
-                      }
-                      return null;
-                    },
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          child: Text(
+                            'RM',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: AppColors.textPrimary,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: TextFormField(
+                            controller: _amountController,
+                            keyboardType: TextInputType.number,
+                            style: AppTypography.bodyMedium,
+                            decoration: const InputDecoration(
+                              hintText: 'Enter amount',
+                              hintStyle: TextStyle(
+                                fontSize: 14,
+                                color: AppColors.textTertiary,
+                              ),
+                              filled: true,
+                              fillColor: AppColors.backgroundTertiary,
+                              border: InputBorder.none,
+                              focusedBorder: InputBorder.none,
+                              enabledBorder: InputBorder.none,
+                              errorBorder: InputBorder.none,
+                              focusedErrorBorder: InputBorder.none,
+                              contentPadding: EdgeInsets.only(right: 16, top: 14, bottom: 14),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Please enter an amount';
+                              }
+                              try {
+                                final amount = double.parse(value);
+                                if (amount <= 0) {
+                                  return 'Amount must be greater than 0';
+                                }
+                              } catch (e) {
+                                return 'Please enter a valid amount';
+                              }
+                              return null;
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 24),
+                  SizedBox(height: AppSpacing.xxl),
                   
                   // Message field
                   Text(
                     'Message to Poster',
-                    style: Theme.of(context).textTheme.titleMedium,
+                    style: AppTypography.labelMedium,
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: AppSpacing.md),
                   TextFormField(
                     controller: _messageController,
-                    maxLines: 5,
+                    maxLines: 6,
+                    style: AppTypography.bodyMedium,
                     decoration: InputDecoration(
                       hintText: 'Describe why you\'re a good fit for this task',
+                      hintStyle: const TextStyle(
+                        fontSize: 14,
+                        color: AppColors.textTertiary,
+                      ),
+                      filled: true,
+                      fillColor: AppColors.backgroundTertiary,
+                      contentPadding: EdgeInsets.all(AppSpacing.lg),
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.0),
+                        borderRadius: AppRadius.md,
+                        borderSide: BorderSide(color: AppColors.borderDefault),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: AppRadius.md,
+                        borderSide: BorderSide(color: AppColors.borderDefault),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: AppRadius.md,
+                        borderSide: BorderSide(color: AppColors.borderDefault),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: AppRadius.md,
+                        borderSide: BorderSide(color: AppColors.borderDefault),
+                      ),
+                      focusedErrorBorder: OutlineInputBorder(
+                        borderRadius: AppRadius.md,
+                        borderSide: BorderSide(color: AppColors.borderDefault),
                       ),
                     ),
                     validator: (value) {
@@ -190,21 +304,21 @@ class _ApplyTaskScreenState extends ConsumerState<ApplyTaskScreen> {
                   
                   // Error message
                   if (_errorMessage != null) ...[  
-                    const SizedBox(height: 16),
+                    SizedBox(height: AppSpacing.lg),
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Colors.red.shade50,
-                        borderRadius: BorderRadius.circular(4),
+                        color: AppColors.errorLight,
+                        borderRadius: AppRadius.sm,
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.error_outline, color: Colors.red.shade700),
-                          const SizedBox(width: 8),
+                          Icon(Icons.error_outline, color: AppColors.error),
+                          SizedBox(width: AppSpacing.sm),
                           Expanded(
                             child: Text(
                               _errorMessage!,
-                              style: TextStyle(color: Colors.red.shade700),
+                              style: TextStyle(color: AppColors.error),
                             ),
                           ),
                         ],
@@ -212,7 +326,7 @@ class _ApplyTaskScreenState extends ConsumerState<ApplyTaskScreen> {
                     ),
                   ],
                   
-                  const SizedBox(height: 32),
+                  SizedBox(height: AppSpacing.xxxl),
                   
                   // Submit button
                   SizedBox(
@@ -221,15 +335,23 @@ class _ApplyTaskScreenState extends ConsumerState<ApplyTaskScreen> {
                     child: ElevatedButton(
                       onPressed: _isLoading ? null : _submitOffer,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: StyleConstants.primaryColor,
-                        foregroundColor: Colors.white,
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: AppColors.textPrimary,
+                        elevation: 0,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: AppRadius.md,
+                          side: const BorderSide(
+                            color: AppColors.primaryDark,
+                            width: 1,
+                          ),
                         ),
                       ),
                       child: _isLoading
-                          ? const CircularProgressIndicator(color: Colors.white)
-                          : const Text('Submit Offer'),
+                          ? CircularProgressIndicator(color: AppColors.textPrimary)
+                          : Text(
+                              'Submit Offer',
+                              style: AppTypography.labelMedium,
+                            ),
                     ),
                   ),
                 ],

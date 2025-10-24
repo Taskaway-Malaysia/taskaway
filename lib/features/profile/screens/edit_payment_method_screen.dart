@@ -3,6 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../payments/controllers/payment_method_controller.dart';
 import '../../payments/models/payment_method.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_radius.dart';
 
 class EditPaymentMethodScreen extends ConsumerStatefulWidget {
   final PaymentMethod paymentMethod;
@@ -52,22 +56,18 @@ class _EditPaymentMethodScreenState extends ConsumerState<EditPaymentMethodScree
           Container(
             padding: const EdgeInsets.fromLTRB(16, 48, 16, 16),
             decoration: const BoxDecoration(
-              color: Color(0xFF6C5CE7), // Purple color
+              color: AppColors.posterPrimary, // Purple color
             ),
             child: Row(
               children: [
                 IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Colors.white),
+                  icon: Icon(Icons.arrow_back_ios, color: AppColors.white),
                   onPressed: () => Navigator.pop(context),
                 ),
                 const Spacer(),
-                const Text(
+                Text(
                   'Saved payment method',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: AppTypography.headlineSmall.copyWith(color: AppColors.white),
                 ),
                 const Spacer(),
                 const SizedBox(width: 48), // Balance the back button
@@ -78,28 +78,28 @@ class _EditPaymentMethodScreenState extends ConsumerState<EditPaymentMethodScree
           // Content
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(AppSpacing.lg),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Saved payment method display
-                  const Text(
+                  Text(
                     'Saved payment method',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                      color: AppColors.textPrimary,
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: AppSpacing.lg),
                   
                   // Card display
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.all(24),
+                    padding: EdgeInsets.all(AppSpacing.xxl),
                     decoration: BoxDecoration(
                       border: Border.all(color: Colors.grey.shade300),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: AppRadius.lg,
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -113,13 +113,13 @@ class _EditPaymentMethodScreenState extends ConsumerState<EditPaymentMethodScree
                               height: 40,
                               decoration: BoxDecoration(
                                 color: Colors.blue.shade700,
-                                borderRadius: BorderRadius.circular(6),
+                                borderRadius: AppRadius.smMd,
                               ),
                               child: const Center(
                                 child: Text(
                                   'VISA',
                                   style: TextStyle(
-                                    color: Colors.white,
+                                    color: AppColors.white,
                                     fontWeight: FontWeight.bold,
                                     fontSize: 16,
                                   ),
@@ -128,7 +128,7 @@ class _EditPaymentMethodScreenState extends ConsumerState<EditPaymentMethodScree
                             ),
                           ],
                         ),
-                        const SizedBox(height: 24),
+                        SizedBox(height: AppSpacing.xxl),
                         
                         // Card number
                         Text(
@@ -137,10 +137,10 @@ class _EditPaymentMethodScreenState extends ConsumerState<EditPaymentMethodScree
                             fontSize: 24,
                             fontWeight: FontWeight.w500,
                             letterSpacing: 2,
-                            color: Colors.black87,
+                            color: AppColors.textPrimary,
                           ),
                         ),
-                        const SizedBox(height: 16),
+                        SizedBox(height: AppSpacing.lg),
                         
                         // Name and expiry
                         Row(
@@ -148,19 +148,11 @@ class _EditPaymentMethodScreenState extends ConsumerState<EditPaymentMethodScree
                           children: [
                             Text(
                               widget.paymentMethod.cardHolderName?.toUpperCase() ?? 'CARDHOLDER NAME',
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.black87,
-                              ),
+                              style: AppTypography.labelMedium,
                             ),
                             Text(
                               widget.paymentMethod.expiryDate ?? '03/26',
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.black87,
-                              ),
+                              style: AppTypography.labelMedium,
                             ),
                           ],
                         ),
@@ -168,7 +160,7 @@ class _EditPaymentMethodScreenState extends ConsumerState<EditPaymentMethodScree
                     ),
                   ),
                   
-                  const SizedBox(height: 32),
+                  SizedBox(height: AppSpacing.xxxl),
                   
                   // Edit form
                   Form(
@@ -176,30 +168,30 @@ class _EditPaymentMethodScreenState extends ConsumerState<EditPaymentMethodScree
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Name',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w500,
-                            color: Colors.black87,
+                            color: AppColors.textPrimary,
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        SizedBox(height: AppSpacing.sm),
                         TextFormField(
                           controller: _nameController,
                           decoration: InputDecoration(
                             hintText: 'Ibrahim bin Razali',
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: AppRadius.md,
                               borderSide: BorderSide(color: Colors.grey.shade300),
                             ),
                             enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: AppRadius.md,
                               borderSide: BorderSide(color: Colors.grey.shade300),
                             ),
                             focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: const BorderSide(color: Color(0xFF6C5CE7)),
+                              borderRadius: AppRadius.md,
+                              borderSide: const BorderSide(color: AppColors.posterPrimary),
                             ),
                           ),
                           validator: (value) {
@@ -209,17 +201,17 @@ class _EditPaymentMethodScreenState extends ConsumerState<EditPaymentMethodScree
                             return null;
                           },
                         ),
-                        const SizedBox(height: 20),
+                        SizedBox(height: AppSpacing.xl),
 
-                        const Text(
+                        Text(
                           'Card Number',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w500,
-                            color: Colors.black87,
+                            color: AppColors.textPrimary,
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        SizedBox(height: AppSpacing.sm),
                         TextFormField(
                           controller: _cardNumberController,
                           decoration: InputDecoration(
@@ -230,13 +222,13 @@ class _EditPaymentMethodScreenState extends ConsumerState<EditPaymentMethodScree
                                 height: 20,
                                 decoration: BoxDecoration(
                                   color: Colors.blue.shade700,
-                                  borderRadius: BorderRadius.circular(4),
+                                  borderRadius: AppRadius.sm,
                                 ),
                                 child: const Center(
                                   child: Text(
                                     'VISA',
                                     style: TextStyle(
-                                      color: Colors.white,
+                                      color: AppColors.white,
                                       fontWeight: FontWeight.bold,
                                       fontSize: 10,
                                     ),
@@ -245,16 +237,16 @@ class _EditPaymentMethodScreenState extends ConsumerState<EditPaymentMethodScree
                               ),
                             ),
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: AppRadius.md,
                               borderSide: BorderSide(color: Colors.grey.shade300),
                             ),
                             enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: AppRadius.md,
                               borderSide: BorderSide(color: Colors.grey.shade300),
                             ),
                             focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: const BorderSide(color: Color(0xFF6C5CE7)),
+                              borderRadius: AppRadius.md,
+                              borderSide: const BorderSide(color: AppColors.posterPrimary),
                             ),
                           ),
                           keyboardType: TextInputType.number,
@@ -269,7 +261,7 @@ class _EditPaymentMethodScreenState extends ConsumerState<EditPaymentMethodScree
                             return null;
                           },
                         ),
-                        const SizedBox(height: 20),
+                        SizedBox(height: AppSpacing.xl),
 
                         Row(
                           children: [
@@ -277,30 +269,30 @@ class _EditPaymentMethodScreenState extends ConsumerState<EditPaymentMethodScree
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text(
+                                  Text(
                                     'Expires',
                                     style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w500,
-                                      color: Colors.black87,
+                                      color: AppColors.textPrimary,
                                     ),
                                   ),
-                                  const SizedBox(height: 8),
+                                  SizedBox(height: AppSpacing.sm),
                                   TextFormField(
                                     controller: _expiryController,
                                     decoration: InputDecoration(
                                       hintText: '01/03/26',
                                       border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(8),
+                                        borderRadius: AppRadius.md,
                                         borderSide: BorderSide(color: Colors.grey.shade300),
                                       ),
                                       enabledBorder: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(8),
+                                        borderRadius: AppRadius.md,
                                         borderSide: BorderSide(color: Colors.grey.shade300),
                                       ),
                                       focusedBorder: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(8),
-                                        borderSide: const BorderSide(color: Color(0xFF6C5CE7)),
+                                        borderRadius: AppRadius.md,
+                                        borderSide: const BorderSide(color: AppColors.posterPrimary),
                                       ),
                                     ),
                                     keyboardType: TextInputType.number,
@@ -318,35 +310,35 @@ class _EditPaymentMethodScreenState extends ConsumerState<EditPaymentMethodScree
                                 ],
                               ),
                             ),
-                            const SizedBox(width: 16),
+                            SizedBox(width: AppSpacing.lg),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text(
+                                  Text(
                                     'CVV',
                                     style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w500,
-                                      color: Colors.black87,
+                                      color: AppColors.textPrimary,
                                     ),
                                   ),
-                                  const SizedBox(height: 8),
+                                  SizedBox(height: AppSpacing.sm),
                                   TextFormField(
                                     controller: _cvvController,
                                     decoration: InputDecoration(
                                       hintText: '123',
                                       border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(8),
+                                        borderRadius: AppRadius.md,
                                         borderSide: BorderSide(color: Colors.grey.shade300),
                                       ),
                                       enabledBorder: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(8),
+                                        borderRadius: AppRadius.md,
                                         borderSide: BorderSide(color: Colors.grey.shade300),
                                       ),
                                       focusedBorder: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(8),
-                                        borderSide: const BorderSide(color: Color(0xFF6C5CE7)),
+                                        borderRadius: AppRadius.md,
+                                        borderSide: const BorderSide(color: AppColors.posterPrimary),
                                       ),
                                     ),
                                     keyboardType: TextInputType.number,
@@ -370,7 +362,7 @@ class _EditPaymentMethodScreenState extends ConsumerState<EditPaymentMethodScree
                           ],
                         ),
                         
-                        const SizedBox(height: 32),
+                        SizedBox(height: AppSpacing.xxxl),
                         
                         // Update button
                         SizedBox(
@@ -379,25 +371,22 @@ class _EditPaymentMethodScreenState extends ConsumerState<EditPaymentMethodScree
                           child: ElevatedButton(
                             onPressed: _isLoading ? null : _updatePaymentMethod,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF6C5CE7),
-                              foregroundColor: Colors.white,
+                              backgroundColor: AppColors.posterPrimary,
+                              foregroundColor: AppColors.white,
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
+                                borderRadius: AppRadius.md,
                               ),
                             ),
                             child: _isLoading
-                                ? const CircularProgressIndicator(color: Colors.white)
-                                : const Text(
+                                ? CircularProgressIndicator(color: AppColors.white)
+                                : Text(
                                     'Securely Save Card',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                    ),
+                                    style: AppTypography.labelLarge,
                                   ),
                           ),
                         ),
                         
-                        const SizedBox(height: 16),
+                        SizedBox(height: AppSpacing.lg),
                         
                         // Remove button
                         SizedBox(
@@ -409,15 +398,12 @@ class _EditPaymentMethodScreenState extends ConsumerState<EditPaymentMethodScree
                               foregroundColor: Colors.red,
                               side: const BorderSide(color: Colors.red),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
+                                borderRadius: AppRadius.md,
                               ),
                             ),
-                            child: const Text(
+                            child: Text(
                               'Remove card',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
+                              style: AppTypography.labelLarge,
                             ),
                           ),
                         ),
@@ -484,17 +470,17 @@ class _EditPaymentMethodScreenState extends ConsumerState<EditPaymentMethodScree
     final shouldRemove = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Remove Payment Method'),
-        content: const Text('Are you sure you want to remove this payment method?'),
+        title: Text('Remove Payment Method'),
+        content: Text('Are you sure you want to remove this payment method?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text('Cancel'),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Remove'),
+            child: Text('Remove'),
           ),
         ],
       ),

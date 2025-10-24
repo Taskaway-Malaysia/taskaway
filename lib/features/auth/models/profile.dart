@@ -15,6 +15,15 @@ class Profile {
   final String? about;
   final List<String>? skills;
   final List<String>? myWorks;
+  final DateTime? lastSignInAt;
+  final double? latitude;
+  final double? longitude;
+  final bool? isAvailable;
+  final String? bankName;
+  final String? bankAccountNumber;
+  final String? bankAccountHolderName;
+  final String? bankVerificationStatus;
+  final DateTime? bankVerifiedAt;
 
   Profile({
     required this.id,
@@ -33,6 +42,15 @@ class Profile {
     this.about,
     this.skills,
     this.myWorks,
+    this.lastSignInAt,
+    this.latitude,
+    this.longitude,
+    this.isAvailable,
+    this.bankName,
+    this.bankAccountNumber,
+    this.bankAccountHolderName,
+    this.bankVerificationStatus,
+    this.bankVerifiedAt,
   });
 
   factory Profile.fromJson(Map<String, dynamic> json) {
@@ -53,6 +71,15 @@ class Profile {
       about: json['about'] as String?,
       skills: json['skills'] != null ? List<String>.from(json['skills']) : null,
       myWorks: json['my_works'] != null ? List<String>.from(json['my_works']) : null,
+      lastSignInAt: json['last_sign_in_at'] != null ? DateTime.parse(json['last_sign_in_at'] as String) : null,
+      latitude: json['latitude'] != null ? (json['latitude'] as num).toDouble() : null,
+      longitude: json['longitude'] != null ? (json['longitude'] as num).toDouble() : null,
+      isAvailable: json['is_available'] as bool?,
+      bankName: json['bank_name'] as String?,
+      bankAccountNumber: json['bank_account_number'] as String?,
+      bankAccountHolderName: json['bank_account_holder_name'] as String?,
+      bankVerificationStatus: json['bank_verification_status'] as String?,
+      bankVerifiedAt: json['bank_verified_at'] != null ? DateTime.parse(json['bank_verified_at'] as String) : null,
     );
   }
 
@@ -73,6 +100,15 @@ class Profile {
     if (about != null) 'about': about,
     if (skills != null) 'skills': skills,
     if (myWorks != null) 'my_works': myWorks,
+    if (lastSignInAt != null) 'last_sign_in_at': lastSignInAt!.toIso8601String(),
+    if (latitude != null) 'latitude': latitude,
+    if (longitude != null) 'longitude': longitude,
+    if (isAvailable != null) 'is_available': isAvailable,
+    if (bankName != null) 'bank_name': bankName,
+    if (bankAccountNumber != null) 'bank_account_number': bankAccountNumber,
+    if (bankAccountHolderName != null) 'bank_account_holder_name': bankAccountHolderName,
+    if (bankVerificationStatus != null) 'bank_verification_status': bankVerificationStatus,
+    if (bankVerifiedAt != null) 'bank_verified_at': bankVerifiedAt!.toIso8601String(),
   };
 
   Profile copyWith({
@@ -92,6 +128,15 @@ class Profile {
     String? about,
     List<String>? skills,
     List<String>? myWorks,
+    DateTime? lastSignInAt,
+    double? latitude,
+    double? longitude,
+    bool? isAvailable,
+    String? bankName,
+    String? bankAccountNumber,
+    String? bankAccountHolderName,
+    String? bankVerificationStatus,
+    DateTime? bankVerifiedAt,
   }) {
     return Profile(
       id: id ?? this.id,
@@ -110,6 +155,15 @@ class Profile {
       about: about ?? this.about,
       skills: skills ?? this.skills,
       myWorks: myWorks ?? this.myWorks,
+      lastSignInAt: lastSignInAt ?? this.lastSignInAt,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
+      isAvailable: isAvailable ?? this.isAvailable,
+      bankName: bankName ?? this.bankName,
+      bankAccountNumber: bankAccountNumber ?? this.bankAccountNumber,
+      bankAccountHolderName: bankAccountHolderName ?? this.bankAccountHolderName,
+      bankVerificationStatus: bankVerificationStatus ?? this.bankVerificationStatus,
+      bankVerifiedAt: bankVerifiedAt ?? this.bankVerifiedAt,
     );
   }
   
@@ -132,7 +186,16 @@ class Profile {
         other.bio == bio &&
         other.about == about &&
         other.skills == skills &&
-        other.myWorks == myWorks;
+        other.myWorks == myWorks &&
+        other.lastSignInAt == lastSignInAt &&
+        other.latitude == latitude &&
+        other.longitude == longitude &&
+        other.isAvailable == isAvailable &&
+        other.bankName == bankName &&
+        other.bankAccountNumber == bankAccountNumber &&
+        other.bankAccountHolderName == bankAccountHolderName &&
+        other.bankVerificationStatus == bankVerificationStatus &&
+        other.bankVerifiedAt == bankVerifiedAt;
   }
 
   @override
@@ -154,6 +217,20 @@ class Profile {
       about,
       skills,
       myWorks,
+      Object.hash(
+        lastSignInAt,
+        latitude,
+        longitude,
+        isAvailable,
+        bankName,
+        bankAccountNumber,
+        bankAccountHolderName,
+        bankVerificationStatus,
+        bankVerifiedAt,
+      ),
     );
   }
+
+  // Helper getter for profile image URL (alias for avatarUrl)
+  String? get profileImageUrl => avatarUrl;
 }

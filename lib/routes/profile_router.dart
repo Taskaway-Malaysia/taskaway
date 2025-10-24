@@ -1,11 +1,12 @@
 import 'package:go_router/go_router.dart';
-import '../features/profile/screens/profile_screen.dart';
+import '../features/profile/screens/profile_screen_new.dart';
 import '../features/profile/screens/edit_profile_screen.dart';
 import '../features/profile/screens/settings_screen.dart';
 import '../features/profile/screens/payment_options_screen.dart';
 import '../features/profile/screens/payment_history_screen.dart';
 import '../features/profile/screens/payment_methods_screen.dart';
 import '../features/profile/screens/my_reviews_screen.dart';
+import '../features/profile/screens/bank_details_screen.dart';
 
 /// Profile-related routes for the app
 class ProfileRouter {
@@ -13,7 +14,7 @@ class ProfileRouter {
     GoRoute(
       path: '/home/profile',
       name: 'profile',
-      builder: (context, state) => const ProfileScreen(),
+      builder: (context, state) => const ProfileScreenNew(),
     ),
     // Profile edit routes (these were originally standalone in the redirect logic)
     GoRoute(
@@ -45,6 +46,11 @@ class ProfileRouter {
       path: '/payment-methods',
       name: 'payment-methods',
       builder: (context, state) => const PaymentMethodsScreen(),
+    ),
+    GoRoute(
+      path: '/profile/bank-details',
+      name: 'bank-details',
+      builder: (context, state) => const BankDetailsScreen(),
     ),
   ];
 }

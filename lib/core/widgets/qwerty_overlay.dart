@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:taskaway/core/constants/style_constants.dart';
+import '../theme/app_radius.dart';
 
 enum KeyboardLayout { lowercase, uppercase, numbers, symbols }
 
@@ -165,7 +166,7 @@ class _QwertyOverlayState extends State<QwertyOverlay> {
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
         color: Colors.grey[400],
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: AppRadius.mdLg,
       ),
     );
   }
@@ -180,7 +181,7 @@ class _QwertyOverlayState extends State<QwertyOverlay> {
           margin: const EdgeInsets.symmetric(horizontal: 4),
           decoration: BoxDecoration(
             color: Theme.of(context).scaffoldBackgroundColor,
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: AppRadius.mdLg,
             border: Border.all(color: Colors.grey[300]!),
           ),
           child: Row(
@@ -318,7 +319,7 @@ class _QwertyOverlayState extends State<QwertyOverlay> {
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
             color: Theme.of(context).scaffoldBackgroundColor,
-            borderRadius: BorderRadius.circular(6),
+            borderRadius: AppRadius.smMd,
           ),
           child: Center(
             child: Text(
@@ -343,12 +344,12 @@ class _QwertyOverlayState extends State<QwertyOverlay> {
       height: 44,
       child: InkWell(
         onTap: onPressed,
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: AppRadius.smMd,
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 2),
           decoration: BoxDecoration(
             color: color ?? Theme.of(context).scaffoldBackgroundColor.withAlpha(200),
-            borderRadius: BorderRadius.circular(6),
+            borderRadius: AppRadius.smMd,
           ),
           child: Center(child: child ?? Icon(icon, size: 22)),
         ),

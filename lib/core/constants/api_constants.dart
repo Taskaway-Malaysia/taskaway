@@ -7,14 +7,18 @@ class ApiConstants {
   static const String supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR4b2pvcG1rZ2picXNmY2FjZ2x6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk0MzMxODcsImV4cCI6MjA2NTAwOTE4N30.5itLemoP3J_05zZW9qS7yRb4RbBlZ2dy3J6GkDA1rkY';
   
   // Payments / Integrations
-  // Toggle to true in development to bypass real Stripe calls
+  // All payments now handled via CHIPP Gateway through Supabase Edge Functions
   static const bool mockPayments = false;
-  
-  // Stripe Configuration
-  static const String stripePublishableKey = 'pk_test_51RUxP5PNCUSI0FBOWAUJlNXifjQBUiGQI4VNWcrC7zymgCIWDavy7qetpxYITXe45LCjvVFDNNkafnI8uDbunDyZ00V446s1UF';
   
   // Storage Buckets
   static const String taskImagesBucket = 'task-images';
+  
+  // MapTiler Configuration
+  static const String mapTilerApiKey = '3rwsmrzemB8A99DT82ka'; // TODO: Replace with actual MapTiler API key
+  static const String mapTilerStyleUrl = 'https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key=';
+
+  // Google Maps Configuration
+  static const String googleMapsApiKey = 'AIzaSyAYaUhvdUnHlDkrgqt0FF-sV_3uJdjAwes'; // TODO: Replace with actual Google Maps API key
   
   // API Endpoints
   static const String billplzApiEndpoint = 'https://www.billplz-sandbox.com/api/v3';

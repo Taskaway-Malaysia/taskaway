@@ -37,7 +37,7 @@ class TaskListView extends ConsumerWidget {
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: () => ref.invalidate(taskStreamProvider),
-              child: const Text('Retry'),
+              child: Text('Retry'),
             ),
           ],
         ),

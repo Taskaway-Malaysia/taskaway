@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../theme/app_radius.dart';
 import 'package:taskaway/core/constants/style_constants.dart'; // For theme colors
 
 class NumpadOverlay extends StatefulWidget {
@@ -116,7 +117,7 @@ class _NumpadOverlayState extends State<NumpadOverlay> {
       height: 5,
       decoration: BoxDecoration(
         color: Colors.grey[400],
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: AppRadius.mdLg,
       ),
     );
   }
@@ -178,7 +179,7 @@ class _NumpadOverlayState extends State<NumpadOverlay> {
           margin: const EdgeInsets.only(bottom: 16),
           decoration: BoxDecoration(
             color: Theme.of(context).scaffoldBackgroundColor,
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: AppRadius.md,
             border: Border.all(color: Colors.grey.shade300),
           ),
           child: Text(
@@ -212,7 +213,7 @@ class NumpadButton extends StatelessWidget {
       style: TextButton.styleFrom(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12.0),
+          borderRadius: AppRadius.lg,
         ),
         padding: const EdgeInsets.all(12.0), // Adjusted padding
       ),

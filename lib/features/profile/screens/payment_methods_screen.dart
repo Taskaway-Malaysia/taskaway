@@ -5,6 +5,10 @@ import '../../payments/controllers/payment_method_controller.dart';
 import '../../payments/models/payment_method.dart';
 import 'add_payment_method_screen.dart';
 import 'edit_payment_method_screen.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_radius.dart';
 
 class PaymentMethodsScreen extends ConsumerStatefulWidget {
   const PaymentMethodsScreen({super.key});
@@ -38,12 +42,12 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen>
           Container(
             padding: const EdgeInsets.fromLTRB(16, 48, 16, 16),
             decoration: const BoxDecoration(
-              color: Color(0xFF6C5CE7), // Purple color
+              color: AppColors.posterPrimary, // Purple color
             ),
             child: Row(
               children: [
                 IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Colors.white),
+                  icon: Icon(Icons.arrow_back_ios, color: AppColors.white),
                   onPressed: () {
                     if (context.canPop()) {
                       context.pop();
@@ -53,13 +57,9 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen>
                   },
                 ),
                 const Spacer(),
-                const Text(
+                Text(
                   'Payment methods',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: AppTypography.headlineSmall.copyWith(color: AppColors.white),
                 ),
                 const Spacer(),
                 const SizedBox(width: 48), // Balance the back button
@@ -69,12 +69,12 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen>
 
           // Tab bar
           Container(
-            padding: const EdgeInsets.all(16),
-            color: Colors.white,
+            padding: EdgeInsets.all(AppSpacing.lg),
+            color: AppColors.white,
             child: Container(
               decoration: BoxDecoration(
                 color: Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: AppRadius.md,
               ),
               child: TabBar(
                 controller: _tabController,
@@ -82,12 +82,12 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen>
                   Tab(text: 'Make payment'),
                   Tab(text: 'Receive payment'),
                 ],
-                labelColor: Colors.white,
+                labelColor: AppColors.white,
                 unselectedLabelColor: Colors.grey.shade600,
                 indicatorSize: TabBarIndicatorSize.tab,
                 indicator: BoxDecoration(
-                  color: const Color(0xFF6C5CE7),
-                  borderRadius: BorderRadius.circular(8),
+                  color: AppColors.posterPrimary,
+                  borderRadius: AppRadius.md,
                 ),
                 labelStyle: const TextStyle(
                   fontWeight: FontWeight.w600,
@@ -120,35 +120,35 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen>
   Widget _buildPaymentMethodsList() {
     return ref.watch(paymentMethodsStreamProvider).when(
       data: (paymentMethods) => SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(AppSpacing.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Saved payment methods section
             if (paymentMethods.isNotEmpty) ...[
-              const Text(
+              Text(
                 'Saved payment method',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+                  color: AppColors.textPrimary,
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: AppSpacing.lg),
               ...paymentMethods.map((method) => _buildSavedPaymentMethod(method)).toList(),
-              const SizedBox(height: 32),
+              SizedBox(height: AppSpacing.xxxl),
             ],
 
             // Add new payment method section
-            const Text(
+            Text(
               'Add new payment method',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Colors.black87,
+                color: AppColors.textPrimary,
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: AppSpacing.lg),
             _buildPaymentMethodOption(
               icon: Icons.credit_card_outlined,
               title: 'Credit / debit card',
@@ -206,10 +206,10 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen>
               style: TextStyle(color: Theme.of(context).colorScheme.error),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: AppSpacing.lg),
             ElevatedButton(
               onPressed: () => ref.invalidate(paymentMethodsStreamProvider),
-              child: const Text('Retry'),
+              child: Text('Retry'),
             ),
           ],
         ),
@@ -230,10 +230,10 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen>
           );
         },
         child: Container(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.all(AppSpacing.lg),
           decoration: BoxDecoration(
             border: Border.all(color: Colors.grey.shade300),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: AppRadius.md,
           ),
           child: Row(
             children: [
@@ -245,14 +245,14 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen>
                   color: method.type == PaymentMethodType.creditCard 
                       ? Colors.blue.shade700 
                       : Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: AppRadius.sm,
                 ),
                 child: Center(
                   child: method.type == PaymentMethodType.creditCard
-                      ? const Text(
+                      ? Text(
                           'VISA',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: AppColors.white,
                             fontWeight: FontWeight.bold,
                             fontSize: 12,
                           ),
@@ -266,7 +266,7 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen>
                         ),
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: AppSpacing.md),
               
               // Payment method details
               Expanded(
@@ -276,7 +276,7 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen>
                       : method.displayName,
                   style: const TextStyle(
                     fontSize: 16,
-                    color: Colors.black87,
+                    color: AppColors.textPrimary,
                   ),
                 ),
               ),
@@ -304,10 +304,10 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen>
       child: InkWell(
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.all(AppSpacing.lg),
           decoration: BoxDecoration(
             border: Border.all(color: Colors.grey.shade300),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: AppRadius.md,
           ),
           child: Row(
             children: [
@@ -316,13 +316,13 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen>
                 size: 24,
                 color: Colors.grey.shade700,
               ),
-              const SizedBox(width: 16),
+              SizedBox(width: AppSpacing.lg),
               Expanded(
                 child: Text(
                   title,
                   style: const TextStyle(
                     fontSize: 16,
-                    color: Colors.black87,
+                    color: AppColors.textPrimary,
                   ),
                 ),
               ),

@@ -5,6 +5,10 @@ import '../../auth/controllers/auth_controller.dart';
 import '../controllers/profile_controller.dart';
 import '../widgets/skills_input.dart';
 import '../widgets/image_picker_grid.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_radius.dart';
 
 class EditProfileScreen extends ConsumerStatefulWidget {
   const EditProfileScreen({super.key});
@@ -164,13 +168,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         slivers: [
           // Purple header as SliverAppBar
           SliverAppBar(
-            backgroundColor: const Color(0xFF6C5CE7),
+            backgroundColor: AppColors.posterPrimary,
             elevation: 0,
             pinned: false,
             floating: false,
             expandedHeight: 80,
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.white),
+              icon: Icon(Icons.arrow_back_ios, color: AppColors.white),
               onPressed: () {
                 if (context.canPop()) {
                   context.pop();
@@ -184,9 +188,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               title: Text(
                 'Edit Profile',
                 style: TextStyle(
-                  color: Colors.white,
                   fontSize: 20,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.white,
                 ),
               ),
             ),
@@ -195,7 +199,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           // Content
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(AppSpacing.lg),
               child: Form(
                 key: _formKey,
                 child: Column(
@@ -225,15 +229,15 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                             bottom: 0,
                             right: 0,
                             child: Container(
-                              decoration: const BoxDecoration(
-                                color: Color(0xFF6C5CE7),
+                              decoration: BoxDecoration(
+                                color: AppColors.posterPrimary,
                                 shape: BoxShape.circle,
                               ),
                               child: const Padding(
                                 padding: EdgeInsets.all(8),
                                 child: Icon(
                                   Icons.edit,
-                                  color: Colors.white,
+                                  color: AppColors.white,
                                   size: 16,
                                 ),
                               ),
@@ -243,10 +247,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: 32),
+                    SizedBox(height: AppSpacing.xxxl),
 
                     // PUBLIC INFORMATION Section
-                    const Text(
+                    Text(
                       'PUBLIC INFORMATION',
                       style: TextStyle(
                         fontSize: 16,
@@ -256,32 +260,29 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: 16),
+                    SizedBox(height: AppSpacing.lg),
 
                     // Name field
-                    const Text(
+                    Text(
                       'Name',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: AppTypography.labelLarge,
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: AppSpacing.sm),
                     TextFormField(
                       controller: _nameController,
                       decoration: InputDecoration(
                         hintText: 'Enter your full name',
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: AppRadius.md,
                           borderSide: BorderSide(color: Colors.grey.shade400),
                         ),
                         enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: AppRadius.md,
                           borderSide: BorderSide(color: Colors.grey.shade400),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Color(0xFF6C5CE7)),
+                          borderRadius: AppRadius.md,
+                          borderSide: const BorderSide(color: AppColors.posterPrimary),
                         ),
                       ),
                       validator: (value) {
@@ -293,102 +294,93 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       onChanged: (value) => setState(() {}), // Update avatar
                     ),
 
-                    const SizedBox(height: 16),
+                    SizedBox(height: AppSpacing.lg),
 
                     // Location field
-                    const Text(
+                    Text(
                       'Location',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: AppTypography.labelLarge,
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: AppSpacing.sm),
                     TextFormField(
                       controller: _locationController,
                       decoration: InputDecoration(
                         hintText: 'Enter your location',
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: AppRadius.md,
                           borderSide: BorderSide(color: Colors.grey.shade400),
                         ),
                         enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: AppRadius.md,
                           borderSide: BorderSide(color: Colors.grey.shade400),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Color(0xFF6C5CE7)),
+                          borderRadius: AppRadius.md,
+                          borderSide: const BorderSide(color: AppColors.posterPrimary),
                         ),
                       ),
                     ),
 
-                    const SizedBox(height: 16),
+                    SizedBox(height: AppSpacing.lg),
 
                     // Bio field
-                    const Text(
+                    Text(
                       'Bio',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: AppTypography.labelLarge,
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: AppSpacing.sm),
                     TextFormField(
                       controller: _bioController,
                       maxLines: 4,
                       decoration: InputDecoration(
                         hintText: 'Craft your bio here! Let others know who you are in a few words.',
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: AppRadius.md,
                           borderSide: BorderSide(color: Colors.grey.shade400),
                         ),
                         enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: AppRadius.md,
                           borderSide: BorderSide(color: Colors.grey.shade400),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Color(0xFF6C5CE7)),
+                          borderRadius: AppRadius.md,
+                          borderSide: const BorderSide(color: AppColors.posterPrimary),
                         ),
                       ),
                     ),
 
-                    const SizedBox(height: 16),
+                    SizedBox(height: AppSpacing.lg),
 
                     // About field
-                    const Text(
+                    Text(
                       'About',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: AppTypography.labelLarge,
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: AppSpacing.sm),
                     TextFormField(
                       controller: _aboutController,
                       maxLines: 6,
                       decoration: InputDecoration(
                         hintText: 'Tell people more about yourself, your experience, and what you do...',
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: AppRadius.md,
                           borderSide: BorderSide(color: Colors.grey.shade400),
                         ),
                         enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: AppRadius.md,
                           borderSide: BorderSide(color: Colors.grey.shade400),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Color(0xFF6C5CE7)),
+                          borderRadius: AppRadius.md,
+                          borderSide: const BorderSide(color: AppColors.posterPrimary),
                         ),
                       ),
                     ),
 
-                    const SizedBox(height: 32),
+                    SizedBox(height: AppSpacing.xxxl),
 
                     // ADDITIONAL INFORMATION Section
-                    const Text(
+                    Text(
                       'ADDITIONAL INFORMATION',
                       style: TextStyle(
                         fontSize: 16,
@@ -398,22 +390,19 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: 16),
+                    SizedBox(height: AppSpacing.lg),
 
                     // Skills section
-                    const Text(
+                    Text(
                       'Skills',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: AppTypography.labelLarge,
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: AppSpacing.sm),
                     Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: EdgeInsets.all(AppSpacing.lg),
                       decoration: BoxDecoration(
                         border: Border.all(color: Colors.grey.shade400),
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: AppRadius.md,
                       ),
                       child: SkillsInput(
                         initialSkills: _skills,
@@ -425,22 +414,19 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: 16),
+                    SizedBox(height: AppSpacing.lg),
 
                     // My Works section
-                    const Text(
+                    Text(
                       'My works',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: AppTypography.labelLarge,
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: AppSpacing.sm),
                     Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: EdgeInsets.all(AppSpacing.lg),
                       decoration: BoxDecoration(
                         border: Border.all(color: Colors.grey.shade400),
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: AppRadius.md,
                       ),
                       child: Builder(
                         builder: (context) {
@@ -467,9 +453,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         ],
       ),
       bottomNavigationBar: Container(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(AppSpacing.lg),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.white,
           boxShadow: [
             BoxShadow(
               color: Colors.grey.withValues(alpha: 0.1),
@@ -486,10 +472,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             child: ElevatedButton(
               onPressed: _isLoading ? null : _saveProfile,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF6C5CE7),
-                foregroundColor: Colors.white,
+                backgroundColor: AppColors.posterPrimary,
+                foregroundColor: AppColors.white,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: AppRadius.md,
                 ),
               ),
               child: _isLoading
@@ -497,16 +483,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       height: 20,
                       width: 20,
                       child: CircularProgressIndicator(
-                        color: Colors.white,
+                        color: AppColors.white,
                         strokeWidth: 2,
                       ),
                     )
-                  : const Text(
+                  : Text(
                       'Save Changes',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: AppTypography.labelLarge,
                     ),
             ),
           ),
