@@ -32,79 +32,81 @@ class _ProfileScreenNewState extends ConsumerState<ProfileScreenNew> {
   Future<void> _editBio(String? currentBio) async {
     final controller = TextEditingController(text: currentBio);
 
-    try {
-      final result = await showDialog<String>(
-        context: context,
-        builder: (dialogContext) => AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: AppRadius.lg,
+    final result = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: AppRadius.lg,
+        ),
+        title: Text(
+          'About me',
+          style: AppTypography.titleLarge.copyWith(
+            fontWeight: AppTypography.bold,
           ),
-          title: Text(
-            'About me',
-            style: AppTypography.titleLarge.copyWith(
-              fontWeight: AppTypography.bold,
+        ),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          maxLines: 5,
+          maxLength: 200,
+          textCapitalization: TextCapitalization.sentences,
+          decoration: InputDecoration(
+            hintText: 'Write a fun and punchy intro...',
+            border: OutlineInputBorder(
+              borderRadius: AppRadius.md,
             ),
           ),
-          content: TextField(
-            controller: controller,
-            autofocus: true,
-            maxLines: 5,
-            maxLength: 200,
-            textCapitalization: TextCapitalization.sentences,
-            decoration: InputDecoration(
-              hintText: 'Write a fun and punchy intro...',
-              border: OutlineInputBorder(
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text(
+              'Cancel',
+              style: AppTypography.labelLarge.copyWith(
+                fontWeight: AppTypography.semiBold,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(dialogContext).pop(controller.text),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: AppColors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
                 borderRadius: AppRadius.md,
               ),
             ),
+            child: Text(
+              'Save',
+              style: AppTypography.labelLarge.copyWith(
+                fontWeight: AppTypography.semiBold,
+              ),
+            ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: Text(
-                'Cancel',
-                style: AppTypography.labelLarge.copyWith(
-                  fontWeight: AppTypography.semiBold,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.of(dialogContext).pop(controller.text),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: AppColors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: AppRadius.md,
-                ),
-              ),
-              child: Text(
-                'Save',
-                style: AppTypography.labelLarge.copyWith(
-                  fontWeight: AppTypography.semiBold,
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
+        ],
+      ),
+    );
 
-      if (result != null && mounted) {
-        // TODO: Save bio to database
-        // Example: await ref.read(profileControllerProvider.notifier).updateBio(result);
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Bio updated successfully'),
-              backgroundColor: AppColors.success,
-            ),
-          );
-        }
-      }
-    } finally {
+    // Dispose controller after dialog has fully closed
+    // Use addPostFrameCallback to ensure disposal happens after widget rebuild
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       controller.dispose();
+    });
+
+    if (result != null && mounted) {
+      // TODO: Save bio to database
+      // Example: await ref.read(profileControllerProvider.notifier).updateBio(result);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Bio updated successfully'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+      }
     }
   }
 
@@ -113,81 +115,83 @@ class _ProfileScreenNewState extends ConsumerState<ProfileScreenNew> {
       text: currentSkills?.join(', ') ?? '',
     );
 
-    try {
-      final result = await showDialog<String>(
-        context: context,
-        builder: (dialogContext) => AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: AppRadius.lg,
+    final result = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: AppRadius.lg,
+        ),
+        title: Text(
+          'Skills',
+          style: AppTypography.titleLarge.copyWith(
+            fontWeight: AppTypography.bold,
           ),
-          title: Text(
-            'Skills',
-            style: AppTypography.titleLarge.copyWith(
-              fontWeight: AppTypography.bold,
+        ),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          maxLines: 5,
+          maxLength: 200,
+          textCapitalization: TextCapitalization.words,
+          decoration: InputDecoration(
+            hintText: 'Add your skills separated by commas...',
+            border: OutlineInputBorder(
+              borderRadius: AppRadius.md,
             ),
           ),
-          content: TextField(
-            controller: controller,
-            autofocus: true,
-            maxLines: 5,
-            maxLength: 200,
-            textCapitalization: TextCapitalization.words,
-            decoration: InputDecoration(
-              hintText: 'Add your skills separated by commas...',
-              border: OutlineInputBorder(
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text(
+              'Cancel',
+              style: AppTypography.labelLarge.copyWith(
+                fontWeight: AppTypography.semiBold,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(dialogContext).pop(controller.text),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: AppColors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
                 borderRadius: AppRadius.md,
               ),
             ),
+            child: Text(
+              'Save',
+              style: AppTypography.labelLarge.copyWith(
+                fontWeight: AppTypography.semiBold,
+              ),
+            ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: Text(
-                'Cancel',
-                style: AppTypography.labelLarge.copyWith(
-                  fontWeight: AppTypography.semiBold,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.of(dialogContext).pop(controller.text),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: AppColors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: AppRadius.md,
-                ),
-              ),
-              child: Text(
-                'Save',
-                style: AppTypography.labelLarge.copyWith(
-                  fontWeight: AppTypography.semiBold,
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
+        ],
+      ),
+    );
 
-      if (result != null && mounted) {
-        // TODO: Save skills to database
-        // Parse skills from comma-separated string
-        // final skillsList = result.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
-        // await ref.read(profileControllerProvider.notifier).updateSkills(skillsList);
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Skills updated successfully'),
-              backgroundColor: AppColors.success,
-            ),
-          );
-        }
-      }
-    } finally {
+    // Dispose controller after dialog has fully closed
+    // Use addPostFrameCallback to ensure disposal happens after widget rebuild
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       controller.dispose();
+    });
+
+    if (result != null && mounted) {
+      // TODO: Save skills to database
+      // Parse skills from comma-separated string
+      // final skillsList = result.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
+      // await ref.read(profileControllerProvider.notifier).updateSkills(skillsList);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Skills updated successfully'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+      }
     }
   }
 

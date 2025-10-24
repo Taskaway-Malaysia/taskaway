@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import '../../../core/theme/app_radius.dart';
+import '../../../core/theme/app_colors.dart';
 
 class MapSearchBar extends StatefulWidget {
   final bool isTaskerMode;
@@ -38,9 +39,29 @@ class _MapSearchBarState extends State<MapSearchBar> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
+          Stack(
+            children: [
+              // Bottom layer - white background with bottom corner radius
+              Container(
+                height: 68, // Total height (44 for content + 12 padding top + 12 padding bottom)
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.vertical(
+                    bottom: Radius.circular(24),  // Large corner radius only at bottom
+                  ),
+                ),
+              ),
+              // Top layer - taskaway color (covers top half)
+              Container(
+                height: 34, // Half of total height (68 / 2)
+                decoration: const BoxDecoration(
+                  color: AppColors.primary,
+                ),
+              ),
+              // Content layer - search bar and filter button
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Row(
               children: [
                 Expanded(
                   child: Container(
@@ -92,6 +113,7 @@ class _MapSearchBarState extends State<MapSearchBar> {
                   height: 44,
                   width: 44,
                   decoration: BoxDecoration(
+                    color: Colors.white,
                     border: Border.all(color: Colors.grey.shade300),
                     borderRadius: AppRadius.md,
                   ),
@@ -107,6 +129,8 @@ class _MapSearchBarState extends State<MapSearchBar> {
                 ),
               ],
             ),
+          ),
+            ],
           ),
 
           // Banner Carousel Section with background layer
