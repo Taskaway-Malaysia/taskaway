@@ -47,11 +47,49 @@ final userAcceptedTasksProvider = FutureProvider<List<Task>>((ref) async {
   return tasks;
 });
 
-class ActivityScreen extends ConsumerWidget {
+class ActivityScreen extends ConsumerStatefulWidget {
   const ActivityScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ActivityScreen> createState() => _ActivityScreenState();
+}
+
+class _ActivityScreenState extends ConsumerState<ActivityScreen> {
+  final ScrollController _scrollController = ScrollController();
+  int _displayLimit = 10; // Start with 10 tasks
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.hasClients) {
+      final maxScroll = _scrollController.position.maxScrollExtent;
+      final currentScroll = _scrollController.position.pixels;
+      final threshold = maxScroll * 0.8;
+
+      if (currentScroll >= threshold) {
+        _loadMoreTasks();
+      }
+    }
+  }
+
+  void _loadMoreTasks() {
+    setState(() {
+      _displayLimit += 10; // Load 10 more tasks
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final tasksAsync = ref.watch(userAcceptedTasksProvider);
 
     return Scaffold(
@@ -91,16 +129,20 @@ class ActivityScreen extends ConsumerWidget {
                     );
                   }
 
+                  // Apply pagination - show only first N tasks
+                  final paginatedTasks = tasks.take(_displayLimit).toList();
+
                   return ListView.separated(
+                    controller: _scrollController,
                     padding: EdgeInsets.zero,
-                    itemCount: tasks.length,
+                    itemCount: paginatedTasks.length,
                     separatorBuilder: (context, index) => Container(
                       height: 1,
                       color: const Color(0xFFE8E9F1),
                       margin: const EdgeInsets.symmetric(horizontal: 8),
                     ),
                     itemBuilder: (context, index) {
-                      return _TaskCard(task: tasks[index]);
+                      return _TaskCard(task: paginatedTasks[index]);
                     },
                   );
                 },

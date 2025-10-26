@@ -558,9 +558,98 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
 
     return applicationsAsync.when(
       data: (applications) {
-        // Only show if there are applications
+        // Show waiting message if no applications yet
         if (applications.isEmpty) {
-          return const SizedBox.shrink();
+          return Align(
+            alignment: Alignment.bottomCenter,
+            child: Container(
+              width: double.infinity,
+              margin: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppColors.white,
+                borderRadius: AppRadius.lg,
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.textPrimary.withOpacity(0.1),
+                    blurRadius: 20,
+                    offset: const Offset(0, -4),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Animated waiting icon
+                  Container(
+                    width: 60,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFDB5B).withOpacity(0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.hourglass_empty,
+                      size: 30,
+                      color: Color(0xFFFFDB5B),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Title
+                  const Text(
+                    'Waiting for Offers',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Description
+                  Text(
+                    'Your task is now visible to nearby taskers. You\'ll receive offers here once taskers apply for your task.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: AppColors.textSecondary,
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Tips
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.shade50,
+                      borderRadius: AppRadius.md,
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.info_outline,
+                          size: 18,
+                          color: Colors.blue.shade700,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Tip: Make sure your task details are clear to attract more offers!',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.blue.shade900,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
         }
 
         return Align(

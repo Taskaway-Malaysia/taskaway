@@ -6,7 +6,6 @@ import 'package:taskaway/core/theme/app_colors.dart';
 import 'package:taskaway/features/auth/controllers/auth_controller.dart';
 import 'package:taskaway/features/home/screens/poster_home_screen.dart';
 import 'package:taskaway/features/home/screens/tasker_home_screen.dart';
-import 'package:taskaway/features/home/screens/map_home_screen.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_radius.dart';
@@ -28,7 +27,7 @@ class HomeScreen extends ConsumerWidget {
 
     // Determine the current index based on location
     int actualIndex;
-    if (currentLocation == '/home/browse' || currentLocation == '/home/tasks') {
+    if (currentLocation == '/home/browse') {
       actualIndex = 0; // Home tab
     } else if (currentLocation == '/home/activity') {
       actualIndex = 1; // Activity tab
@@ -48,10 +47,7 @@ class HomeScreen extends ConsumerWidget {
     // The body of the scaffold will be the child for nested routes,
     // or the role-specific home screen for the main home route.
     Widget body;
-    if (currentLocation == '/home/browse') {
-      // Show the new map-based home screen
-      body = const MapHomeScreen();
-    } else if (currentLocation == '/home/post-task') {
+    if (currentLocation == '/home/post-task') {
       // Always show PosterHomeScreen when accessing post-task route
       body = profileAsync.when(
         data: (profile) => PosterHomeScreen(profile: profile),

@@ -9,11 +9,21 @@ final messageControllerProvider = Provider<MessageController>((ref) {
   return MessageController(ref: ref, repository: repository);
 });
 
+// Provider for initial channel load (fast - only 20 channels)
 final userChannelsProvider = StreamProvider.autoDispose<List<Channel>>((ref) {
   final user = ref.watch(currentUserProvider);
   if (user == null) return Stream.value([]);
-  
-  return ref.watch(messageControllerProvider).watchUserChannels(user.id);
+
+  // Start with 20 channels for fast initial load
+  return ref.watch(messageControllerProvider).watchUserChannels(user.id, limit: 20);
+});
+
+// Provider for loading more channels (on demand)
+final userChannelsWithLimitProvider = StreamProvider.autoDispose.family<List<Channel>, int>((ref, limit) {
+  final user = ref.watch(currentUserProvider);
+  if (user == null) return Stream.value([]);
+
+  return ref.watch(messageControllerProvider).watchUserChannels(user.id, limit: limit);
 });
 
 final channelMessagesProvider = StreamProvider.autoDispose.family<List<Message>, String>((ref, channelId) async* {
@@ -93,8 +103,8 @@ class MessageController {
     );
   }
 
-  Stream<List<Channel>> watchUserChannels(String userId) {
-    return repository.watchUserChannels(userId);
+  Stream<List<Channel>> watchUserChannels(String userId, {int limit = 50}) {
+    return repository.watchUserChannels(userId, limit: limit);
   }
 
   Future<Message> sendMessage({

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../auth/controllers/auth_controller.dart';
+import '../../auth/repositories/profile_repository.dart';
 import 'payment_options_screen.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/app_colors.dart';
@@ -16,6 +17,105 @@ class SettingsScreen extends ConsumerStatefulWidget {
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   bool _pushNotificationsEnabled = true;
+  bool _isLoadingNotificationSettings = true;
+  bool _isUpdatingNotificationSettings = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadNotificationSettings();
+  }
+
+  /// Load current notification settings from the database
+  Future<void> _loadNotificationSettings() async {
+    final user = ref.read(currentUserProvider);
+    if (user == null) {
+      setState(() {
+        _isLoadingNotificationSettings = false;
+      });
+      return;
+    }
+
+    try {
+      final profileRepository = ref.read(profileRepositoryProvider);
+      final enabled = await profileRepository.getNotificationSettings(user.id);
+
+      if (mounted) {
+        setState(() {
+          _pushNotificationsEnabled = enabled ?? true;
+          _isLoadingNotificationSettings = false;
+        });
+      }
+    } catch (e) {
+      print('[Settings] Error loading notification settings: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingNotificationSettings = false;
+        });
+      }
+    }
+  }
+
+  /// Update notification settings in the database
+  Future<void> _updateNotificationSettings(bool enabled) async {
+    final user = ref.read(currentUserProvider);
+    if (user == null) return;
+
+    setState(() {
+      _isUpdatingNotificationSettings = true;
+    });
+
+    try {
+      final profileRepository = ref.read(profileRepositoryProvider);
+      final success = await profileRepository.updateNotificationSettings(user.id, enabled);
+
+      if (mounted) {
+        setState(() {
+          _isUpdatingNotificationSettings = false;
+          if (success) {
+            _pushNotificationsEnabled = enabled;
+          }
+        });
+
+        // Show success message
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(enabled
+                  ? 'Push notifications enabled'
+                  : 'Push notifications disabled'),
+              backgroundColor: AppColors.posterPrimary,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        } else {
+          // Show error message
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Failed to update notification settings'),
+              backgroundColor: Colors.red,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      print('[Settings] Error updating notification settings: $e');
+      if (mounted) {
+        setState(() {
+          _isUpdatingNotificationSettings = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to update notification settings'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -96,13 +196,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   _buildSwitchMenuItem(
                     icon: Icons.notifications_outlined,
                     title: 'Push notification',
-                    subtitle: 'Allow Taskaway to send notifications',
+                    subtitle: _isLoadingNotificationSettings
+                        ? 'Loading...'
+                        : 'Allow Taskaway to send notifications',
                     value: _pushNotificationsEnabled,
-                    onChanged: (value) {
-                      setState(() {
-                        _pushNotificationsEnabled = value;
-                      });
-                    },
+                    onChanged: _isLoadingNotificationSettings || _isUpdatingNotificationSettings
+                        ? null
+                        : (value) async {
+                            await _updateNotificationSettings(value);
+                          },
                   ),
 
                   SizedBox(height: AppSpacing.xxxl),
@@ -242,7 +344,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     required String title,
     required String subtitle,
     required bool value,
-    required ValueChanged<bool> onChanged,
+    required ValueChanged<bool>? onChanged,
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),

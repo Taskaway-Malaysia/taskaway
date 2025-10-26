@@ -25,15 +25,9 @@ class DefaultFirebaseOptions {
       case TargetPlatform.iOS:
         return ios;
       case TargetPlatform.macOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for macos - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return macos;
       case TargetPlatform.windows:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for windows - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return windows;
       case TargetPlatform.linux:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for linux - '
@@ -58,7 +52,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyD0vKeCvlWnowfYZlDQXykmHocbXOtQFdk',
-    appId: '1:189891927637:android:087a000b2e89b29d203edc',
+    appId: '1:189891927637:android:f740c7e3b6f22cb9203edc',
     messagingSenderId: '189891927637',
     projectId: 'flutter-staging-taskaway',
     storageBucket: 'flutter-staging-taskaway.firebasestorage.app',
@@ -66,11 +60,30 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyCpJfTvwzcKXsIXVGc33-esL5G5JnZ67BY',
+    appId: '1:189891927637:ios:8bc67592c2c5e595203edc',
+    messagingSenderId: '189891927637',
+    projectId: 'flutter-staging-taskaway',
+    storageBucket: 'flutter-staging-taskaway.firebasestorage.app',
+    iosBundleId: 'com.taskawayasia',
+  );
+
+  static const FirebaseOptions macos = FirebaseOptions(
+    apiKey: 'AIzaSyCpJfTvwzcKXsIXVGc33-esL5G5JnZ67BY',
     appId: '1:189891927637:ios:2934af22574b8307203edc',
     messagingSenderId: '189891927637',
     projectId: 'flutter-staging-taskaway',
     storageBucket: 'flutter-staging-taskaway.firebasestorage.app',
     iosBundleId: 'my.taskaway.taskaway',
+  );
+
+  static const FirebaseOptions windows = FirebaseOptions(
+    apiKey: 'AIzaSyAjHYcqIIB5QkKwTZPOFTd1WXb1bVm7NQ0',
+    appId: '1:189891927637:web:85e0c66ff6835ca9203edc',
+    messagingSenderId: '189891927637',
+    projectId: 'flutter-staging-taskaway',
+    authDomain: 'flutter-staging-taskaway.firebaseapp.com',
+    storageBucket: 'flutter-staging-taskaway.firebasestorage.app',
+    measurementId: 'G-1N0N0RL3Y7',
   );
 
 }

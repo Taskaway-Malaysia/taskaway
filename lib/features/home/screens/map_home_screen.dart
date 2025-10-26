@@ -14,20 +14,47 @@ import 'tasker_home_screen.dart'; // Import to use filter providers
 import '../../auth/controllers/auth_controller.dart';
 import '../../profile/controllers/profile_controller.dart';
 import '../../../core/services/location_service.dart';
-import '../../tasks/screens/my_task_screen.dart' as my_tasks; // Import providers for poster filters
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_radius.dart';
 import 'dart:developer' as dev;
+import 'dart:async';
+import '../../tasks/repositories/task_repository.dart';
+
+// Status provider for filtering posted tasks
+final statusProvider = StateProvider<String>((ref) => 'Upcoming tasks');
 
 // Independent status provider for MapHomeScreen (separate from MyTaskScreen)
 // Defaults to 'Upcoming tasks' to show only active tasks, not completed ones
 final mapHomeStatusProvider = StateProvider<String>((ref) => 'Upcoming tasks');
 
+// Provider to get ALL tasks posted by the current user
+final myPostedTasksProvider = StreamProvider.autoDispose<List<Task>>((ref) {
+  final currentUser = ref.watch(currentUserProvider);
+
+  dev.log('[MyPostedTasks] Provider called');
+  dev.log('[MyPostedTasks] Current user: ${currentUser?.id}');
+
+  if (currentUser == null) {
+    dev.log('[MyPostedTasks] No current user, returning empty stream');
+    return Stream.value([]);
+  }
+
+  // Watch ALL tasks posted by this user with real-time updates
+  final taskRepo = ref.read(taskRepositoryProvider);
+  return taskRepo.watchMyPostedTasks(currentUser.id).map((myTasks) {
+    dev.log('[MyPostedTasks] Real-time update: Found ${myTasks.length} tasks posted by user');
+    for (var task in myTasks) {
+      dev.log('[MyPostedTasks] - Task: ${task.title}, Status: ${task.status}');
+    }
+    return myTasks;
+  });
+});
+
 // Provider to filter posted tasks by status for MapHomeScreen
 final filteredPostedTasksProvider = Provider.autoDispose<AsyncValue<List<Task>>>((ref) {
   final status = ref.watch(mapHomeStatusProvider);
 
-  return ref.watch(my_tasks.myPostedTasksProvider).when(
+  return ref.watch(myPostedTasksProvider).when(
     data: (tasks) {
       // Filter by status using same mapping as MyTaskScreen
       final filteredTasks = tasks.where((task) {
@@ -79,6 +106,15 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
   final _locationService = LocationService();
   bool _isLoadingLocation = false;
 
+  // Pagination variables
+  int _displayLimit = 5; // Start with 5 tasks
+  Timer? _autoLoadTimer;
+  final ScrollController _listScrollController = ScrollController();
+
+  // Sticky header state
+  bool _isHeaderCollapsed = false;
+  static const double _headerCollapseThreshold = 100.0; // Scroll threshold to collapse header
+
   // Helper function to generate random coordinates near KL
   LatLng _generateRandomKLCoordinate(int index) {
     // Base KL coordinates with slight variations
@@ -110,6 +146,12 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
     dev.log('[MapHomeScreen] initState - Initial _currentLocation: $_currentLocation');
     _getCurrentLocation();
 
+    // Add scroll listener for list view pagination
+    _listScrollController.addListener(_onListScroll);
+
+    // Start auto-load timer for map view (loads 5 more tasks every 3 seconds)
+    _startAutoLoadTimer();
+
     // Start location tracking if user is already available
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final profile = ref.read(currentProfileProvider).value;
@@ -124,7 +166,51 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
   @override
   void dispose() {
     _locationService.stopTracking();
+    _listScrollController.dispose();
+    _autoLoadTimer?.cancel();
     super.dispose();
+  }
+
+  // Pagination helper methods
+  void _onListScroll() {
+    if (!_listScrollController.hasClients) return;
+
+    final currentScroll = _listScrollController.position.pixels;
+
+    // Handle header collapse/expand based on scroll position
+    if (currentScroll > _headerCollapseThreshold && !_isHeaderCollapsed) {
+      setState(() {
+        _isHeaderCollapsed = true;
+      });
+    } else if (currentScroll <= _headerCollapseThreshold && _isHeaderCollapsed) {
+      setState(() {
+        _isHeaderCollapsed = false;
+      });
+    }
+
+    // Handle pagination - load more tasks when near bottom (80% of scroll extent)
+    final maxScroll = _listScrollController.position.maxScrollExtent;
+    final threshold = maxScroll * 0.8;
+
+    if (currentScroll >= threshold) {
+      _loadMoreTasks();
+    }
+  }
+
+  void _startAutoLoadTimer() {
+    // For map view: auto-load 5 more tasks every 3 seconds in background
+    _autoLoadTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
+      if (_isMapView && mounted) {
+        _loadMoreTasks();
+      }
+    });
+  }
+
+  void _loadMoreTasks() {
+    setState(() {
+      _displayLimit += 5; // Increase limit by 5
+      dev.log('[MapHomeScreen] Loaded more tasks, new limit: $_displayLimit');
+    });
   }
 
   Future<void> _getCurrentLocation() async {
@@ -396,10 +482,24 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Use filtered tasks when in tasker mode, filtered posted tasks when in poster mode
-    final tasksAsync = _isTaskerMode
-        ? ref.watch(filteredAvailableTasksProvider)  // Use filtered tasks for taskers
-        : ref.watch(filteredPostedTasksProvider);    // Show user's posted tasks filtered by status
+    // Calculate actual header heights based on component sizes
+    // This works consistently across all devices regardless of screen size
+    const double searchBarHeight = 68.0;  // Container height from MapSearchBar
+    const double bannerHeight = 120.0 + 8.0 + 8.0 + 8.0;  // Banner + top padding + bottom padding + indicator
+    const double tabBarHeight = 10.0 + 2.0 + 10.0;  // Tab button padding + border + padding
+
+    // When collapsed, only show minimal header
+    const double collapsedTop = 50.0;
+
+    // When expanded, show full header: search bar + banner + tabs
+    const double expandedTop = searchBarHeight + bannerHeight + tabBarHeight + 160 ;
+
+    // Preload BOTH datasets for instant tab switching (no delay)
+    final taskerTasksAsync = ref.watch(filteredAvailableTasksProvider);  // Find Job data
+    final posterTasksAsync = ref.watch(filteredPostedTasksProvider);     // My Tasks data
+
+    // Pick which dataset to display based on current mode
+    final tasksAsync = _isTaskerMode ? taskerTasksAsync : posterTasksAsync;
 
     return Scaffold(
       backgroundColor: _isMapView ? AppColors.backgroundPrimary : AppColors.white,
@@ -473,6 +573,10 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
             return distanceA.compareTo(distanceB);
           });
 
+          // Apply pagination - show only first N tasks based on display limit
+          final paginatedTasks = sortedTasks.take(_displayLimit).toList();
+          dev.log('[MapHomeScreen] Total tasks: ${sortedTasks.length}, Displaying: ${paginatedTasks.length}');
+
           return Stack(
             children: [
             // Show either map or list view (map only available in Tasker mode)
@@ -496,7 +600,7 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
                   ),
                   // Task markers layer (drawn first, below current location)
                   MarkerLayer(
-                    markers: sortedTasks.asMap().entries.where((entry) {
+                    markers: paginatedTasks.asMap().entries.where((entry) {
                       // Only show tasks that have valid coordinates
                       final task = entry.value;
                       return task.latitude != null && task.longitude != null;
@@ -586,27 +690,35 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
               )
             else if (!_isMapView || !_isTaskerMode)
               // List view (shown when not in map view or when in Poster mode)
-              Positioned.fill(
-                top: 410, // Adjusted to start right below tabs
+              AnimatedPositioned(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+                top: _isHeaderCollapsed ? collapsedTop : expandedTop, // Use calculated header heights
                 bottom: _isTaskerMode ? 48 : 0, // Space for VIEW MAP button only in Tasker mode
+                left: 0,
+                right: 0,
                 child: Container(
                   color: AppColors.white, // White background
                   child: ListView.separated(
+                    controller: _listScrollController, // Add scroll controller for pagination
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                    itemCount: sortedTasks.length,
+                    itemCount: paginatedTasks.length,
                     separatorBuilder: (context, index) => const SizedBox(height: 12),
                     itemBuilder: (context, index) {
                       return _TaskListItem(
-                        task: sortedTasks[index],
+                        task: paginatedTasks[index],
                         index: index,
+                        showStatus: !_isTaskerMode, // Show status for My Tasks, hide for Find Job
                       );
                     },
                   ),
                 ),
               ),
           
-          Positioned(
-            top: 0,
+          AnimatedPositioned(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            top: _isHeaderCollapsed ? -300 : 0, // Move off-screen when collapsed
             left: 0,
             right: 0,
             child: Column(
@@ -730,15 +842,18 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
                   ),
                 ),
                 // White rounded container with search and content
-                Container(
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOut,
                   decoration: BoxDecoration(
                     color: AppColors.white,
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(24),
-                      topRight: Radius.circular(24),
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(_isHeaderCollapsed ? 0 : 24),
+                      topRight: Radius.circular(_isHeaderCollapsed ? 0 : 24),
                     ),
                   ),
                   child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       // Show search bar in Tasker mode
                       if (_isTaskerMode) ...[
@@ -751,6 +866,8 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
                           onToggle: (isTasker) {
                             setState(() {
                               _isTaskerMode = isTasker;
+                              // Reset pagination when switching modes
+                              _displayLimit = 5;
                               // When switching to Poster mode, automatically switch to list view
                               if (!isTasker) {
                                 _isMapView = false;
@@ -775,6 +892,8 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
                           onToggle: (isTasker) {
                             setState(() {
                               _isTaskerMode = isTasker;
+                              // Reset pagination when switching modes
+                              _displayLimit = 5;
                               // Keep current view preference when switching modes
                             });
                           },
@@ -801,7 +920,7 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.only(bottom: 8),
                       child: Row(
-                        children: sortedTasks.asMap().entries.map((entry) {
+                        children: paginatedTasks.asMap().entries.map((entry) {
                           final index = entry.key;
                           final task = entry.value;
                           // Use actual task location if available, fallback to user location
@@ -912,7 +1031,7 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
 
   /// Build availability switch widget
   Widget _buildStatusFilter() {
-    final currentStatus = ref.watch(my_tasks.statusProvider);
+    final currentStatus = ref.watch(statusProvider);
     final statuses = ['Awaiting offers', 'Upcoming tasks', 'Completed'];
 
     return Container(
@@ -928,7 +1047,7 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
           return Expanded(
             child: GestureDetector(
               onTap: () {
-                ref.read(my_tasks.statusProvider.notifier).state = status;
+                ref.read(statusProvider.notifier).state = status;
               },
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 10),
@@ -1352,33 +1471,49 @@ class _TabButton extends StatelessWidget {
 class _TaskListItem extends ConsumerWidget {
   final Task task;
   final int index;
+  final bool showStatus;
 
   const _TaskListItem({
     required this.task,
     required this.index,
+    this.showStatus = false,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Status color mapping
+    final posterName = task.posterProfile?['full_name'] as String? ?? 'Unknown User';
+    final offerCount = task.offers?.length ?? 0;
+
+    // Status color mapping (only used when showStatus is true)
     final statusColors = {
       'open': AppColors.warning,
+      'pending_approval': AppColors.warning,
       'accepted': AppColors.info,
+      'assigned': AppColors.info,
       'in_progress': Colors.purple,
       'completed': AppColors.success,
       'cancelled': AppColors.error,
     };
-
     final statusColor = statusColors[task.status.toLowerCase()] ?? AppColors.textTertiary;
-    final posterName = task.posterProfile?['full_name'] as String? ?? 'Unknown User';
-    final offerCount = task.offers?.length ?? 0;
+
+    // User-friendly status labels
+    final statusLabels = {
+      'open': 'Open',
+      'pending_approval': 'Pending',
+      'accepted': 'Accepted',
+      'assigned': 'Assigned',
+      'in_progress': 'In Progress',
+      'completed': 'Completed',
+      'cancelled': 'Cancelled',
+    };
+    final statusLabel = statusLabels[task.status.toLowerCase()] ?? task.status;
 
     return InkWell(
       onTap: () {
         context.go('/home/tasks/${task.id}');
       },
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           color: AppColors.backgroundPrimary,
           borderRadius: AppRadius.md,
@@ -1387,91 +1522,132 @@ class _TaskListItem extends ConsumerWidget {
             width: 1,
           ),
         ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Left side - Task info
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Left side - Task details
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      task.title,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Row(
+                      children: [
+                        Text(
+                          'By ',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                        Text(
+                          posterName,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: AppColors.textPrimary87,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 1),
+                    Text(
+                      'Bidding • $offerCount Offer${offerCount != 1 ? 's' : ''}',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 1),
+                    Text(
+                      'Due date ${_formatDate(task.scheduledTime)}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textTertiary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(width: 12),
+
+              // Right side - Price, Status, Button
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
+                  // Price
                   Text(
-                    task.title,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
+                    'RM ${task.price.toStringAsFixed(0)}',
+                    style: AppTypography.titleMedium.copyWith(
+                      fontWeight: AppTypography.bold,
                       color: AppColors.textPrimary,
                     ),
                   ),
+
                   const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Text(
-                        'By ',
+
+                  // Status Badge - Only for My Tasks
+                  if (showStatus)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: statusColor.withOpacity(0.1),
+                        borderRadius: AppRadius.lg,
+                      ),
+                      child: Text(
+                        statusLabel,
                         style: TextStyle(
-                          fontSize: 13,
-                          color: AppColors.textSecondary,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: statusColor,
                         ),
                       ),
-                      Text(
-                        posterName,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: AppColors.textPrimary87,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Bidding • $offerCount Offer${offerCount != 1 ? 's' : ''}',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: AppColors.textSecondary,
                     ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Due date ${_formatDate(task.scheduledTime)}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textTertiary,
+
+                  // Spacer to push button to bottom
+                  const Spacer(),
+
+                  // Button - Always at bottom (Apply Job for Find Job, View Details for My Tasks)
+                  SizedBox(
+                    height: 24,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        context.go('/home/tasks/${task.id}');
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.gray900,
+                        foregroundColor: AppColors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        elevation: 0,
+                        minimumSize: const Size(0, 24),
+                      ),
+                      child: Text(
+                        showStatus ? 'View Details' : 'Apply Job',
+                        style: AppTypography.labelSmall.copyWith(
+                          color: AppColors.white,
+                          fontWeight: AppTypography.semiBold,
+                          fontSize: 10,
+                        ),
+                      ),
                     ),
                   ),
                 ],
               ),
-            ),
-
-            // Right side - Price and Status
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  'RM ${task.price.toStringAsFixed(0)}',
-                  style: AppTypography.titleMedium.copyWith(
-                    fontWeight: AppTypography.bold,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.1),
-                    borderRadius: AppRadius.lg,
-                  ),
-                  child: Text(
-                    task.status.toUpperCase(),
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: statusColor,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

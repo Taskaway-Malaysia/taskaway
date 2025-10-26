@@ -34,13 +34,23 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
   bool _showSuggestions = true;
   late Channel _channel;
   int _selectedIndex = 3; // Message tab selected
+  bool _isUserScrolling = false;
+  int _previousMessageCount = 0;
 
   @override
   void initState() {
     super.initState();
     _channel = widget.channel;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _scrollToBottom();
+
+    // Listen to scroll events to detect user scrolling
+    _scrollController.addListener(() {
+      if (_scrollController.hasClients) {
+        // User is scrolling if they're not at the bottom
+        final isAtBottom = _scrollController.position.pixels <= 100; // 100px threshold
+        setState(() {
+          _isUserScrolling = !isAtBottom;
+        });
+      }
     });
   }
 
@@ -51,14 +61,30 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
     super.dispose();
   }
 
-  void _scrollToBottom() {
+  void _scrollToBottom({bool animate = true}) {
     if (_scrollController.hasClients) {
-      _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
+      if (animate) {
+        _scrollController.animateTo(
+          0, // Scroll to 0 because reverse: true
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      } else {
+        _scrollController.jumpTo(0);
+      }
     }
+  }
+
+  void _handleNewMessages(List<Message> messages) {
+    // Only auto-scroll if:
+    // 1. User is not actively scrolling up to read old messages
+    // 2. OR it's a new message (count increased)
+    if (!_isUserScrolling && messages.length > _previousMessageCount) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scrollToBottom(animate: false);
+      });
+    }
+    _previousMessageCount = messages.length;
   }
 
   void _sendMessage() async {
@@ -79,10 +105,11 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
       _messageController.clear();
       setState(() {
         _showSuggestions = false;
+        _isUserScrolling = false; // Reset so we auto-scroll to show sent message
       });
 
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        _scrollToBottom();
+        _scrollToBottom(animate: true);
       });
     } catch (e) {
       if (mounted) {
@@ -525,6 +552,9 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
               Expanded(
                 child: messagesAsync.when(
                   data: (messages) {
+                    // Handle new messages for auto-scroll logic
+                    _handleNewMessages(messages);
+
                     if (messages.isEmpty) {
                       return Center(
                         child: Column(
@@ -558,6 +588,7 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
 
                     return ListView.separated(
                       controller: _scrollController,
+                      reverse: true, // Newest messages at bottom (index 0)
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       itemCount: messages.length,
                       separatorBuilder: (context, index) => SizedBox(height: AppSpacing.sm),

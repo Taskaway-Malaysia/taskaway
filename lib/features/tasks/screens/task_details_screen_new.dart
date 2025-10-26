@@ -139,6 +139,74 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
       }
     }
   }
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'accepted':
+        return const Color(0xFFFFDB5B); // Yellow
+      case 'in_progress':
+        return Colors.blue;
+      case 'pending_approval':
+        return Colors.orange;
+      case 'completed':
+        return Colors.green;
+      default:
+        return AppColors.textSecondary;
+    }
+  }
+
+  IconData _getStatusIcon(String status) {
+    switch (status.toLowerCase()) {
+      case 'accepted':
+        return Icons.access_time;
+      case 'in_progress':
+        return Icons.work_outline;
+      case 'pending_approval':
+        return Icons.rate_review;
+      case 'completed':
+        return Icons.check_circle;
+      default:
+        return Icons.info_outline;
+    }
+  }
+
+  String _getStatusTitle(String status, bool isPoster) {
+    switch (status.toLowerCase()) {
+      case 'accepted':
+        return isPoster ? 'Waiting for Tasker to Start' : 'Ready to Start';
+      case 'in_progress':
+        return isPoster ? 'Tasker is Working' : 'Task in Progress';
+      case 'pending_approval':
+        return isPoster ? 'Review Required' : 'Awaiting Approval';
+      case 'completed':
+        return 'Task Completed';
+      default:
+        return 'Task Status';
+    }
+  }
+
+  String _getStatusDescription(String status, bool isPoster) {
+    switch (status.toLowerCase()) {
+      case 'accepted':
+        return isPoster
+            ? 'Your offer has been accepted. The tasker will start working on your task soon.'
+            : 'You have accepted this task. Click "Start Task" when you\'re ready to begin work.';
+      case 'in_progress':
+        return isPoster
+            ? 'The tasker is currently working on your task. You\'ll be notified when it\'s complete.'
+            : 'You are currently working on this task. Click "Mark Complete" when you finish.';
+      case 'pending_approval':
+        return isPoster
+            ? 'The tasker has marked this task as complete. Please review the work and approve or request changes.'
+            : 'You have marked this task as complete. Waiting for the poster to review and approve your work.';
+      case 'completed':
+        return isPoster
+            ? 'This task has been completed and approved. Payment has been released to the tasker.'
+            : 'This task has been completed and approved. Payment has been released to you.';
+      default:
+        return '';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final taskAsyncValue = ref.watch(taskProvider(widget.taskId));
@@ -155,8 +223,12 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, size: 20, color: AppColors.textPrimary),
           onPressed: () {
-            // Navigate back to home screen
-            context.go('/home');
+            // Try to pop if possible, otherwise navigate to home
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/home/browse');
+            }
           },
         ),
         title: Text(
@@ -286,6 +358,65 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
                   const SizedBox(height: 16),
                   Divider(height: 1, thickness: 1, color: AppColors.borderDefault),
                   const SizedBox(height: 16),
+
+                  // Status Banner for Both Poster and Tasker
+                  if (['accepted', 'in_progress', 'pending_approval', 'completed'].contains(task.status.toLowerCase())) ...[
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: _getStatusColor(task.status).withOpacity(0.1),
+                        borderRadius: AppRadius.md,
+                        border: Border.all(
+                          color: _getStatusColor(task.status).withOpacity(0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: _getStatusColor(task.status).withOpacity(0.2),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              _getStatusIcon(task.status),
+                              color: _getStatusColor(task.status),
+                              size: 20,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _getStatusTitle(task.status, isPoster),
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: _getStatusColor(task.status),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  _getStatusDescription(task.status, isPoster),
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: AppColors.textSecondary,
+                                    height: 1.4,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
 
                   // Task Images Row - Scrollable
                   if (task.images != null && task.images!.isNotEmpty) ...[

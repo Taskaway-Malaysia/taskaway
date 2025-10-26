@@ -37,6 +37,7 @@ class _MapSearchBarState extends State<MapSearchBar> {
         color: Colors.white,
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Stack(
@@ -213,14 +214,14 @@ class _MapSearchBarState extends State<MapSearchBar> {
             children: [
               Expanded(
                 child: _TabButton(
-                  label: 'TASKER',
+                  label: 'FIND JOB',
                   isSelected: widget.isTaskerMode,
                   onTap: () => widget.onToggle(true),
                 ),
               ),
               Expanded(
                 child: _TabButton(
-                  label: 'POSTER',
+                  label: 'MY TASKS',
                   isSelected: !widget.isTaskerMode,
                   onTap: () => widget.onToggle(false),
                 ),
@@ -249,7 +250,7 @@ class _TabButton extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
+        padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
           color: Colors.white,
           border: Border(
