@@ -171,6 +171,75 @@ class TaskRepository {
         .asBroadcastStream();
   }
 
+  // Watch tasks assigned to the current user (tasks where user is the tasker)
+  Stream<List<Task>> watchMyAssignedTasks(String taskerId) {
+    try {
+      dev.log('[TaskRepository] Setting up watch for tasks assigned to: $taskerId');
+
+      // Use Supabase Real-time subscription
+      return supabase
+          .from(_tableName)
+          .stream(primaryKey: ['id'])
+          .eq('tasker_id', taskerId)  // Filter by tasks assigned to this tasker
+          .order('created_at', ascending: false)
+          .asyncMap((data) async {
+            dev.log('[TaskRepository] Received ${data.length} assigned tasks from stream');
+
+            // For each task, fetch the poster profile
+            final tasksWithProfiles = await Future.wait(
+              data.map((taskJson) async {
+                final posterId = taskJson['poster_id'];
+                if (posterId != null) {
+                  try {
+                    final profileResponse = await supabase
+                        .from('taskaway_profiles')
+                        .select()
+                        .eq('id', posterId)
+                        .single();
+                    taskJson['poster_profile'] = profileResponse;
+                  } catch (e) {
+                    dev.log('[TaskRepository] Error fetching poster profile for $posterId: $e');
+                  }
+                }
+                return taskJson;
+              }).toList(),
+            );
+
+            final tasks = tasksWithProfiles.map((json) => Task.fromJson(json)).toList();
+            dev.log('[TaskRepository] Returning ${tasks.length} assigned tasks');
+            return tasks;
+          })
+          .handleError((error) {
+            dev.log('[TaskRepository] Realtime subscription error for assigned tasks: $error');
+            // Fallback to polling if real-time fails
+            return _createMyAssignedTasksPollingStream(taskerId);
+          });
+    } catch (e) {
+      dev.log('[TaskRepository] Error setting up Realtime stream for assigned tasks: $e');
+      return _createMyAssignedTasksPollingStream(taskerId);
+    }
+  }
+
+  // Creates a polling-based stream for assigned tasks as a fallback when Realtime fails
+  Stream<List<Task>> _createMyAssignedTasksPollingStream(String taskerId) {
+    return Stream.periodic(const Duration(seconds: 3), (_) => null)
+        .asyncMap((_) async {
+          try {
+            final response = await supabase
+                .from(_tableName)
+                .select()
+                .eq('tasker_id', taskerId)
+                .order('created_at', ascending: false);
+
+            return response.map((json) => Task.fromJson(json)).toList().cast<Task>();
+          } catch (e) {
+            dev.log('[TaskRepository] Error fetching assigned tasks: $e');
+            return <Task>[];
+          }
+        })
+        .asBroadcastStream();
+  }
+
   // Creates a polling-based stream as a fallback when Realtime fails
   Stream<List<Task>> _createPollingStream() {
     // Use a periodic timer to poll data every 3 seconds

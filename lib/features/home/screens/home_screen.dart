@@ -70,59 +70,69 @@ class HomeScreen extends ConsumerWidget {
                   height: 64,
                   color: AppColors.backgroundPrimary,
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      _buildNavItem(
-                        index: 0,
-                        iconPath: 'assets/icons/nav_home.svg',
-                        label: 'Home',
-                        isSelected: actualIndex == 0,
-                        onTap: () {
-                          if (actualIndex == 0) return;
-                          ref.read(currentIndexProvider.notifier).state = 0;
-                          context.go('/home/browse');
-                        },
+                      Expanded(
+                        child: _buildNavItem(
+                          index: 0,
+                          iconPath: 'assets/icons/nav_home.svg',
+                          label: 'Jobs',
+                          isSelected: actualIndex == 0,
+                          onTap: () {
+                            if (actualIndex == 0) return;
+                            ref.read(currentIndexProvider.notifier).state = 0;
+                            context.go('/home/browse');
+                          },
+                        ),
                       ),
-                      _buildNavItem(
-                        index: 1,
-                        iconPath: 'assets/icons/nav_activity.svg',
-                        label: 'Activity',
-                        isSelected: actualIndex == 1,
-                        onTap: () {
-                          if (actualIndex == 1) return;
-                          ref.read(currentIndexProvider.notifier).state = 1;
-                          context.go('/home/activity');
-                        },
+                      Expanded(
+                        child: _buildNavItem(
+                          index: 1,
+                          iconPath: 'assets/icons/nav_activity.svg',
+                          label: 'Task',
+                          isSelected: actualIndex == 1,
+                          onTap: () {
+                            if (actualIndex == 1) return;
+                            ref.read(currentIndexProvider.notifier).state = 1;
+                            context.go('/home/activity');
+                          },
+                        ),
                       ),
-                      _buildCenterTaskawayButton(
-                        isSelected: actualIndex == 2,
-                        onTap: () {
-                          if (actualIndex == 2) return;
-                          ref.read(currentIndexProvider.notifier).state = 2;
-                          context.go('/create-task');
-                        },
+                      Expanded(
+                        child: _buildCenterTaskawayButton(
+                          isSelected: actualIndex == 2,
+                          onTap: () {
+                            if (actualIndex == 2) return;
+                            ref.read(currentIndexProvider.notifier).state = 2;
+                            context.go('/create-task');
+                          },
+                        ),
                       ),
-                      _buildNavItem(
-                        index: 3,
-                        iconPath: 'assets/icons/nav_message.svg',
-                        label: 'Message',
-                        isSelected: actualIndex == 3,
-                        onTap: () {
-                          if (actualIndex == 3) return;
-                          ref.read(currentIndexProvider.notifier).state = 3;
-                          context.go('/home/chat');
-                        },
+                      Expanded(
+                        child: _buildNavItem(
+                          index: 3,
+                          iconPath: 'assets/icons/nav_message.svg',
+                          label: 'Message',
+                          isSelected: actualIndex == 3,
+                          onTap: () {
+                            if (actualIndex == 3) return;
+                            ref.read(currentIndexProvider.notifier).state = 3;
+                            context.go('/home/chat');
+                          },
+                        ),
                       ),
-                      _buildNavItem(
-                        index: 4,
-                        iconPath: 'assets/icons/nav_profile.svg',
-                        label: 'Profile',
-                        isSelected: actualIndex == 4,
-                        onTap: () {
-                          if (actualIndex == 4) return;
-                          ref.read(currentIndexProvider.notifier).state = 4;
-                          context.go('/home/profile');
-                        },
+                      Expanded(
+                        child: _buildNavItem(
+                          index: 4,
+                          iconPath: 'assets/icons/nav_profile.svg',
+                          label: 'Profile',
+                          isSelected: actualIndex == 4,
+                          onTap: () {
+                            if (actualIndex == 4) return;
+                            ref.read(currentIndexProvider.notifier).state = 4;
+                            context.go('/home/profile');
+                          },
+                        ),
                       ),
                     ],
                   ),
@@ -208,7 +218,7 @@ class HomeScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 3),
           Text(
-            'Taskaway',
+            'Post a Task',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: AppColors.navInactive,

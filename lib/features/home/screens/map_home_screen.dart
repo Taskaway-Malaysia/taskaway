@@ -50,22 +50,35 @@ final myPostedTasksProvider = StreamProvider.autoDispose<List<Task>>((ref) {
   });
 });
 
-// Provider to filter posted tasks by status for MapHomeScreen
-final filteredPostedTasksProvider = Provider.autoDispose<AsyncValue<List<Task>>>((ref) {
-  final status = ref.watch(mapHomeStatusProvider);
+// Provider to get ALL tasks assigned to the current user (where user is the tasker)
+final myAssignedTasksProvider = StreamProvider.autoDispose<List<Task>>((ref) {
+  final currentUser = ref.watch(currentUserProvider);
 
-  return ref.watch(myPostedTasksProvider).when(
+  dev.log('[MyAssignedTasks] Provider called');
+  dev.log('[MyAssignedTasks] Current user: ${currentUser?.id}');
+
+  if (currentUser == null) {
+    dev.log('[MyAssignedTasks] No current user, returning empty stream');
+    return Stream.value([]);
+  }
+
+  // Watch ALL tasks assigned to this user with real-time updates
+  final taskRepo = ref.read(taskRepositoryProvider);
+  return taskRepo.watchMyAssignedTasks(currentUser.id).map((myTasks) {
+    dev.log('[MyAssignedTasks] Real-time update: Found ${myTasks.length} tasks assigned to user');
+    for (var task in myTasks) {
+      dev.log('[MyAssignedTasks] - Task: ${task.title}, Status: ${task.status}');
+    }
+    return myTasks;
+  });
+});
+
+// Provider for Ongoing Job tab - shows ALL tasks assigned to current user
+final myTasksProvider = Provider.autoDispose<AsyncValue<List<Task>>>((ref) {
+  return ref.watch(myAssignedTasksProvider).when(
     data: (tasks) {
-      // Filter by status using same mapping as MyTaskScreen
-      final filteredTasks = tasks.where((task) {
-        final mappedStatus = _mapTaskStatusToUiStatus(task.status);
-        return mappedStatus == status;
-      }).toList();
-
-      dev.log('[MapHomeScreen] Poster view - Total posted tasks: ${tasks.length}');
-      dev.log('[MapHomeScreen] Poster view - Filtered by "$status": ${filteredTasks.length}');
-
-      return AsyncValue.data(filteredTasks);
+      dev.log('[MapHomeScreen] Ongoing Job view - Total assigned tasks: ${tasks.length}');
+      return AsyncValue.data(tasks);
     },
     loading: () => const AsyncValue.loading(),
     error: (err, stack) => AsyncValue.error(err, stack),
@@ -266,8 +279,8 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
 
       dev.log('[MapHomeScreen] Getting current position...');
       final position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-        timeLimit: const Duration(seconds: 10),
+        desiredAccuracy: LocationAccuracy.medium,  // Medium accuracy is faster and sufficient
+        timeLimit: const Duration(seconds: 30),     // Increased timeout for better reliability
       );
 
       dev.log('[MapHomeScreen] Got position: ${position.latitude}, ${position.longitude}');
@@ -291,14 +304,9 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
       });
     } catch (e) {
       dev.log('[MapHomeScreen] Error getting location: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Could not get your location: $e'),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
+      // Silently use default KL location on timeout - no scary error message
+      // This provides better UX when GPS is slow or unavailable
+      dev.log('[MapHomeScreen] Using default KL location');
     }
   }
 
@@ -388,47 +396,16 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
                       }).toList(),
                     ),
                   ),
-                  SizedBox(height: AppSpacing.lg),
-                  // Sort filter
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    decoration: BoxDecoration(
-                      color: AppColors.backgroundPrimary,
-                      borderRadius: AppRadius.smMd,
-                      border: Border.all(color: AppColors.borderDefault),
-                    ),
-                    child: DropdownButton<String>(
-                      value: ref.watch(sortFilterProvider),
-                      hint: Text('Sort by'),
-                      underline: Container(),
-                      icon: const Icon(Icons.arrow_drop_down),
-                      isExpanded: true,
-                      dropdownColor: AppColors.backgroundPrimary,
-                      onChanged: (String? newValue) {
-                        if (newValue != null) {
-                          ref.read(sortFilterProvider.notifier).state = newValue;
-                          setState(() {}); // Refresh to update result count
-                        }
-                      },
-                      items: <String>['Latest', 'Price: High to Low', 'Price: Low to High']
-                          .map<DropdownMenuItem<String>>((String value) {
-                        return DropdownMenuItem<String>(
-                          value: value,
-                          child: Text(value, style: const TextStyle(fontSize: 14)),
-                        );
-                      }).toList(),
-                    ),
-                  ),
                   SizedBox(height: AppSpacing.xxl),
                   // Clear All Filters button
-                  if (ref.watch(categoryFilterProvider) != 'All Categories' ||
-                      ref.watch(sortFilterProvider) != 'Latest')
+                  if (ref.watch(categoryFilterProvider) != 'All Categories')
                     Padding(
                       padding: const EdgeInsets.only(bottom: 12),
                       child: OutlinedButton(
                         onPressed: () {
+                          dev.log('[MapHomeScreen] Clear All Filters button pressed');
                           ref.read(categoryFilterProvider.notifier).state = 'All Categories';
-                          ref.read(sortFilterProvider.notifier).state = 'Latest';
+                          dev.log('[MapHomeScreen] Filters cleared - Category: All Categories');
                           setState(() {}); // Refresh to update UI
                         },
                         style: OutlinedButton.styleFrom(
@@ -450,7 +427,13 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
                     ),
                   // Apply Filters button
                   ElevatedButton(
-                    onPressed: () => Navigator.of(context).pop(),
+                    onPressed: () {
+                      dev.log('[MapHomeScreen] Apply Filters button pressed');
+                      dev.log('[MapHomeScreen] Current filters - Category: ${ref.read(categoryFilterProvider)}, Sort: ${ref.read(sortFilterProvider)}');
+
+                      // Close the bottom sheet - Provider will auto-rebuild due to state changes
+                      Navigator.of(context).pop();
+                    },
                     style: ElevatedButton.styleFrom(
                       minimumSize: const Size(double.infinity, 48),
                       backgroundColor: AppColors.primary,
@@ -495,8 +478,8 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
     const double expandedTop = searchBarHeight + bannerHeight + tabBarHeight + 160 ;
 
     // Preload BOTH datasets for instant tab switching (no delay)
-    final taskerTasksAsync = ref.watch(filteredAvailableTasksProvider);  // Find Job data
-    final posterTasksAsync = ref.watch(filteredPostedTasksProvider);     // My Tasks data
+    final taskerTasksAsync = ref.watch(filteredAvailableTasksProvider);  // Find Job data - all open tasks
+    final posterTasksAsync = ref.watch(myTasksProvider);                 // Ongoing Job data - tasks assigned to current user
 
     // Pick which dataset to display based on current mode
     final tasksAsync = _isTaskerMode ? taskerTasksAsync : posterTasksAsync;
@@ -708,7 +691,7 @@ class _MapHomeScreenState extends ConsumerState<MapHomeScreen> {
                       return _TaskListItem(
                         task: paginatedTasks[index],
                         index: index,
-                        showStatus: !_isTaskerMode, // Show status for My Tasks, hide for Find Job
+                        showStatus: !_isTaskerMode, // Show status for Ongoing Job, hide for Find Job
                       );
                     },
                   ),
@@ -1596,7 +1579,7 @@ class _TaskListItem extends ConsumerWidget {
 
                   const SizedBox(height: 4),
 
-                  // Status Badge - Only for My Tasks
+                  // Status Badge - Only for Ongoing Job
                   if (showStatus)
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -1617,7 +1600,7 @@ class _TaskListItem extends ConsumerWidget {
                   // Spacer to push button to bottom
                   const Spacer(),
 
-                  // Button - Always at bottom (Apply Job for Find Job, View Details for My Tasks)
+                  // Button - Always at bottom (Apply Job for Find Job, View Details for Ongoing Job)
                   SizedBox(
                     height: 24,
                     child: ElevatedButton(

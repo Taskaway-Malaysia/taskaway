@@ -58,12 +58,14 @@ final availableTasksProvider = StreamProvider<List<Task>>((ref) {
 });
 
 // Provider for filtered available tasks
-final filteredAvailableTasksProvider = Provider<AsyncValue<List<Task>>>((ref) {
+final filteredAvailableTasksProvider = Provider.autoDispose<AsyncValue<List<Task>>>((ref) {
   final tasksAsync = ref.watch(availableTasksProvider);
   final region = ref.watch(regionFilterProvider);
   final category = ref.watch(categoryFilterProvider);
   final sort = ref.watch(sortFilterProvider);
   final searchQuery = ref.watch(searchQueryProvider);
+
+  dev.log('[FilteredTasks] Provider rebuilding - Region: $region, Category: $category, Sort: $sort');
 
   return tasksAsync.whenData((tasks) {
     var filteredTasks = tasks;
@@ -94,17 +96,32 @@ final filteredAvailableTasksProvider = Provider<AsyncValue<List<Task>>>((ref) {
     }
 
     // Apply sorting
+    dev.log('[TaskerHome] Applying sort: $sort');
     switch (sort) {
       case 'Latest':
         filteredTasks.sort((a, b) => b.createdAt.compareTo(a.createdAt));
         break;
       case 'Price: High to Low':
-        filteredTasks.sort((a, b) => b.price.compareTo(a.price));
+        dev.log('[TaskerHome] Sorting by Price: High to Low');
+        dev.log('[TaskerHome] Before sort - first 3 prices: ${filteredTasks.take(3).map((t) => '${t.title}: RM${t.price}').join(', ')}');
+        filteredTasks.sort((a, b) {
+          final comparison = b.price.compareTo(a.price);
+          return comparison;
+        });
+        dev.log('[TaskerHome] After sort - first 3 prices: ${filteredTasks.take(3).map((t) => '${t.title}: RM${t.price}').join(', ')}');
         break;
       case 'Price: Low to High':
-        filteredTasks.sort((a, b) => a.price.compareTo(b.price));
+        dev.log('[TaskerHome] Sorting by Price: Low to High');
+        dev.log('[TaskerHome] Before sort - first 3 prices: ${filteredTasks.take(3).map((t) => '${t.title}: RM${t.price}').join(', ')}');
+        filteredTasks.sort((a, b) {
+          final comparison = a.price.compareTo(b.price);
+          return comparison;
+        });
+        dev.log('[TaskerHome] After sort - first 3 prices: ${filteredTasks.take(3).map((t) => '${t.title}: RM${t.price}').join(', ')}');
         break;
     }
+
+    dev.log('[TaskerHome] Filtered tasks count: ${filteredTasks.length}');
 
     return filteredTasks;
   });
@@ -332,29 +349,6 @@ class _TaskerHomeScreenState extends ConsumerState<TaskerHomeScreen> {
                   ),
                 ],
               ),
-              SizedBox(height: AppSpacing.lg),
-              _buildDropdownContainer(
-                child: DropdownButton<String>(
-                  value: ref.watch(sortFilterProvider),
-                  hint: Text('Sort by'),
-                  underline: Container(),
-                  icon: const Icon(Icons.arrow_drop_down),
-                  isExpanded: true,
-                  onChanged: (String? newValue) {
-                    if (newValue != null) {
-                      ref.read(sortFilterProvider.notifier).state = newValue;
-                      setState(() {}); // Refresh to update result count
-                    }
-                  },
-                  items: <String>['Latest', 'Price: High to Low', 'Price: Low to High']
-                      .map<DropdownMenuItem<String>>((String value) {
-                    return DropdownMenuItem<String>(
-                      value: value,
-                      child: Text(value, style: const TextStyle(fontSize: 14)),
-                    );
-                  }).toList(),
-                ),
-              ),
               SizedBox(height: AppSpacing.xxl),
               // Clear All Filters button
               if (_getActiveFilterCount(ref) > 0)
@@ -364,7 +358,6 @@ class _TaskerHomeScreenState extends ConsumerState<TaskerHomeScreen> {
                     onPressed: () {
                       ref.read(regionFilterProvider.notifier).state = 'All Regions';
                       ref.read(categoryFilterProvider.notifier).state = 'All Categories';
-                      ref.read(sortFilterProvider.notifier).state = 'Latest';
                       setState(() {}); // Refresh to update UI
                     },
                     style: OutlinedButton.styleFrom(
@@ -386,7 +379,13 @@ class _TaskerHomeScreenState extends ConsumerState<TaskerHomeScreen> {
                 ),
               // Apply Filters button
               ElevatedButton(
-                onPressed: () => Navigator.of(context).pop(),
+                onPressed: () {
+                  dev.log('[TaskerHome] Apply Filters button pressed');
+                  dev.log('[TaskerHome] Current filters - Region: ${ref.read(regionFilterProvider)}, Category: ${ref.read(categoryFilterProvider)}, Sort: ${ref.read(sortFilterProvider)}');
+
+                  // Close the bottom sheet - Provider will auto-rebuild due to state changes
+                  Navigator.of(context).pop();
+                },
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size(double.infinity, 48),
                   backgroundColor: const Color(0xFFFFDB5B),
@@ -420,7 +419,6 @@ class _TaskerHomeScreenState extends ConsumerState<TaskerHomeScreen> {
   Widget _buildActiveFilters(BuildContext context, WidgetRef ref) {
     final region = ref.watch(regionFilterProvider);
     final category = ref.watch(categoryFilterProvider);
-    final sort = ref.watch(sortFilterProvider);
 
     List<Widget> chips = [];
 
@@ -464,33 +462,12 @@ class _TaskerHomeScreenState extends ConsumerState<TaskerHomeScreen> {
       );
     }
 
-    if (sort != 'Latest') {
-      chips.add(
-        Padding(
-          padding: const EdgeInsets.only(right: 8),
-          child: Chip(
-            label: Text(sort, style: const TextStyle(fontSize: 12)),
-            deleteIcon: const Icon(Icons.close, size: 16),
-            onDeleted: () {
-              ref.read(sortFilterProvider.notifier).state = 'Latest';
-            },
-            backgroundColor: const Color(0xFFFFF5E0),
-            side: const BorderSide(color: Color(0xFFFFC333)),
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            labelPadding: EdgeInsets.zero,
-          ),
-        ),
-      );
-    }
-
     if (chips.isNotEmpty) {
       chips.add(
         TextButton(
           onPressed: () {
             ref.read(regionFilterProvider.notifier).state = 'All Regions';
             ref.read(categoryFilterProvider.notifier).state = 'All Categories';
-            ref.read(sortFilterProvider.notifier).state = 'Latest';
           },
           child: Text(
             'Clear all',
@@ -889,7 +866,6 @@ class _TaskerHomeScreenState extends ConsumerState<TaskerHomeScreen> {
     int count = 0;
     if (ref.watch(regionFilterProvider) != 'All Regions') count++;
     if (ref.watch(categoryFilterProvider) != 'All Categories') count++;
-    if (ref.watch(sortFilterProvider) != 'Latest') count++;
     return count;
   }
 }

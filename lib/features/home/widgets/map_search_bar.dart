@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_colors.dart';
 
@@ -22,13 +21,6 @@ class MapSearchBar extends StatefulWidget {
 }
 
 class _MapSearchBarState extends State<MapSearchBar> {
-  final PageController _pageController = PageController();
-
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -73,6 +65,7 @@ class _MapSearchBarState extends State<MapSearchBar> {
                       borderRadius: AppRadius.md,
                     ),
                     child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -85,22 +78,29 @@ class _MapSearchBarState extends State<MapSearchBar> {
                         Expanded(
                           child: TextField(
                             onChanged: widget.onSearch,
+                            textAlignVertical: TextAlignVertical.center,
                             style: const TextStyle(
                               fontSize: 15,
                               color: Colors.black,
+                              height: 1.2,
                             ),
                             decoration: InputDecoration(
                               hintText: 'Search for any service',
                               hintStyle: TextStyle(
                                 color: Colors.grey.shade400,
                                 fontSize: 15,
+                                height: 1.2,
                               ),
                               filled: true,
                               fillColor: Colors.white,
                               border: InputBorder.none,
                               enabledBorder: InputBorder.none,
                               focusedBorder: InputBorder.none,
-                              contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 0,
+                                vertical: 12,
+                              ),
+                              isDense: true,
                             ),
                           ),
                         ),
@@ -150,61 +150,17 @@ class _MapSearchBarState extends State<MapSearchBar> {
                         borderRadius: AppRadius.md,
                       ),
                     ),
-                    // Main banner with shadow
-                    Container(
-                      decoration: BoxDecoration(
-                        borderRadius: AppRadius.md,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: ClipRRect(
-                        borderRadius: AppRadius.md,
-                        child: SizedBox(
-                          width: double.infinity,
-                          height: 120,
-                          child: PageView(
-                            controller: _pageController,
-                            children: [
-                              Image.asset(
-                                'assets/images/my-11134258-820lh-mf2fi3npb2tn0f.webp',
-                                width: double.infinity,
-                                height: 120,
-                                fit: BoxFit.cover,
-                              ),
-                              Image.asset(
-                                'assets/images/my-11134258-820lh-mf2fi3npb2tn0f.webp',
-                                width: double.infinity,
-                                height: 120,
-                                fit: BoxFit.cover,
-                              ),
-                              Image.asset(
-                                'assets/images/my-11134258-820lh-mf2fi3npb2tn0f.webp',
-                                width: double.infinity,
-                                height: 120,
-                                fit: BoxFit.cover,
-                              ),
-                            ],
-                          ),
-                        ),
+                    // Main banner
+                    ClipRRect(
+                      borderRadius: AppRadius.md,
+                      child: Image.asset(
+                        'assets/images/my-11134258-820lh-mf2fi3npb2tn0f.webp',
+                        width: double.infinity,
+                        height: 120,
+                        fit: BoxFit.cover,
                       ),
                     ),
                   ],
-                ),
-                const SizedBox(height: 8),
-                SmoothPageIndicator(
-                  controller: _pageController,
-                  count: 3,
-                  effect: WormEffect(
-                    dotHeight: 8,
-                    dotWidth: 8,
-                    activeDotColor: const Color(0xFFFFDB5B),
-                    dotColor: Colors.grey.shade300,
-                  ),
                 ),
               ],
             ),
@@ -221,7 +177,7 @@ class _MapSearchBarState extends State<MapSearchBar> {
               ),
               Expanded(
                 child: _TabButton(
-                  label: 'MY TASKS',
+                  label: 'ONGOING JOB',
                   isSelected: !widget.isTaskerMode,
                   onTap: () => widget.onToggle(false),
                 ),
