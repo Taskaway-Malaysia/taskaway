@@ -109,59 +109,68 @@ class MessageRepository {
     }
   }
 
-  Stream<List<Channel>> watchUserChannels(String userId) {
-    print('Watching channels for user: $userId');
+  Stream<List<Channel>> watchUserChannels(String userId, {int limit = 50}) {
+    dev.log('[MessageRepository] Watching channels for user: $userId with limit: $limit');
+
     return supabase
         .from(_channelsTable)
         .stream(primaryKey: ['id'])
+        .order('last_message_at', ascending: false)
+        .limit(limit)  // Limit at database level - only fetch first N channels
         .map((response) async {
-          print('Total channels received: ${response.length}');
+          dev.log('[MessageRepository] Received ${response.length} channels from database');
 
-          // Filter channels where user is either poster or tasker
+          // Filter channels where user is either poster or tasker (in memory, but on limited dataset)
           final userChannels = response.where((row) {
-            final isPoster = row['poster_id'] == userId;
-            final isTasker = row['tasker_id'] == userId;
-            final shouldInclude = isPoster || isTasker;
-
-            if (!shouldInclude) {
-              print('Excluding channel: poster_id=${row['poster_id']}, tasker_id=${row['tasker_id']}, current_user=$userId');
-            }
-
-            return shouldInclude;
+            return row['poster_id'] == userId || row['tasker_id'] == userId;
           }).toList();
 
-          print('Filtered to ${userChannels.length} channels for user $userId');
-          
-          // Sort by last_message_at in descending order
-          userChannels.sort((a, b) {
-            final aTime = a['last_message_at'] != null 
-              ? DateTime.parse(a['last_message_at'] as String)
-              : DateTime.fromMillisecondsSinceEpoch(0);
-            final bTime = b['last_message_at'] != null 
-              ? DateTime.parse(b['last_message_at'] as String)
-              : DateTime.fromMillisecondsSinceEpoch(0);
-            return bTime.compareTo(aTime); // Descending order
-          });
-          
+          dev.log('[MessageRepository] Filtered to ${userChannels.length} user channels');
+
           // Convert to Channel objects
           final channels = userChannels.map((json) => Channel.fromJson(json)).toList();
-          
+
           if (channels.isEmpty) return channels;
 
-          // Get unread counts for each channel
+          // Batch query for unread counts - get all in one query instead of N queries
+          final channelIds = channels.map((c) => c.id).toList();
+          final unreadCounts = await _getUnreadCountsBatch(channelIds, userId);
+
+          // Apply unread counts to channels
           for (final channel in channels) {
-            final otherUserId = userId == channel.posterId ? channel.taskerId : channel.posterId;
-            final unreadResponse = await supabase
-                .from(_tableName)
-                .select()
-                .eq('channel_id', channel.id)
-                .eq('sender_id', otherUserId)
-                .eq('is_read', false);
-            channel.copyWith(unreadCount: (unreadResponse as List).length);
+            channel.copyWith(unreadCount: unreadCounts[channel.id] ?? 0);
           }
-          
+
+          dev.log('[MessageRepository] Returning ${channels.length} channels with unread counts');
           return channels;
         }).asyncMap((future) => future);
+  }
+
+  /// Efficiently get unread counts for multiple channels in a single query
+  Future<Map<String, int>> _getUnreadCountsBatch(List<String> channelIds, String currentUserId) async {
+    if (channelIds.isEmpty) return {};
+
+    try {
+      // Single query to get all unread messages for all channels
+      final response = await supabase
+          .from(_tableName)
+          .select('channel_id')
+          .inFilter('channel_id', channelIds)
+          .neq('sender_id', currentUserId)  // Only messages from other users
+          .eq('is_read', false);
+
+      // Count unread messages per channel
+      final Map<String, int> counts = {};
+      for (final row in response) {
+        final channelId = row['channel_id'] as String;
+        counts[channelId] = (counts[channelId] ?? 0) + 1;
+      }
+
+      return counts;
+    } catch (e) {
+      dev.log('[MessageRepository] Error getting unread counts: $e');
+      return {};
+    }
   }
 
   Future<Message> sendMessage({

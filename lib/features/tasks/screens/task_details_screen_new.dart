@@ -13,6 +13,14 @@ import '../../auth/models/profile.dart';
 import '../../messages/controllers/message_controller.dart';
 import '../../messages/models/channel.dart';
 import '../../../core/theme/app_radius.dart';
+import '../models/task_comment.dart';
+import '../repositories/task_comment_repository.dart';
+
+// Provider to watch comments for a specific task with real-time updates
+final taskCommentsStreamProvider = StreamProvider.family.autoDispose<List<TaskComment>, String>((ref, taskId) {
+  final commentRepo = ref.read(taskCommentRepositoryProvider);
+  return commentRepo.watchTaskComments(taskId);
+});
 
 class TaskDetailsScreenNew extends ConsumerStatefulWidget {
   final String taskId;
@@ -26,9 +34,17 @@ class TaskDetailsScreenNew extends ConsumerStatefulWidget {
 class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
   bool _isLoading = false;
   String? _errorMessage;
+  final TextEditingController _commentController = TextEditingController();
+
+  @override
+  void dispose() {
+    _commentController.dispose();
+    super.dispose();
+  }
 
   // Navigate to chat method - allows any user to message the poster
   Future<void> _navigateToChat(BuildContext context) async {
+    print('[TaskDetails] Navigate to chat button clicked');
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -38,6 +54,8 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
       final messageController = ref.read(messageControllerProvider);
       final task = ref.read(taskProvider(widget.taskId)).value;
       final currentUser = ref.read(currentUserProvider);
+
+      print('[TaskDetails] Task: ${task?.id}, Current User: ${currentUser?.id}');
 
       if (task == null || currentUser == null) {
         throw Exception('Unable to load task details. Please try again.');
@@ -113,19 +131,24 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
       }
 
       if (channel != null && mounted) {
+        print('[TaskDetails] Navigating to chat with channel ID: ${channel.id}');
         // Navigate to chat screen with channel object
         await context.pushNamed('chat-room',
           pathParameters: {'id': channel.id},
           extra: channel);
+        print('[TaskDetails] Navigation completed');
+      } else {
+        print('[TaskDetails] Channel is null or not mounted');
       }
     } catch (e) {
+      print('[TaskDetails] Error in _navigateToChat: $e');
       setState(() {
         _errorMessage = e.toString();
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(e.toString()),
+            content: Text('Error: ${e.toString()}'),
             backgroundColor: AppColors.error,
             duration: const Duration(seconds: 3),
           ),
@@ -139,6 +162,151 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
       }
     }
   }
+
+  // Post a comment to the task
+  Future<void> _postComment() async {
+    final comment = _commentController.text.trim();
+    if (comment.isEmpty) return;
+
+    final currentUser = ref.read(currentUserProvider);
+    if (currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please sign in to post a comment'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
+    try {
+      final commentRepo = ref.read(taskCommentRepositoryProvider);
+      await commentRepo.addComment(
+        taskId: widget.taskId,
+        userId: currentUser.id,
+        comment: comment,
+      );
+
+      // Clear the input field
+      _commentController.clear();
+
+      // Hide keyboard
+      FocusScope.of(context).unfocus();
+
+      // Note: No need to manually refresh with StreamProvider - it updates automatically
+
+      // Show success message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Comment posted successfully'),
+            backgroundColor: AppColors.success,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to post comment: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  // Format time ago helper
+  String _formatTimeAgo(DateTime dateTime) {
+    final now = DateTime.now();
+    final difference = now.difference(dateTime);
+
+    if (difference.inDays > 365) {
+      final years = (difference.inDays / 365).floor();
+      return '$years ${years == 1 ? 'year' : 'years'} ago';
+    } else if (difference.inDays > 30) {
+      final months = (difference.inDays / 30).floor();
+      return '$months ${months == 1 ? 'month' : 'months'} ago';
+    } else if (difference.inDays > 0) {
+      return '${difference.inDays} ${difference.inDays == 1 ? 'day' : 'days'} ago';
+    } else if (difference.inHours > 0) {
+      return '${difference.inHours} ${difference.inHours == 1 ? 'hour' : 'hours'} ago';
+    } else if (difference.inMinutes > 0) {
+      return '${difference.inMinutes} ${difference.inMinutes == 1 ? 'minute' : 'minutes'} ago';
+    } else {
+      return 'Just now';
+    }
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'accepted':
+        return const Color(0xFFFFDB5B); // Yellow
+      case 'in_progress':
+        return Colors.blue;
+      case 'pending_approval':
+        return Colors.orange;
+      case 'completed':
+        return Colors.green;
+      default:
+        return AppColors.textSecondary;
+    }
+  }
+
+  IconData _getStatusIcon(String status) {
+    switch (status.toLowerCase()) {
+      case 'accepted':
+        return Icons.access_time;
+      case 'in_progress':
+        return Icons.work_outline;
+      case 'pending_approval':
+        return Icons.rate_review;
+      case 'completed':
+        return Icons.check_circle;
+      default:
+        return Icons.info_outline;
+    }
+  }
+
+  String _getStatusTitle(String status, bool isPoster) {
+    switch (status.toLowerCase()) {
+      case 'accepted':
+        return isPoster ? 'Waiting for Tasker to Start' : 'Ready to Start';
+      case 'in_progress':
+        return isPoster ? 'Tasker is Working' : 'Task in Progress';
+      case 'pending_approval':
+        return isPoster ? 'Review Required' : 'Awaiting Approval';
+      case 'completed':
+        return 'Task Completed';
+      default:
+        return 'Task Status';
+    }
+  }
+
+  String _getStatusDescription(String status, bool isPoster) {
+    switch (status.toLowerCase()) {
+      case 'accepted':
+        return isPoster
+            ? 'Your offer has been accepted. The tasker will start working on your task soon.'
+            : 'You have accepted this task. Click "Start Task" when you\'re ready to begin work.';
+      case 'in_progress':
+        return isPoster
+            ? 'The tasker is currently working on your task. You\'ll be notified when it\'s complete.'
+            : 'You are currently working on this task. Click "Mark Complete" when you finish.';
+      case 'pending_approval':
+        return isPoster
+            ? 'The tasker has marked this task as complete. Please review the work and approve or request changes.'
+            : 'You have marked this task as complete. Waiting for the poster to review and approve your work.';
+      case 'completed':
+        return isPoster
+            ? 'This task has been completed and approved. Payment has been released to the tasker.'
+            : 'This task has been completed and approved. Payment has been released to you.';
+      default:
+        return '';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final taskAsyncValue = ref.watch(taskProvider(widget.taskId));
@@ -155,8 +323,12 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, size: 20, color: AppColors.textPrimary),
           onPressed: () {
-            // Navigate back to home screen
-            context.go('/home');
+            // Try to pop if possible, otherwise navigate to home
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/home/browse');
+            }
           },
         ),
         title: Text(
@@ -286,6 +458,65 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
                   const SizedBox(height: 16),
                   Divider(height: 1, thickness: 1, color: AppColors.borderDefault),
                   const SizedBox(height: 16),
+
+                  // Status Banner for Both Poster and Tasker
+                  if (['accepted', 'in_progress', 'pending_approval', 'completed'].contains(task.status.toLowerCase())) ...[
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: _getStatusColor(task.status).withOpacity(0.1),
+                        borderRadius: AppRadius.md,
+                        border: Border.all(
+                          color: _getStatusColor(task.status).withOpacity(0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: _getStatusColor(task.status).withOpacity(0.2),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              _getStatusIcon(task.status),
+                              color: _getStatusColor(task.status),
+                              size: 20,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _getStatusTitle(task.status, isPoster),
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: _getStatusColor(task.status),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  _getStatusDescription(task.status, isPoster),
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: AppColors.textSecondary,
+                                    height: 1.4,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
 
                   // Task Images Row - Scrollable
                   if (task.images != null && task.images!.isNotEmpty) ...[
@@ -926,6 +1157,100 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
                     ],
                   ],
 
+                  // Comments Section
+                  const SizedBox(height: 32),
+                  Container(
+                    padding: EdgeInsets.all(AppSpacing.lg),
+                    decoration: BoxDecoration(
+                      color: AppColors.white,
+                      border: Border.all(color: AppColors.borderDefault),
+                      borderRadius: AppRadius.md,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Questions & Answers',
+                          style: AppTypography.titleLarge.copyWith(
+                            fontWeight: AppTypography.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Ask questions about this task',
+                          style: AppTypography.bodyMedium.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Comment Input Field
+                        Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            TextField(
+                              controller: _commentController,
+                              maxLines: 3,
+                              minLines: 3,
+                              decoration: InputDecoration(
+                                hintText: 'Type your question or comment...',
+                                hintStyle: AppTypography.bodyMedium.copyWith(
+                                  color: AppColors.textTertiary,
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: AppRadius.sm,
+                                  borderSide: const BorderSide(color: AppColors.borderDefault),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: AppRadius.sm,
+                                  borderSide: const BorderSide(color: AppColors.borderDefault),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: AppRadius.sm,
+                                  borderSide: const BorderSide(color: AppColors.primary),
+                                ),
+                                contentPadding: EdgeInsets.all(AppSpacing.md),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: ElevatedButton(
+                                onPressed: _postComment,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primary,
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: AppSpacing.xl,
+                                    vertical: AppSpacing.md,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: AppRadius.sm,
+                                  ),
+                                ),
+                                child: Text(
+                                  'Post Comment',
+                                  style: AppTypography.labelLarge.copyWith(
+                                    color: AppColors.textWhite,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 24),
+
+                        // Comments List - Wrapped in separate widget to isolate rebuilds
+                        _CommentsListView(
+                          taskId: widget.taskId,
+                          formatTimeAgo: _formatTimeAgo,
+                        ),
+                      ],
+                    ),
+                  ),
+
                   const SizedBox(height: 100), // Bottom padding for navigation bar
                 ],
               ),
@@ -1150,6 +1475,135 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
           ),
         ],
       ),
+    );
+  }
+}
+
+// Comments List View Widget - Separate widget to isolate StreamProvider rebuilds
+class _CommentsListView extends ConsumerWidget {
+  final String taskId;
+  final String Function(DateTime) formatTimeAgo;
+
+  const _CommentsListView({
+    required this.taskId,
+    required this.formatTimeAgo,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final commentsAsync = ref.watch(taskCommentsStreamProvider(taskId));
+
+    return commentsAsync.when(
+      data: (comments) {
+        if (comments.isEmpty) {
+          return Container(
+            padding: EdgeInsets.all(AppSpacing.xl),
+            child: Center(
+              child: Text(
+                'No comments yet. Be the first to ask a question!',
+                style: AppTypography.bodyMedium.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ),
+          );
+        }
+
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (int i = 0; i < comments.length; i++) ...[
+              if (i > 0)
+                Divider(
+                  height: 24,
+                  color: AppColors.borderDefault,
+                ),
+              _CommentItem(
+                comment: comments[i],
+                timeAgo: formatTimeAgo(comments[i].createdAt),
+              ),
+            ],
+          ],
+        );
+      },
+      loading: () => Container(
+        padding: EdgeInsets.all(AppSpacing.lg),
+        child: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      ),
+      error: (error, stack) => Container(
+        padding: EdgeInsets.all(AppSpacing.lg),
+        child: Center(
+          child: Text(
+            'Failed to load comments',
+            style: AppTypography.bodyMedium.copyWith(
+              color: AppColors.error,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// Comment Item Widget
+class _CommentItem extends StatelessWidget {
+  final TaskComment comment;
+  final String timeAgo;
+
+  const _CommentItem({
+    required this.comment,
+    required this.timeAgo,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          children: [
+            CircleAvatar(
+              radius: 16,
+              backgroundColor: AppColors.primary.withOpacity(0.1),
+              child: Text(
+                (comment.userName ?? 'U')[0].toUpperCase(),
+                style: AppTypography.labelMedium.copyWith(
+                  color: AppColors.primary,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    comment.userName ?? 'User',
+                    style: AppTypography.labelMedium.copyWith(
+                      fontWeight: AppTypography.semiBold,
+                    ),
+                  ),
+                  Text(
+                    timeAgo,
+                    style: AppTypography.bodySmall.copyWith(
+                      color: AppColors.textTertiary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Text(
+          comment.comment,
+          style: AppTypography.bodyMedium,
+        ),
+      ],
     );
   }
 }

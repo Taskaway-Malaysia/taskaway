@@ -3,56 +3,89 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:taskaway/features/auth/controllers/auth_controller.dart';
-import 'package:taskaway/features/applications/repositories/application_repository.dart';
 import 'package:taskaway/features/tasks/repositories/task_repository.dart';
 import 'package:taskaway/features/tasks/models/task.dart';
 import 'package:taskaway/core/theme/app_colors.dart';
 import 'package:taskaway/core/theme/app_typography.dart';
 import 'package:taskaway/core/theme/app_spacing.dart';
 
-final userAcceptedTasksProvider = FutureProvider<List<Task>>((ref) async {
-  final user = ref.watch(currentUserProvider);
-  if (user == null) return [];
+// Provider to watch all tasks created by the current user (where user is the poster)
+final myPostedTasksProvider = StreamProvider.autoDispose<List<Task>>((ref) {
+  final currentUser = ref.watch(currentUserProvider);
 
-  final applicationRepo = ref.watch(applicationRepositoryProvider);
-  final taskRepo = ref.watch(taskRepositoryProvider);
+  if (currentUser == null) {
+    return Stream.value([]);
+  }
 
-  final acceptedApplications = await applicationRepo.getUserApplications(
-    user.id,
-    statuses: ['accepted'],
-  );
+  // Watch ALL tasks created by this user with real-time updates
+  final taskRepo = ref.read(taskRepositoryProvider);
+  return taskRepo.watchMyPostedTasks(currentUser.id).map((tasks) {
+    // Sort tasks by status priority: open > in_progress > pending_approval > completed > cancelled
+    tasks.sort((a, b) {
+      final statusOrder = {
+        'open': 1,
+        'accepted': 2,
+        'in_progress': 2,
+        'pending_approval': 3,
+        'completed': 4,
+        'cancelled': 5,
+        'rejected': 5,
+      };
 
-  if (acceptedApplications.isEmpty) return [];
+      final aOrder = statusOrder[a.status.toLowerCase()] ?? 6;
+      final bOrder = statusOrder[b.status.toLowerCase()] ?? 6;
 
-  final taskIds = acceptedApplications.map((app) => app.taskId).toList();
-  final tasks = await taskRepo.getTasksByIds(taskIds);
+      return aOrder.compareTo(bOrder);
+    });
 
-  // Sort tasks by status priority: pending_approval > in_progress > completed > cancelled
-  tasks.sort((a, b) {
-    final statusOrder = {
-      'pending_approval': 1,
-      'in_progress': 2,
-      'accepted': 2,
-      'completed': 3,
-      'cancelled': 4,
-      'rejected': 4,
-    };
-
-    final aOrder = statusOrder[a.status.toLowerCase()] ?? 5;
-    final bOrder = statusOrder[b.status.toLowerCase()] ?? 5;
-
-    return aOrder.compareTo(bOrder);
+    return tasks;
   });
-
-  return tasks;
 });
 
-class ActivityScreen extends ConsumerWidget {
+class ActivityScreen extends ConsumerStatefulWidget {
   const ActivityScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final tasksAsync = ref.watch(userAcceptedTasksProvider);
+  ConsumerState<ActivityScreen> createState() => _ActivityScreenState();
+}
+
+class _ActivityScreenState extends ConsumerState<ActivityScreen> {
+  final ScrollController _scrollController = ScrollController();
+  int _displayLimit = 10; // Start with 10 tasks
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.hasClients) {
+      final maxScroll = _scrollController.position.maxScrollExtent;
+      final currentScroll = _scrollController.position.pixels;
+      final threshold = maxScroll * 0.8;
+
+      if (currentScroll >= threshold) {
+        _loadMoreTasks();
+      }
+    }
+  }
+
+  void _loadMoreTasks() {
+    setState(() {
+      _displayLimit += 10; // Load 10 more tasks
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tasksAsync = ref.watch(myPostedTasksProvider);
 
     return Scaffold(
       backgroundColor: AppColors.white,
@@ -72,7 +105,7 @@ class ActivityScreen extends ConsumerWidget {
               ),
               child: Center(
                 child: Text(
-                  'Activity',
+                  'Task',
                   style: AppTypography.headlineMedium,
                 ),
               ),
@@ -83,7 +116,7 @@ class ActivityScreen extends ConsumerWidget {
                   if (tasks.isEmpty) {
                     return Center(
                       child: Text(
-                        'No active tasks',
+                        'No tasks created yet',
                         style: AppTypography.bodyLarge.copyWith(
                           color: AppColors.textSecondary,
                         ),
@@ -91,16 +124,20 @@ class ActivityScreen extends ConsumerWidget {
                     );
                   }
 
+                  // Apply pagination - show only first N tasks
+                  final paginatedTasks = tasks.take(_displayLimit).toList();
+
                   return ListView.separated(
+                    controller: _scrollController,
                     padding: EdgeInsets.zero,
-                    itemCount: tasks.length,
+                    itemCount: paginatedTasks.length,
                     separatorBuilder: (context, index) => Container(
                       height: 1,
                       color: const Color(0xFFE8E9F1),
                       margin: const EdgeInsets.symmetric(horizontal: 8),
                     ),
                     itemBuilder: (context, index) {
-                      return _TaskCard(task: tasks[index]);
+                      return _TaskCard(task: paginatedTasks[index]);
                     },
                   );
                 },

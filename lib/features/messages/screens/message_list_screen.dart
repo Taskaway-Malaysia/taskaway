@@ -9,13 +9,52 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 
-class MessageListScreen extends ConsumerWidget {
+class MessageListScreen extends ConsumerStatefulWidget {
   const MessageListScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MessageListScreen> createState() => _MessageListScreenState();
+}
+
+class _MessageListScreenState extends ConsumerState<MessageListScreen> {
+  final ScrollController _scrollController = ScrollController();
+  int _backendLimit = 20; // Start with 20 conversations from backend
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.hasClients) {
+      final maxScroll = _scrollController.position.maxScrollExtent;
+      final currentScroll = _scrollController.position.pixels;
+      final threshold = maxScroll * 0.8;
+
+      if (currentScroll >= threshold) {
+        _loadMoreConversations();
+      }
+    }
+  }
+
+  void _loadMoreConversations() {
+    setState(() {
+      _backendLimit += 20; // Fetch 20 more from backend
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final channelsAsync = ref.watch(userChannelsProvider);
+    // Use provider with dynamic limit for backend pagination
+    final channelsAsync = ref.watch(userChannelsWithLimitProvider(_backendLimit));
 
     return channelsAsync.when(
       data: (channels) => _buildChatList(context, theme, channels, ref),
@@ -36,6 +75,7 @@ class MessageListScreen extends ConsumerWidget {
       3: 'assets/images/profile_mike.png',
     };
 
+    // No frontend pagination - backend already paginated!
     return Scaffold(
       backgroundColor: AppColors.white,
       body: Column(
@@ -90,6 +130,7 @@ class MessageListScreen extends ConsumerWidget {
               ),
             )
           : ListView.separated(
+              controller: _scrollController,
               padding: const EdgeInsets.symmetric(vertical: 8),
               itemCount: channelsList.length,
               separatorBuilder: (context, index) => Container(

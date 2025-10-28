@@ -23,7 +23,7 @@ import '../features/auth/screens/otp_verification_screen.dart';
 import '../features/auth/screens/create_profile_screen.dart';
 import '../features/auth/screens/signup_success_screen.dart';
 import '../features/home/screens/home_screen.dart';
-import '../features/tasks/screens/my_task_screen.dart';
+import '../features/home/screens/map_home_screen.dart';
 import '../features/tasks/screens/create_task_screen.dart';
 import '../features/tasks/screens/create_task_single_page_screen.dart';
 import '../features/tasks/screens/task_details_screen_new.dart';
@@ -57,21 +57,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     refreshListenable: routerRefresh,
     redirect: (BuildContext context, GoRouterState state) async {
       final String location = state.uri.toString(); // Use full URI
-      
-      // CHIPP payment returns are handled via deep links (taskaway://payment-return)
-      // No special redirect handling needed for web
-      
-      // Handle taskaway:// deep links that come directly (mobile)
-      if (location.startsWith('taskaway://payment-return')) {
-        print('GoRouter Redirect: Handling taskaway:// deep link directly');
-        // Extract the path and query parameters
-        final uri = Uri.parse(location);
-        final queryString = uri.hasQuery ? '?${uri.query}' : '';
-        final redirectPath = '/payment-return$queryString';
-        print('GoRouter Redirect: Converting $location to $redirectPath');
-        return redirectPath;
-      }
-      
+
+      // CHIP payment returns are handled by WebView in chip_payment_screen.dart
+      // No router redirect needed - WebView handles navigation directly
+
       // Check for pending deep links from our service
       final pendingDeepLink = ref.read(deepLinkProvider);
       if (pendingDeepLink != null && location != pendingDeepLink) {
@@ -157,25 +146,39 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         bool hasProfile = false;
         // Ensure user is not null before trying to fetch profile
         try {
-          final profileResponse = await Supabase.instance.client
-              .from('taskaway_profiles')
-              .select('id')
-              .eq('id', user.id) // Use user.id from auth
-              .maybeSingle();
-          hasProfile = profileResponse != null;
-          print('GoRouter Redirect: User ${user.id} hasProfile: $hasProfile');
+          // Use the profile provider instead of direct query to leverage caching
+          final profileAsync = ProviderScope.containerOf(context).read(currentProfileProvider);
+
+          // If profile data is available, use it
+          if (profileAsync.hasValue) {
+            hasProfile = profileAsync.value != null;
+            print('GoRouter Redirect: User ${user.id} hasProfile from cache: $hasProfile');
+          } else {
+            // Fallback to direct query only if profile provider hasn't loaded yet
+            final profileResponse = await Supabase.instance.client
+                .from('taskaway_profiles')
+                .select('id')
+                .eq('id', user.id) // Use user.id from auth
+                .maybeSingle();
+            hasProfile = profileResponse != null;
+            print('GoRouter Redirect: User ${user.id} hasProfile from query: $hasProfile');
+          }
         } catch (e) {
           print(
-              'GoRouter Redirect: Error checking profile for ${user.id}: $e. Assuming no profile.');
+              'GoRouter Redirect: Error checking profile for ${user.id}: $e. Allowing navigation to continue.');
+          // On error, assume profile exists to avoid redirect loops
+          // The app will handle missing profile when actually needed
+          hasProfile = true;
         }
 
-        if (!hasProfile &&
-            !profileCreationRoutes.contains(location) &&
-            location != '/login') {
-          print(
-              'GoRouter Redirect: Logged in, no profile. Redirecting to /create-profile.');
-          return '/create-profile';
-        }
+        // DISABLED: Profile check redirect - causing issues
+        // if (!hasProfile &&
+        //     !profileCreationRoutes.contains(location) &&
+        //     location != '/login') {
+        //   print(
+        //       'GoRouter Redirect: Logged in, no profile. Redirecting to /create-profile.');
+        //   return '/create-profile';
+        // }
 
         // If logged in and has profile, but on a public route (like /login) or profile creation route
         // (excluding '/', which is SplashScreen, and auth in-progress routes like OTP)
@@ -362,7 +365,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/home/browse',
                 name: 'browse',
-                builder: (context, state) => const MyTaskScreen(),
+                builder: (context, state) => const MapHomeScreen(),
                 routes: [
                   GoRoute(
                     path: ':id',
@@ -404,7 +407,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/home/tasks',
                 name: 'tasks',
-                builder: (context, state) => const MyTaskScreen(),
+                builder: (context, state) => const MapHomeScreen(),
                 routes: [
                   GoRoute(
                     path: ':id',

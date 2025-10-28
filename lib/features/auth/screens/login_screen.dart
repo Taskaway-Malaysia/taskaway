@@ -99,32 +99,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 children: [
                   SizedBox(height: AppSpacing.xxxl * 1.2),
 
-                  // Logo
-                  Container(
-                    width: 62,
-                    height: 62,
-                    decoration: BoxDecoration(
-                      color: AppColors.white,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: AppColors.borderDefault,
-                        width: 1,
-                      ),
-                    ),
-                    child: Center(
-                      child: ClipOval(
-                        child: Image.asset(
-                          'assets/images/taskaway_logo_login.png',
-                          width: 50,
-                          height: 50,
-                          fit: BoxFit.contain,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  SizedBox(height: AppSpacing.xl),
-
                   // Welcome text
                   Text(
                     'Welcome to Taskaway',

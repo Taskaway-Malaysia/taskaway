@@ -55,21 +55,12 @@ class DeepLinkService {
 
   void _handleDeepLink(Uri uri) {
     print('[DeepLinkService] Received deep link: $uri');
-    
-    // Handle payment return deep links
-    if (uri.scheme == 'taskaway' && uri.host == 'payment-return') {
-      // Extract query parameters
-      final paymentIntent = uri.queryParameters['payment_intent'];
-      final paymentIntentClientSecret = uri.queryParameters['payment_intent_client_secret'];
-      final redirectStatus = uri.queryParameters['redirect_status'];
-      
-      print('[DeepLinkService] Payment return - Status: $redirectStatus, Intent: $paymentIntent');
-      
-      // Store the deep link URL in the provider
-      // The GoRouter redirect will handle the navigation
-      final deepLinkUrl = '/payment-return?payment_intent=$paymentIntent&payment_intent_client_secret=$paymentIntentClientSecret&redirect_status=$redirectStatus';
-      _ref?.read(deepLinkProvider.notifier).setPendingDeepLink(deepLinkUrl);
-    }
+
+    // Payment return deep links (taskaway://payment-return) are handled directly
+    // by WebView in chip_payment_screen.dart - no global handling needed
+
+    // Add other deep link handlers here as needed
+    // Example: if (uri.scheme == 'taskaway' && uri.host == 'other-feature') { ... }
   }
 
   void dispose() {

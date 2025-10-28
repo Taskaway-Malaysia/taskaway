@@ -454,8 +454,6 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
         return 'Cash payment';
       case 'online_banking':
         return 'Online banking';
-      case 'taskaway_credit':
-        return 'Taskaway credit';
       default:
         return 'Select payment';
     }
@@ -671,7 +669,7 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
                 children: [
                   SizedBox(width: AppSpacing.lg),
                   InkWell(
-                    onTap: () => context.pop(),
+                    onTap: () => context.go('/home/browse'),
                     child: const Icon(
                       Icons.arrow_back_ios,
                       size: 20,
@@ -1258,14 +1256,6 @@ class _PricePaymentModalContentState extends State<_PricePaymentModalContent> {
                       SizedBox(height: AppSpacing.md),
 
                       // Payment Options
-                      _buildPaymentMethodOption(
-                        'taskaway_credit',
-                        'Taskaway Credit',
-                        'Pay using your wallet balance',
-                        Icons.account_balance_wallet,
-                        isComingSoon: true,
-                      ),
-                      SizedBox(height: AppSpacing.sm),
                       _buildPaymentMethodOption(
                         'cash',
                         'Cash',

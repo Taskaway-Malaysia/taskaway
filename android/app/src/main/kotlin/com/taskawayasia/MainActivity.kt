@@ -1,4 +1,4 @@
-package com.taskawayasia.taskaway
+package com.taskawayasia
 
 import io.flutter.embedding.android.FlutterFragmentActivity
 

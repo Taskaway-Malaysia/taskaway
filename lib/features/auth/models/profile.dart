@@ -24,6 +24,9 @@ class Profile {
   final String? bankAccountHolderName;
   final String? bankVerificationStatus;
   final DateTime? bankVerifiedAt;
+  final String? fcmToken;
+  final bool notificationsEnabled;
+  final DateTime? lastSeen;
 
   Profile({
     required this.id,
@@ -51,6 +54,9 @@ class Profile {
     this.bankAccountHolderName,
     this.bankVerificationStatus,
     this.bankVerifiedAt,
+    this.fcmToken,
+    this.notificationsEnabled = true,
+    this.lastSeen,
   });
 
   factory Profile.fromJson(Map<String, dynamic> json) {
@@ -80,6 +86,9 @@ class Profile {
       bankAccountHolderName: json['bank_account_holder_name'] as String?,
       bankVerificationStatus: json['bank_verification_status'] as String?,
       bankVerifiedAt: json['bank_verified_at'] != null ? DateTime.parse(json['bank_verified_at'] as String) : null,
+      fcmToken: json['fcm_token'] as String?,
+      notificationsEnabled: json['notifications_enabled'] as bool? ?? true,
+      lastSeen: json['last_seen'] != null ? DateTime.parse(json['last_seen'] as String) : null,
     );
   }
 
@@ -109,6 +118,9 @@ class Profile {
     if (bankAccountHolderName != null) 'bank_account_holder_name': bankAccountHolderName,
     if (bankVerificationStatus != null) 'bank_verification_status': bankVerificationStatus,
     if (bankVerifiedAt != null) 'bank_verified_at': bankVerifiedAt!.toIso8601String(),
+    if (fcmToken != null) 'fcm_token': fcmToken,
+    'notifications_enabled': notificationsEnabled,
+    if (lastSeen != null) 'last_seen': lastSeen!.toIso8601String(),
   };
 
   Profile copyWith({
@@ -137,6 +149,9 @@ class Profile {
     String? bankAccountHolderName,
     String? bankVerificationStatus,
     DateTime? bankVerifiedAt,
+    String? fcmToken,
+    bool? notificationsEnabled,
+    DateTime? lastSeen,
   }) {
     return Profile(
       id: id ?? this.id,
@@ -164,6 +179,9 @@ class Profile {
       bankAccountHolderName: bankAccountHolderName ?? this.bankAccountHolderName,
       bankVerificationStatus: bankVerificationStatus ?? this.bankVerificationStatus,
       bankVerifiedAt: bankVerifiedAt ?? this.bankVerifiedAt,
+      fcmToken: fcmToken ?? this.fcmToken,
+      notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
+      lastSeen: lastSeen ?? this.lastSeen,
     );
   }
   
@@ -195,7 +213,10 @@ class Profile {
         other.bankAccountNumber == bankAccountNumber &&
         other.bankAccountHolderName == bankAccountHolderName &&
         other.bankVerificationStatus == bankVerificationStatus &&
-        other.bankVerifiedAt == bankVerifiedAt;
+        other.bankVerifiedAt == bankVerifiedAt &&
+        other.fcmToken == fcmToken &&
+        other.notificationsEnabled == notificationsEnabled &&
+        other.lastSeen == lastSeen;
   }
 
   @override
@@ -227,6 +248,9 @@ class Profile {
         bankAccountHolderName,
         bankVerificationStatus,
         bankVerifiedAt,
+        fcmToken,
+        notificationsEnabled,
+        lastSeen,
       ),
     );
   }
