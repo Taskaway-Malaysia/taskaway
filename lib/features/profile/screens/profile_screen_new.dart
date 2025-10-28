@@ -22,6 +22,7 @@ class _ProfileScreenNewState extends ConsumerState<ProfileScreenNew> {
   final ImagePicker _picker = ImagePicker();
   final SupabaseService _supabaseService = SupabaseService();
   bool _isUploading = false;
+  bool _isEditMode = false;
 
   @override
   void initState() {
@@ -407,7 +408,10 @@ class _ProfileScreenNewState extends ConsumerState<ProfileScreenNew> {
           children: [
             // Header
             Container(
-              padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
+              padding: EdgeInsets.symmetric(
+                horizontal: AppSpacing.lg,
+                vertical: AppSpacing.lg,
+              ),
               decoration: BoxDecoration(
                 color: AppColors.white,
                 border: Border(
@@ -417,11 +421,45 @@ class _ProfileScreenNewState extends ConsumerState<ProfileScreenNew> {
                   ),
                 ),
               ),
-              child: Center(
-                child: Text(
-                  'Profile',
-                  style: AppTypography.headlineMedium,
-                ),
+              child: Stack(
+                children: [
+                  Center(
+                    child: Text(
+                      'Profile',
+                      style: AppTypography.headlineMedium,
+                    ),
+                  ),
+                  Positioned(
+                    right: 0,
+                    top: 0,
+                    bottom: 0,
+                    child: Center(
+                      child: TextButton(
+                        onPressed: () {
+                          setState(() {
+                            _isEditMode = !_isEditMode;
+                          });
+                        },
+                        style: TextButton.styleFrom(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: AppSpacing.md,
+                            vertical: AppSpacing.xs,
+                          ),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        child: Text(
+                          _isEditMode ? 'Done' : 'Edit',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
             // Content
@@ -450,39 +488,71 @@ class _ProfileScreenNewState extends ConsumerState<ProfileScreenNew> {
                               color: AppColors.textPrimary,
                             ),
                           ),
-                          SizedBox(height: AppSpacing.xs),
-                          Text(
-                            'Write a fun and punchy intro.',
-                            style: const TextStyle(
-                              fontSize: 13,
-                              color: AppColors.textSecondary,
+                          if (_isEditMode) ...[
+                            SizedBox(height: AppSpacing.xs),
+                            Text(
+                              'Write a fun and punchy intro.',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: AppColors.textSecondary,
+                              ),
                             ),
-                          ),
+                          ],
                           SizedBox(height: AppSpacing.lg),
-                          InkWell(
-                            onTap: () => _editBio(profile?.bio),
-                            child: Container(
+                          if (_isEditMode)
+                            InkWell(
+                              onTap: () => _editBio(profile?.bio),
+                              child: Container(
+                                width: double.infinity,
+                                padding: EdgeInsets.all(AppSpacing.lg),
+                                decoration: BoxDecoration(
+                                  color: AppColors.backgroundPrimary,
+                                  borderRadius: AppRadius.lg,
+                                  border: Border.all(
+                                    color: AppColors.borderDefault,
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        profile?.bio ?? 'A little bit about you...',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: profile?.bio == null
+                                              ? AppColors.textTertiary
+                                              : AppColors.textPrimary,
+                                        ),
+                                      ),
+                                    ),
+                                    Icon(
+                                      Icons.edit,
+                                      size: 18,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            )
+                          else
+                            Container(
                               width: double.infinity,
                               padding: EdgeInsets.all(AppSpacing.lg),
                               decoration: BoxDecoration(
-                                color: AppColors.backgroundPrimary,
+                                color: AppColors.white,
                                 borderRadius: AppRadius.lg,
-                                border: Border.all(
-                                  color: AppColors.borderDefault,
-                                  width: 1,
-                                ),
                               ),
                               child: Text(
-                                profile?.bio ?? 'A little bit about you...',
+                                profile?.bio ?? 'No bio added yet',
                                 style: TextStyle(
-                                  fontSize: 13,
+                                  fontSize: 14,
                                   color: profile?.bio == null
                                       ? AppColors.textTertiary
                                       : AppColors.textPrimary,
                                 ),
                               ),
                             ),
-                          ),
                         ],
                       ),
                       SizedBox(height: AppSpacing.lg),
@@ -504,41 +574,75 @@ class _ProfileScreenNewState extends ConsumerState<ProfileScreenNew> {
                               color: AppColors.textPrimary,
                             ),
                           ),
-                          SizedBox(height: AppSpacing.xs),
-                          Text(
-                            'Add your top skills and expertise.',
-                            style: const TextStyle(
-                              fontSize: 13,
-                              color: AppColors.textSecondary,
+                          if (_isEditMode) ...[
+                            SizedBox(height: AppSpacing.xs),
+                            Text(
+                              'Add your top skills and expertise.',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: AppColors.textSecondary,
+                              ),
                             ),
-                          ),
+                          ],
                           SizedBox(height: AppSpacing.lg),
-                          InkWell(
-                            onTap: () => _editSkills(profile?.skills),
-                            child: Container(
+                          if (_isEditMode)
+                            InkWell(
+                              onTap: () => _editSkills(profile?.skills),
+                              child: Container(
+                                width: double.infinity,
+                                padding: EdgeInsets.all(AppSpacing.lg),
+                                decoration: BoxDecoration(
+                                  color: AppColors.backgroundPrimary,
+                                  borderRadius: AppRadius.lg,
+                                  border: Border.all(
+                                    color: AppColors.borderDefault,
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        profile?.skills?.isNotEmpty == true
+                                            ? profile!.skills!.join(', ')
+                                            : 'Add your skills...',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: profile?.skills?.isNotEmpty == true
+                                              ? AppColors.textPrimary
+                                              : AppColors.textTertiary,
+                                        ),
+                                      ),
+                                    ),
+                                    Icon(
+                                      Icons.edit,
+                                      size: 18,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            )
+                          else
+                            Container(
                               width: double.infinity,
                               padding: EdgeInsets.all(AppSpacing.lg),
                               decoration: BoxDecoration(
-                                color: AppColors.backgroundPrimary,
+                                color: AppColors.white,
                                 borderRadius: AppRadius.lg,
-                                border: Border.all(
-                                  color: AppColors.borderDefault,
-                                  width: 1,
-                                ),
                               ),
                               child: Text(
                                 profile?.skills?.isNotEmpty == true
                                     ? profile!.skills!.join(', ')
-                                    : 'Add your skills...',
+                                    : 'No skills added yet',
                                 style: TextStyle(
-                                  fontSize: 13,
+                                  fontSize: 14,
                                   color: profile?.skills?.isNotEmpty == true
                                       ? AppColors.textPrimary
                                       : AppColors.textTertiary,
                                 ),
                               ),
                             ),
-                          ),
                         ],
                       ),
                       SizedBox(height: AppSpacing.lg),
@@ -560,109 +664,130 @@ class _ProfileScreenNewState extends ConsumerState<ProfileScreenNew> {
                               color: AppColors.textPrimary,
                             ),
                           ),
-                          SizedBox(height: AppSpacing.sm),
-                          Text(
-                            'Please add your works',
-                            style: const TextStyle(
-                              fontSize: 13,
-                              color: AppColors.textTertiary,
+                          if (_isEditMode) ...[
+                            SizedBox(height: AppSpacing.sm),
+                            Text(
+                              'Please add your works',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: AppColors.textTertiary,
+                              ),
                             ),
-                          ),
+                          ],
                           SizedBox(height: AppSpacing.lg),
                           // Work thumbnails
-                          Row(
-                            children: List.generate(3, (index) {
-                              final hasImage = index < _workImages.length;
-                              return Expanded(
-                                child: Padding(
-                                  padding: EdgeInsets.only(
-                                    right: index < 2 ? AppSpacing.sm : 0,
-                                  ),
-                                  child: GestureDetector(
-                                    onTap: hasImage ? null : _pickAndUploadImage,
-                                    child: Stack(
-                                      children: [
-                                        Container(
-                                          height: 100,
-                                          decoration: BoxDecoration(
-                                            color: AppColors.white,
-                                            border: Border.all(
-                                              color: AppColors.borderDefault,
+                          if (_workImages.isEmpty && !_isEditMode)
+                            Container(
+                              width: double.infinity,
+                              padding: EdgeInsets.all(AppSpacing.lg),
+                              decoration: BoxDecoration(
+                                color: AppColors.white,
+                                borderRadius: AppRadius.lg,
+                              ),
+                              child: Text(
+                                'No work images added yet',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: AppColors.textTertiary,
+                                ),
+                              ),
+                            )
+                          else
+                            Row(
+                              children: List.generate(3, (index) {
+                                final hasImage = index < _workImages.length;
+                                return Expanded(
+                                  child: Padding(
+                                    padding: EdgeInsets.only(
+                                      right: index < 2 ? AppSpacing.sm : 0,
+                                    ),
+                                    child: GestureDetector(
+                                      onTap: (_isEditMode && !hasImage) ? _pickAndUploadImage : null,
+                                      child: Stack(
+                                        children: [
+                                          Container(
+                                            height: 100,
+                                            decoration: BoxDecoration(
+                                              color: AppColors.white,
+                                              border: Border.all(
+                                                color: AppColors.borderDefault,
+                                              ),
+                                              borderRadius: AppRadius.md,
                                             ),
-                                            borderRadius: AppRadius.md,
-                                          ),
-                                          child: hasImage
-                                              ? ClipRRect(
-                                                  borderRadius: AppRadius.md,
-                                                  child: Image.network(
-                                                    _workImages[index],
-                                                    fit: BoxFit.cover,
-                                                    width: double.infinity,
-                                                    height: double.infinity,
-                                                    loadingBuilder: (context, child, loadingProgress) {
-                                                      if (loadingProgress == null) return child;
-                                                      return Center(
-                                                        child: CircularProgressIndicator(
-                                                          value: loadingProgress.expectedTotalBytes != null
-                                                              ? loadingProgress.cumulativeBytesLoaded /
-                                                                  loadingProgress.expectedTotalBytes!
-                                                              : null,
-                                                          color: AppColors.primary,
-                                                          strokeWidth: 2,
-                                                        ),
-                                                      );
-                                                    },
-                                                    errorBuilder: (context, error, stackTrace) {
-                                                      return Center(
-                                                        child: Icon(
-                                                          Icons.broken_image,
-                                                          color: AppColors.textTertiary,
-                                                        ),
-                                                      );
-                                                    },
+                                            child: hasImage
+                                                ? ClipRRect(
+                                                    borderRadius: AppRadius.md,
+                                                    child: Image.network(
+                                                      _workImages[index],
+                                                      fit: BoxFit.cover,
+                                                      width: double.infinity,
+                                                      height: double.infinity,
+                                                      loadingBuilder: (context, child, loadingProgress) {
+                                                        if (loadingProgress == null) return child;
+                                                        return Center(
+                                                          child: CircularProgressIndicator(
+                                                            value: loadingProgress.expectedTotalBytes != null
+                                                                ? loadingProgress.cumulativeBytesLoaded /
+                                                                    loadingProgress.expectedTotalBytes!
+                                                                : null,
+                                                            color: AppColors.primary,
+                                                            strokeWidth: 2,
+                                                          ),
+                                                        );
+                                                      },
+                                                      errorBuilder: (context, error, stackTrace) {
+                                                        return Center(
+                                                          child: Icon(
+                                                            Icons.broken_image,
+                                                            color: AppColors.textTertiary,
+                                                          ),
+                                                        );
+                                                      },
+                                                    ),
+                                                  )
+                                                : Center(
+                                                    child: _isUploading && index == _workImages.length
+                                                        ? CircularProgressIndicator(
+                                                            color: AppColors.primary,
+                                                            strokeWidth: 2,
+                                                          )
+                                                        : (_isEditMode
+                                                            ? Icon(
+                                                                Icons.add,
+                                                                size: 24,
+                                                                color: AppColors.textTertiary,
+                                                              )
+                                                            : SizedBox.shrink()),
                                                   ),
-                                                )
-                                              : Center(
-                                                  child: _isUploading && index == _workImages.length
-                                                      ? CircularProgressIndicator(
-                                                          color: AppColors.primary,
-                                                          strokeWidth: 2,
-                                                        )
-                                                      : Icon(
-                                                          Icons.add,
-                                                          size: 24,
-                                                          color: AppColors.textTertiary,
-                                                        ),
-                                                ),
-                                        ),
-                                        // Delete button for images
-                                        if (hasImage)
-                                          Positioned(
-                                            top: 4,
-                                            right: 4,
-                                            child: GestureDetector(
-                                              onTap: () => _removeWorkImage(index),
-                                              child: Container(
-                                                padding: EdgeInsets.all(4),
-                                                decoration: BoxDecoration(
-                                                  color: AppColors.error,
-                                                  shape: BoxShape.circle,
-                                                ),
-                                                child: Icon(
-                                                  Icons.close,
-                                                  size: 16,
-                                                  color: AppColors.white,
+                                          ),
+                                          // Delete button for images (only in edit mode)
+                                          if (hasImage && _isEditMode)
+                                            Positioned(
+                                              top: 4,
+                                              right: 4,
+                                              child: GestureDetector(
+                                                onTap: () => _removeWorkImage(index),
+                                                child: Container(
+                                                  padding: EdgeInsets.all(4),
+                                                  decoration: BoxDecoration(
+                                                    color: AppColors.error,
+                                                    shape: BoxShape.circle,
+                                                  ),
+                                                  child: Icon(
+                                                    Icons.close,
+                                                    size: 16,
+                                                    color: AppColors.white,
+                                                  ),
                                                 ),
                                               ),
                                             ),
-                                          ),
-                                      ],
+                                        ],
+                                      ),
                                     ),
                                   ),
-                                ),
-                              );
-                            }),
-                          ),
+                                );
+                              }),
+                            ),
                         ],
                       ),
                       SizedBox(height: AppSpacing.xl),

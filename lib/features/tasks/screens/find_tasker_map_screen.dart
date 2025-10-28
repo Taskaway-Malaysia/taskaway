@@ -41,6 +41,38 @@ class _FindTaskerMapScreenState extends ConsumerState<FindTaskerMapScreen> {
   final MapController _mapController = MapController();
 
   @override
+  void initState() {
+    super.initState();
+    // Show success snackbar when screen opens after task creation
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.white),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Task created successfully! Finding nearby taskers...',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: Color(0xFF4CAF50),
+            duration: Duration(seconds: 3),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        );
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final taskAsync = ref.watch(taskProvider(widget.taskId));
