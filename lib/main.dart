@@ -102,9 +102,6 @@ class _TaskawayAppState extends ConsumerState<TaskawayApp> {
 
         // Initialize FCM service immediately
         _initializeFCM();
-
-        // Listen to auth state changes to update FCM token
-        _setupAuthStateListener();
       }
     });
   }
@@ -145,20 +142,6 @@ class _TaskawayAppState extends ConsumerState<TaskawayApp> {
     }
   }
 
-  /// Set up listener for auth state changes to manage FCM token
-  void _setupAuthStateListener() {
-    ref.listen(authStateProvider, (previous, next) async {
-      final user = next.value?.session?.user;
-
-      if (user != null) {
-        // User logged in - get FCM token and store it
-        await _handleUserLogin(user.id);
-      } else {
-        // User logged out - remove FCM token
-        await _handleUserLogout(previous?.value?.session?.user?.id);
-      }
-    });
-  }
 
   /// Handle user login - get and store FCM token
   Future<void> _handleUserLogin(String userId) async {
@@ -204,7 +187,23 @@ class _TaskawayAppState extends ConsumerState<TaskawayApp> {
   @override
   Widget build(BuildContext context) {
     final router = ref.watch(appRouterProvider);
-    
+
+    // Listen to auth state changes to manage FCM token
+    // This must be in build method for Riverpod
+    if (!kIsWeb) {
+      ref.listen(authStateProvider, (previous, next) async {
+        final user = next.value?.session?.user;
+
+        if (user != null) {
+          // User logged in - get FCM token and store it
+          await _handleUserLogin(user.id);
+        } else {
+          // User logged out - remove FCM token
+          await _handleUserLogout(previous?.value?.session?.user?.id);
+        }
+      });
+    }
+
     return MaterialApp.router(
       title: StyleConstants.appName,
       theme: AppTheme.lightTheme,
