@@ -89,7 +89,7 @@ class HomeScreen extends ConsumerWidget {
                         child: _buildNavItem(
                           index: 1,
                           iconPath: 'assets/icons/nav_activity.svg',
-                          label: 'Task',
+                          label: 'My Task',
                           isSelected: actualIndex == 1,
                           onTap: () {
                             if (actualIndex == 1) return;

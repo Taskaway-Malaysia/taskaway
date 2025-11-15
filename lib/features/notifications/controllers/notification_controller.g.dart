@@ -12,14 +12,14 @@ String _$userNotificationsHash() => r'855dfffc2eda057a68a8e835d44b041b2fe40a3f';
 @ProviderFor(userNotifications)
 final userNotificationsProvider =
     AutoDisposeStreamProvider<List<Notification>>.internal(
-  userNotifications,
-  name: r'userNotificationsProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$userNotificationsHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+      userNotifications,
+      name: r'userNotificationsProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$userNotificationsHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
@@ -49,14 +49,14 @@ String _$notificationControllerHash() =>
 @ProviderFor(NotificationController)
 final notificationControllerProvider =
     AutoDisposeAsyncNotifierProvider<NotificationController, void>.internal(
-  NotificationController.new,
-  name: r'notificationControllerProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$notificationControllerHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+      NotificationController.new,
+      name: r'notificationControllerProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$notificationControllerHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
 
 typedef _$NotificationController = AutoDisposeAsyncNotifier<void>;
 // ignore_for_file: type=lint

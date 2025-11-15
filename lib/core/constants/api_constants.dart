@@ -1,28 +1,30 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// Constants related to API endpoints and configurations
+/// All sensitive values are loaded from environment variables
 class ApiConstants {
   // Supabase Configuration
-  static const String supabaseUrl = 'https://txojopmkgjbqsfcacglz.supabase.co';
-  static const String supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR4b2pvcG1rZ2picXNmY2FjZ2x6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk0MzMxODcsImV4cCI6MjA2NTAwOTE4N30.5itLemoP3J_05zZW9qS7yRb4RbBlZ2dy3J6GkDA1rkY';
-  
+  static String get supabaseUrl => dotenv.env['SUPABASE_URL'] ?? '';
+  static String get supabaseAnonKey => dotenv.env['SUPABASE_ANON_KEY'] ?? '';
+
   // Payments / Integrations
   // All payments now handled via CHIPP Gateway through Supabase Edge Functions
-  static const bool mockPayments = false;
-  
+  static bool get mockPayments => dotenv.env['MOCK_PAYMENTS']?.toLowerCase() == 'true';
+
   // Storage Buckets
   static const String taskImagesBucket = 'task-images';
-  
+
   // MapTiler Configuration
-  static const String mapTilerApiKey = '3rwsmrzemB8A99DT82ka'; // TODO: Replace with actual MapTiler API key
+  static String get mapTilerApiKey => dotenv.env['MAPTILER_API_KEY'] ?? '';
   static const String mapTilerStyleUrl = 'https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key=';
 
   // Google Maps Configuration
-  static const String googleMapsApiKey = 'AIzaSyAYaUhvdUnHlDkrgqt0FF-sV_3uJdjAwes'; // TODO: Replace with actual Google Maps API key
-  
+  static String get googleMapsApiKey => dotenv.env['GOOGLE_MAPS_API_KEY'] ?? '';
+
   // API Endpoints
-  static const String billplzApiEndpoint = 'https://www.billplz-sandbox.com/api/v3';
-  static const String billplzCallbackUrl = 'https://aytxvyemlspkzzmwpqkz.functions.supabase.co/billplz-callback';
+  static String get billplzApiEndpoint => dotenv.env['BILLPLZ_API_ENDPOINT'] ?? 'https://www.billplz-sandbox.com/api/v3';
+  static String get billplzCallbackUrl => dotenv.env['BILLPLZ_CALLBACK_URL'] ?? '';
   
   // For web, use the current origin. For mobile, use deep linking.
   static String getRedirectUrl(String paymentId) {

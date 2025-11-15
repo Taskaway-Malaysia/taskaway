@@ -4,6 +4,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'dart:io' show Platform;
 import 'firebase_options.dart';
 // Only import web plugins when needed
 import 'core/constants/api_constants.dart';
@@ -12,16 +14,20 @@ import 'core/theme/app_theme.dart';
 import 'routes/app_router.dart';
 import 'core/services/deep_link_service.dart';
 import 'core/services/fcm_service.dart';
+import 'core/services/tracking_service.dart';
+import 'core/services/analytics_service.dart';
 import 'features/auth/repositories/profile_repository.dart';
 import 'features/auth/controllers/auth_controller.dart';
-import 'dart:developer' as dev;
 
 // We'll conditionally initialize web-specific functionality
 
 void main() async {
   // Initialize Flutter binding
   WidgetsFlutterBinding.ensureInitialized();
-  
+
+  // Load environment variables from .env file
+  await dotenv.load(fileName: ".env");
+
   // Configure web URL strategy if running on web
   // This is handled separately to avoid import errors on mobile
   if (kIsWeb) {
@@ -30,12 +36,29 @@ void main() async {
   }
 
   try {
-    // Initialize Firebase
+    // CRITICAL: Initialize App Tracking Transparency (ATT) BEFORE Firebase
+    // Apple requires explicit consent before ANY tracking can occur
+    if (!kIsWeb && Platform.isIOS) {
+      try {
+        final trackingService = TrackingService();
+        // Initialize ATT and set conservative consent (no tracking yet)
+        // This ensures Firebase respects user privacy from the start
+        await trackingService.initialize(requestIfNeeded: false);
+        // ignore: avoid_print
+        print('[MAIN] ATT initialized with conservative consent');
+      } catch (e) {
+        // ignore: avoid_print
+        print('[MAIN ERROR] Error initializing ATT: $e');
+      }
+    }
+
+    // Initialize Firebase AFTER ATT has set appropriate consent
+    // Firebase will now respect the consent settings from ATT
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
     // ignore: avoid_print
-    print('[MAIN] Firebase initialized successfully');
+    print('[MAIN] Firebase initialized with privacy consent applied');
 
     // Stripe removed - using CHIPP Gateway for payments
 
@@ -89,6 +112,7 @@ class _TaskawayAppState extends ConsumerState<TaskawayApp> {
   final DeepLinkService _deepLinkService = DeepLinkService();
   FCMService? _fcmService;
   ProfileRepository? _profileRepository;
+  TrackingService? _trackingService;
 
   @override
   void initState() {
@@ -102,8 +126,49 @@ class _TaskawayAppState extends ConsumerState<TaskawayApp> {
 
         // Initialize FCM service immediately
         _initializeFCM();
+
+        // Request ATT permission on iOS after app is ready
+        // This gives users a chance to see the app before being asked
+        _requestTrackingPermission();
       }
     });
+  }
+
+  /// Request App Tracking Transparency permission on iOS
+  ///
+  /// Best practices for ATT:
+  /// - Request AFTER user has seen the app and understands its value
+  /// - Request AFTER showing a pre-permission explanation screen (optional but recommended)
+  /// - Don't request on first launch immediately
+  ///
+  /// For production, consider:
+  /// - Showing a custom screen explaining why tracking is needed
+  /// - Delaying request until after user completes onboarding
+  /// - Only requesting if user interacts with features that benefit from tracking
+  Future<void> _requestTrackingPermission() async {
+    if (!Platform.isIOS) return;
+
+    try {
+      _trackingService = ref.read(trackingServiceProvider);
+
+      // Delay the request slightly to let the app fully render
+      // In production, you might want to delay this further or show an explanation first
+      await Future.delayed(const Duration(seconds: 2));
+
+      final status = await _trackingService!.requestTrackingAuthorization();
+      print('[MAIN] ATT permission status: $status');
+
+      // Log the permission status to analytics
+      final analyticsService = ref.read(analyticsServiceProvider);
+      await analyticsService.logCustomEvent(
+        eventName: 'att_permission_requested',
+        parameters: {
+          'status': status.toString(),
+        },
+      );
+    } catch (e) {
+      print('[MAIN ERROR] Failed to request ATT permission: $e');
+    }
   }
 
   /// Initialize FCM service and set up notification handlers
