@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/style_constants.dart';
+import '../../../core/constants/app_links.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -104,6 +106,67 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
         content: Text('Google Sign-Up coming soon'),
       ),
     );
+  }
+
+  Future<void> _handleAppleSignUp() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final router = GoRouter.of(context);
+
+    try {
+      final authController = ref.read(authControllerProvider.notifier);
+      final response = await authController.signInWithApple();
+
+      if (mounted && response.user != null) {
+        router.go('/home/browse');
+      }
+    } on AuthException catch (e) {
+      if (mounted) {
+        scaffoldMessenger.showSnackBar(
+          SnackBar(
+            content: Text(e.message),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        scaffoldMessenger.showSnackBar(
+          const SnackBar(
+            content: Text('An unexpected error occurred with Apple Sign-up.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  /// Launch URL in external browser or in-app webview
+  Future<void> _launchURL(String url) async {
+    final Uri uri = Uri.parse(url);
+
+    if (!await launchUrl(
+      uri,
+      mode: LaunchMode.externalApplication,
+    )) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not open $url'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -468,25 +531,50 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
                       ),
                       const SizedBox(width: 8),
                       Expanded(
-                        child: RichText(
-                          text: const TextSpan(
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w400,
-                              color: Color(0xFF717680),
+                        child: Wrap(
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            const Text(
+                              'I have read and agree to ',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w400,
+                                color: Color(0xFF717680),
+                              ),
                             ),
-                            children: [
-                              TextSpan(text: 'I have read and agree to '),
-                              TextSpan(
-                                text: 'Terms & Conditions',
+                            GestureDetector(
+                              onTap: () => _launchURL(AppLinks.termsAndConditions),
+                              child: const Text(
+                                'Terms & Conditions',
                                 style: TextStyle(
-                                  color: Color(0xFFFFC333),
+                                  fontSize: 12,
+                                  color: Color(0xFF717680),
                                   fontWeight: FontWeight.w500,
                                   decoration: TextDecoration.underline,
                                 ),
                               ),
-                            ],
-                          ),
+                            ),
+                            const Text(
+                              ' and ',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w400,
+                                color: Color(0xFF717680),
+                              ),
+                            ),
+                            GestureDetector(
+                              onTap: () => _launchURL(AppLinks.privacyPolicy),
+                              child: const Text(
+                                'Privacy Policy',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFF717680),
+                                  fontWeight: FontWeight.w500,
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
@@ -497,7 +585,7 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
                   // Create Account button
                   SizedBox(
                     width: double.infinity,
-                    height: 48,
+                    height: 52,
                     child: ElevatedButton(
                       onPressed: _isLoading ? null : _handleSignUp,
                       style: ElevatedButton.styleFrom(
@@ -559,10 +647,49 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
 
                   const SizedBox(height: 14),
 
+                  // Apple sign up button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: OutlinedButton(
+                      onPressed: _handleAppleSignUp,
+                      style: OutlinedButton.styleFrom(
+                        backgroundColor: Colors.black,
+                        foregroundColor: Colors.white,
+                        side: const BorderSide(
+                          color: Colors.black,
+                          width: 1,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: AppRadius.smMd,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.apple,
+                            size: 20,
+                            color: Colors.white,
+                          ),
+                          SizedBox(width: AppSpacing.md),
+                          Text(
+                            'Continue with Apple',
+                            style: AppTypography.labelMedium.copyWith(
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 14),
+
                   // Google sign up button
                   SizedBox(
                     width: double.infinity,
-                    height: 48,
+                    height: 52,
                     child: OutlinedButton(
                       onPressed: _handleGoogleSignUp,
                       style: OutlinedButton.styleFrom(
@@ -612,7 +739,7 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
                           child: Text(
                             'Login',
                             style: AppTypography.bodyMedium.copyWith(
-                              color: AppColors.primary,
+                              color: AppColors.textSecondary,
                               decoration: TextDecoration.underline,
                             ),
                           ),

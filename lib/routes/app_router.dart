@@ -14,7 +14,6 @@ import 'package:taskaway/features/onboarding/screens/onboarding_screen.dart';
 import 'package:taskaway/core/providers/deep_link_provider.dart';
 import 'package:taskaway/core/providers/router_refresh_notifier.dart';
 import 'dart:developer' as dev; // For logging
-import '../features/splash/screens/splash_screen.dart';
 import '../features/landing/screens/landing_screen.dart';
 import '../features/auth/screens/auth_screen.dart';
 import '../features/auth/screens/login_screen.dart';
@@ -85,7 +84,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // Base public routes accessible to anyone, including guests if not specifically redirected elsewhere
       final basePublicRoutes = [
         '/',
-        '/landing',
         '/login',
         '/create-account',
         '/otp-verification',
@@ -181,7 +179,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         // }
 
         // If logged in and has profile, but on a public route (like /login) or profile creation route
-        // (excluding '/', which is SplashScreen, and auth in-progress routes like OTP)
+        // (excluding '/', which is LandingScreen, and auth in-progress routes like OTP)
         final isOnPasswordRecoveryRoute =
             passwordRecoveryRoutes.contains(location);
         print(
@@ -196,12 +194,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 !profileEditingRoutes
                     .contains(location) && // Not part of profile editing flow?
                 !location
-                    .startsWith('/home') && // Not already in a /home section?
-                location != '/' // Not the splash screen itself?
+                    .startsWith('/home') // Not already in a /home section?
             ) {
           print(
-              'GoRouter Redirect: Logged in with profile, on a generic public page ($location) that is not home, profile, or recovery flow. Redirecting to /home.');
-          return '/home';
+              'GoRouter Redirect: Logged in with profile, on a generic public page ($location) that is not home, profile, or recovery flow. Redirecting to /home/browse.');
+          return '/home/browse';
         }
       } else {
         // Not logged in (and not a guest, or guest logic already handled returning null)
@@ -209,15 +206,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             !profileEditingRoutes.contains(location) &&
             location != '/guest-prompt') {
           print(
-              'GoRouter Redirect: Not logged in (and not guest), trying to access $location. Redirecting to /landing.');
-          return '/landing';
+              'GoRouter Redirect: Not logged in (and not guest), trying to access $location. Redirecting to /.');
+          return '/';
         }
 
         // If not logged in but trying to access profile editing routes, redirect to landing
         if (profileEditingRoutes.contains(location)) {
           print(
-              'GoRouter Redirect: Not logged in, trying to access profile editing route $location. Redirecting to /landing.');
-          return '/landing';
+              'GoRouter Redirect: Not logged in, trying to access profile editing route $location. Redirecting to /.');
+          return '/';
         }
       }
       print('GoRouter Redirect: No redirect needed for $location.');
@@ -227,9 +224,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // Routes that should not have the boxed layout.
       GoRoute(
         path: '/',
-        name: 'splash',
+        name: 'landing',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => const SplashScreen(),
+        builder: (context, state) => const LandingScreen(),
       ),
       // All other routes will be placed inside this ShellRoute for the boxed layout.
       ShellRoute(
@@ -237,11 +234,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           return ResponsiveLayout(child: child);
         },
         routes: [
-          GoRoute(
-            path: '/landing',
-            name: 'landing',
-            builder: (context, state) => const LandingScreen(),
-          ),
           GoRoute(
             path: '/guest-prompt',
             name: 'guest-prompt',

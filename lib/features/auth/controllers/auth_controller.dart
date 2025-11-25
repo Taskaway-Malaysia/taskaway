@@ -1,7 +1,11 @@
 import 'dart:async'; // Required for StreamSubscription
+import 'dart:convert';
+import 'dart:io' show Platform;
 import 'package:flutter/material.dart'; // Required for ChangeNotifier
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+import 'package:crypto/crypto.dart';
 import 'package:taskaway/features/auth/models/profile.dart'; // For Profile model
 import 'dart:developer' as dev;
 import 'package:taskaway/core/services/analytics_service.dart';
@@ -14,7 +18,7 @@ final authControllerProvider = StateNotifierProvider<AuthController, bool>((ref)
 });
 
 /// Provider to track if the user is in the password recovery flow.
-/// This helps manage navigation state across widget rebuilds, especially in SplashScreen.
+/// This helps manage navigation state across widget rebuilds, especially during initial app load.
 final passwordRecoveryFlowProvider = StateProvider<bool>((ref) => false);
 
 final authStateProvider = StreamProvider<AuthState>((ref) {
@@ -172,6 +176,107 @@ class AuthController extends StateNotifier<bool> {
       }
 
       return response;
+    } finally {
+      state = false;
+    }
+  }
+
+  /// Sign in with Apple
+  ///
+  /// This method handles Apple Sign-in flow:
+  /// 1. Generates a secure nonce for the authentication request
+  /// 2. Requests Apple credentials (including optional email/fullName on first sign-in)
+  /// 3. Authenticates with Supabase using the Apple ID token and raw nonce
+  /// 4. Updates analytics and profile metadata
+  ///
+  /// Note: Apple only provides email and name on the FIRST sign-in attempt.
+  /// Subsequent sign-ins will have null email/fullName in the credential.
+  Future<AuthResponse> signInWithApple() async {
+    state = true;
+    try {
+      // Check if Apple Sign-in is available on this platform
+      if (!Platform.isIOS && !Platform.isMacOS) {
+        throw const AuthException('Apple Sign-in is only available on iOS and macOS');
+      }
+
+      // Generate raw nonce and hash it for Apple Sign-in
+      final rawNonce = supabase.auth.generateRawNonce();
+      final hashedNonce = sha256.convert(utf8.encode(rawNonce)).toString();
+
+      // Request Apple credentials with hashed nonce
+      final credential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+        nonce: hashedNonce,
+      );
+
+      final idToken = credential.identityToken;
+      if (idToken == null) {
+        throw const AuthException('Could not find ID Token from generated credential.');
+      }
+
+      // Sign in with Supabase using the ID token and raw nonce
+      final response = await supabase.auth.signInWithIdToken(
+        provider: OAuthProvider.apple,
+        idToken: idToken,
+        nonce: rawNonce,
+      );
+
+      // Log analytics event
+      if (response.user != null) {
+        await analytics.logLogin(loginMethod: 'apple');
+        await analytics.setUserId(response.user!.id);
+
+        // Apple only provides the user's full name on the first sign-in
+        // Save it to user metadata if available
+        if (credential.givenName != null || credential.familyName != null) {
+          final nameParts = <String>[];
+          if (credential.givenName != null) nameParts.add(credential.givenName!);
+          if (credential.familyName != null) nameParts.add(credential.familyName!);
+          final fullName = nameParts.join(' ');
+
+          await supabase.auth.updateUser(
+            UserAttributes(
+              data: {
+                'full_name': fullName,
+                'given_name': credential.givenName,
+                'family_name': credential.familyName,
+              },
+            ),
+          );
+        }
+
+        // Update profile with last sign-in time
+        try {
+          await supabase.from('taskaway_profiles').update({
+            'last_sign_in_at': DateTime.now().toIso8601String(),
+          }).eq('id', response.user!.id);
+        } catch (e) {
+          print('Failed to update last_sign_in_at: $e');
+        }
+      }
+
+      return response;
+    } on SignInWithAppleAuthorizationException catch (e) {
+      // Handle Apple Sign-in specific errors
+      switch (e.code) {
+        case AuthorizationErrorCode.canceled:
+          throw const AuthException('Apple Sign-in was canceled');
+        case AuthorizationErrorCode.failed:
+          throw const AuthException('Apple Sign-in failed');
+        case AuthorizationErrorCode.invalidResponse:
+          throw const AuthException('Invalid response from Apple');
+        case AuthorizationErrorCode.notHandled:
+          throw const AuthException('Apple Sign-in not handled');
+        case AuthorizationErrorCode.unknown:
+        default:
+          throw AuthException('Apple Sign-in error: ${e.message}');
+      }
+    } catch (e) {
+      print('Error during Apple Sign-in: $e');
+      rethrow;
     } finally {
       state = false;
     }

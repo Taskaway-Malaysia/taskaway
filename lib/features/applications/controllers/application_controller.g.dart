@@ -40,21 +40,15 @@ class UserApplicationForTaskFamily extends Family<AsyncValue<Application?>> {
   const UserApplicationForTaskFamily();
 
   /// See also [userApplicationForTask].
-  UserApplicationForTaskProvider call(
-    String taskId,
-  ) {
-    return UserApplicationForTaskProvider(
-      taskId,
-    );
+  UserApplicationForTaskProvider call(String taskId) {
+    return UserApplicationForTaskProvider(taskId);
   }
 
   @override
   UserApplicationForTaskProvider getProviderOverride(
     covariant UserApplicationForTaskProvider provider,
   ) {
-    return call(
-      provider.taskId,
-    );
+    return call(provider.taskId);
   }
 
   static const Iterable<ProviderOrFamily>? _dependencies = null;
@@ -76,24 +70,20 @@ class UserApplicationForTaskFamily extends Family<AsyncValue<Application?>> {
 class UserApplicationForTaskProvider
     extends AutoDisposeFutureProvider<Application?> {
   /// See also [userApplicationForTask].
-  UserApplicationForTaskProvider(
-    String taskId,
-  ) : this._internal(
-          (ref) => userApplicationForTask(
-            ref as UserApplicationForTaskRef,
-            taskId,
-          ),
-          from: userApplicationForTaskProvider,
-          name: r'userApplicationForTaskProvider',
-          debugGetCreateSourceHash:
-              const bool.fromEnvironment('dart.vm.product')
-                  ? null
-                  : _$userApplicationForTaskHash,
-          dependencies: UserApplicationForTaskFamily._dependencies,
-          allTransitiveDependencies:
-              UserApplicationForTaskFamily._allTransitiveDependencies,
-          taskId: taskId,
-        );
+  UserApplicationForTaskProvider(String taskId)
+    : this._internal(
+        (ref) =>
+            userApplicationForTask(ref as UserApplicationForTaskRef, taskId),
+        from: userApplicationForTaskProvider,
+        name: r'userApplicationForTaskProvider',
+        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+            ? null
+            : _$userApplicationForTaskHash,
+        dependencies: UserApplicationForTaskFamily._dependencies,
+        allTransitiveDependencies:
+            UserApplicationForTaskFamily._allTransitiveDependencies,
+        taskId: taskId,
+      );
 
   UserApplicationForTaskProvider._internal(
     super._createNotifier, {
@@ -182,21 +172,15 @@ class TaskApplicationsStreamFamily
   /// Stream provider for real-time applications for a specific task
   ///
   /// Copied from [taskApplicationsStream].
-  TaskApplicationsStreamProvider call(
-    String taskId,
-  ) {
-    return TaskApplicationsStreamProvider(
-      taskId,
-    );
+  TaskApplicationsStreamProvider call(String taskId) {
+    return TaskApplicationsStreamProvider(taskId);
   }
 
   @override
   TaskApplicationsStreamProvider getProviderOverride(
     covariant TaskApplicationsStreamProvider provider,
   ) {
-    return call(
-      provider.taskId,
-    );
+    return call(provider.taskId);
   }
 
   static const Iterable<ProviderOrFamily>? _dependencies = null;
@@ -222,24 +206,20 @@ class TaskApplicationsStreamProvider
   /// Stream provider for real-time applications for a specific task
   ///
   /// Copied from [taskApplicationsStream].
-  TaskApplicationsStreamProvider(
-    String taskId,
-  ) : this._internal(
-          (ref) => taskApplicationsStream(
-            ref as TaskApplicationsStreamRef,
-            taskId,
-          ),
-          from: taskApplicationsStreamProvider,
-          name: r'taskApplicationsStreamProvider',
-          debugGetCreateSourceHash:
-              const bool.fromEnvironment('dart.vm.product')
-                  ? null
-                  : _$taskApplicationsStreamHash,
-          dependencies: TaskApplicationsStreamFamily._dependencies,
-          allTransitiveDependencies:
-              TaskApplicationsStreamFamily._allTransitiveDependencies,
-          taskId: taskId,
-        );
+  TaskApplicationsStreamProvider(String taskId)
+    : this._internal(
+        (ref) =>
+            taskApplicationsStream(ref as TaskApplicationsStreamRef, taskId),
+        from: taskApplicationsStreamProvider,
+        name: r'taskApplicationsStreamProvider',
+        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+            ? null
+            : _$taskApplicationsStreamHash,
+        dependencies: TaskApplicationsStreamFamily._dependencies,
+        allTransitiveDependencies:
+            TaskApplicationsStreamFamily._allTransitiveDependencies,
+        taskId: taskId,
+      );
 
   TaskApplicationsStreamProvider._internal(
     super._createNotifier, {
@@ -256,7 +236,7 @@ class TaskApplicationsStreamProvider
   @override
   Override overrideWith(
     Stream<List<Application>> Function(TaskApplicationsStreamRef provider)
-        create,
+    create,
   ) {
     return ProviderOverride(
       origin: this,
@@ -309,20 +289,20 @@ class _TaskApplicationsStreamProviderElement
 }
 
 String _$applicationControllerHash() =>
-    r'083afd038bc6c51bd047b39d3a61ab7d62b46982';
+    r'750b860d990d5a73e5ef9816c5621fa7da267569';
 
 /// See also [ApplicationController].
 @ProviderFor(ApplicationController)
 final applicationControllerProvider =
     AutoDisposeAsyncNotifierProvider<ApplicationController, void>.internal(
-  ApplicationController.new,
-  name: r'applicationControllerProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$applicationControllerHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+      ApplicationController.new,
+      name: r'applicationControllerProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$applicationControllerHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
 
 typedef _$ApplicationController = AutoDisposeAsyncNotifier<void>;
 // ignore_for_file: type=lint

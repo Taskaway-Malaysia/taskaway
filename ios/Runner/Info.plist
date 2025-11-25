@@ -32,6 +32,14 @@
 				<string>taskaway</string>
 			</array>
 		</dict>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>Supabase Auth</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.taskawayasia</string>
+			</array>
+		</dict>
 	</array>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
@@ -39,12 +47,16 @@
 	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>This app needs camera access to take photos for task documentation.</string>
-	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>This app needs location access to find nearby tasks and services.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>This app needs location access to find nearby tasks and services.</string>
+	<string>We use your location to show nearby tasks and send notifications when you're near tasks you've offered on. Your location is checked periodically (every 30 minutes) when you're available for tasks, and is never shared without your permission.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Taskaway only requests "When In Use" location access and never requires "Always Allow" permission. This description is required because some third-party SDKs (Firebase, Maps) reference location APIs, but the app will never request background location access. Your location is only used when you're actively using the app to show nearby tasks.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>This app needs photo library access to select images for task documentation.</string>
+	<key>NSUserTrackingUsageDescription</key>
+	<string>This app uses tracking data to provide personalized recommendations and improve your experience. Your data helps us connect you with relevant tasks and services in your area.</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>

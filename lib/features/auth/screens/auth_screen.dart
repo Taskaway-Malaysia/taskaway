@@ -240,12 +240,12 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                               print('AuthScreen: Post-login check. CurrentUser: ${currentUserNow?.id}, AuthState Event: ${authStateValue?.event}');
 
                               if (mounted && currentUserNow != null) {
-                                print('AuthScreen: User confirmed authenticated, navigating to / to re-trigger SplashScreen logic.');
+                                print('AuthScreen: User confirmed authenticated, navigating to / (Landing Screen).');
                                 router.go('/');
                               } else {
                                 print('AuthScreen: Post-login check. User still null or state not updated.');
                               }
-                              // Navigation is ideally handled by AuthState listener in Splash Screen
+                              // Navigation is ideally handled by AuthState listener in Landing Screen
                             } on AuthException catch (e) {
                               if (mounted) {
                                 scaffoldMessenger.showSnackBar(

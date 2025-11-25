@@ -38,16 +38,41 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       final router = GoRouter.of(context);
 
       try {
+        final email = _emailController.text.trim();
+        final password = _passwordController.text;
+
+        // Log login attempt
+        print('=== LOGIN ATTEMPT ===');
+        print('Email: $email');
+        print('Password length: ${password.length} characters');
+        print('Mounted: $mounted');
+
         final authController = ref.read(authControllerProvider.notifier);
+        print('Auth controller loaded');
+
+        print('Calling signIn...');
         final response = await authController.signIn(
-          email: _emailController.text.trim(),
-          password: _passwordController.text,
+          email: email,
+          password: password,
         );
 
+        print('SignIn response received:');
+        print('  User ID: ${response.user?.id}');
+        print('  User email: ${response.user?.email}');
+        print('  Session exists: ${response.session != null}');
+
         if (mounted) {
-          router.go('/');
+          print('Widget still mounted, navigating to /home/browse');
+          router.go('/home/browse');
+          print('Navigation to /home/browse completed');
+        } else {
+          print('Widget NOT mounted after login, skipping navigation');
         }
       } on AuthException catch (e) {
+        print('=== LOGIN AUTH EXCEPTION ===');
+        print('Message: ${e.message}');
+        print('Stack trace: ${StackTrace.current}');
+
         if (mounted) {
           scaffoldMessenger.showSnackBar(
             SnackBar(
@@ -57,6 +82,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           );
         }
       } catch (e) {
+        print('=== LOGIN UNEXPECTED ERROR ===');
+        print('Error: $e');
+        print('Type: ${e.runtimeType}');
+        print('Stack trace: ${StackTrace.current}');
+
         if (mounted) {
           scaffoldMessenger.showSnackBar(
             SnackBar(
@@ -66,6 +96,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           );
         }
       } finally {
+        print('=== LOGIN ATTEMPT FINISHED ===');
+        print('Loading: false');
+
         if (mounted) {
           setState(() {
             _isLoading = false;
@@ -82,6 +115,48 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         content: Text('Google Sign-In coming soon'),
       ),
     );
+  }
+
+  Future<void> _handleAppleSignIn() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final router = GoRouter.of(context);
+
+    try {
+      final authController = ref.read(authControllerProvider.notifier);
+      final response = await authController.signInWithApple();
+
+      if (mounted && response.user != null) {
+        router.go('/home/browse');
+      }
+    } on AuthException catch (e) {
+      if (mounted) {
+        scaffoldMessenger.showSnackBar(
+          SnackBar(
+            content: Text(e.message),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        scaffoldMessenger.showSnackBar(
+          const SnackBar(
+            content: Text('An unexpected error occurred with Apple Sign-in.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -109,7 +184,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                   // Subtitle
                   Text(
-                    'Please enter your registration email and password',
+                    'Please enter your email and password to continue',
                     style: AppTypography.captionSmall.copyWith(
                       color: AppColors.textSecondary,
                     ),
@@ -297,7 +372,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       child: Text(
                         'Forgot Password?',
                         style: AppTypography.captionMedium.copyWith(
-                          color: AppColors.primary,
+                          color: AppColors.textSecondary,
                           decoration: TextDecoration.underline,
                           fontWeight: AppTypography.medium,
                         ),
@@ -310,7 +385,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   // Continue button
                   SizedBox(
                     width: double.infinity,
-                    height: AppSpacing.buttonHeightMd,
+                    height: 52,
                     child: ElevatedButton(
                       onPressed: _isLoading ? null : _handleLogin,
                       style: ElevatedButton.styleFrom(
@@ -375,10 +450,50 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                   SizedBox(height: AppSpacing.md),
 
+                  // Apple sign in button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: OutlinedButton(
+                      onPressed: _handleAppleSignIn,
+                      style: OutlinedButton.styleFrom(
+                        backgroundColor: Colors.black,
+                        foregroundColor: Colors.white,
+                        side: const BorderSide(
+                          color: Colors.black,
+                          width: 1,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.apple,
+                            size: 20,
+                            color: Colors.white,
+                          ),
+                          SizedBox(width: AppSpacing.md),
+                          Text(
+                            'Continue with Apple',
+                            style: AppTypography.labelMedium.copyWith(
+                              fontWeight: AppTypography.medium,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  SizedBox(height: AppSpacing.md),
+
                   // Google sign in button
                   SizedBox(
                     width: double.infinity,
-                    height: AppSpacing.buttonHeightMd,
+                    height: 52,
                     child: OutlinedButton(
                       onPressed: _handleGoogleSignIn,
                       style: OutlinedButton.styleFrom(
@@ -432,7 +547,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           child: Text(
                             'Sign Up',
                             style: AppTypography.bodyMedium.copyWith(
-                              color: AppColors.primary,
+                              color: AppColors.textSecondary,
                               decoration: TextDecoration.underline,
                             ),
                           ),

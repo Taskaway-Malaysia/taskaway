@@ -13,6 +13,7 @@ import '../../auth/models/profile.dart';
 import '../../messages/controllers/message_controller.dart';
 import '../../messages/models/channel.dart';
 import '../../../core/theme/app_radius.dart';
+import '../../../core/widgets/image_viewer_screen.dart';
 import '../models/task_comment.dart';
 import '../repositories/task_comment_repository.dart';
 
@@ -536,47 +537,64 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
 
                               return Padding(
                                 padding: EdgeInsets.only(right: index < task.images!.length - 1 ? 7 : 0),
-                                child: Container(
-                                  width: width,
-                                  height: 100,
-                                  decoration: BoxDecoration(
-                                    borderRadius: AppRadius.smMd,
-                                    color: AppColors.backgroundTertiary,
-                                  ),
-                                  child: ClipRRect(
-                                    borderRadius: AppRadius.smMd,
-                                    child: Image.network(
-                                      imageUrl,
-                                      fit: BoxFit.cover,
-                                      loadingBuilder: (context, child, loadingProgress) {
-                                        if (loadingProgress == null) return child;
-                                        return Center(
-                                          child: CircularProgressIndicator(
-                                            value: loadingProgress.expectedTotalBytes != null
-                                                ? loadingProgress.cumulativeBytesLoaded /
-                                                    loadingProgress.expectedTotalBytes!
-                                                : null,
-                                            strokeWidth: 2,
-                                          ),
-                                        );
-                                      },
-                                      errorBuilder: (context, error, stackTrace) {
-                                        return Container(
-                                          color: AppColors.backgroundTertiary,
-                                          child: const Icon(
-                                            Icons.broken_image,
-                                            size: 30,
-                                            color: AppColors.textTertiary,
-                                          ),
-                                        );
-                                      },
+                                child: GestureDetector(
+                                  onTap: () {
+                                    // Open image viewer on tap
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => ImageViewerScreen(
+                                          images: task.images!,
+                                          initialIndex: index,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  child: Hero(
+                                    tag: 'task_image_$index',
+                                    child: Container(
+                                      width: width,
+                                      height: 100,
+                                      decoration: BoxDecoration(
+                                        borderRadius: AppRadius.smMd,
+                                        color: AppColors.backgroundTertiary,
+                                      ),
+                                      child: ClipRRect(
+                                        borderRadius: AppRadius.smMd,
+                                        child: Image.network(
+                                          imageUrl,
+                                          fit: BoxFit.cover,
+                                          loadingBuilder: (context, child, loadingProgress) {
+                                            if (loadingProgress == null) return child;
+                                            return Center(
+                                              child: CircularProgressIndicator(
+                                                value: loadingProgress.expectedTotalBytes != null
+                                                    ? loadingProgress.cumulativeBytesLoaded /
+                                                        loadingProgress.expectedTotalBytes!
+                                                    : null,
+                                                strokeWidth: 2,
+                                              ),
+                                            );
+                                          },
+                                          errorBuilder: (context, error, stackTrace) {
+                                            return Container(
+                                              color: AppColors.backgroundTertiary,
+                                              child: const Icon(
+                                                Icons.broken_image,
+                                                size: 30,
+                                                color: AppColors.textTertiary,
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 ),
                               );
                             }).toList(),
-                            // Add more images button if there are less than 4 images
-                            if (task.images!.length < 4) ...[
+                            // Add more images button if there are less than 4 images AND current user is the poster
+                            if (task.images!.length < 4 && currentUser?.id == task.posterId) ...[
                               const SizedBox(width: 7),
                               Container(
                                 width: 100,
@@ -682,7 +700,7 @@ class _TaskDetailsScreenNewState extends ConsumerState<TaskDetailsScreenNew> {
                       Row(
                         children: [
                           const Icon(
-                            Icons.tag,
+                            Icons.location_on,
                             size: 16,
                             color: AppColors.textSecondary,
                           ),
