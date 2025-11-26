@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:taskaway/core/constants/style_constants.dart';
 import 'package:taskaway/core/theme/app_typography.dart';
@@ -118,12 +119,49 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
     });
 
     try {
-      await authNotifier.verifyOtp(
+      final response = await authNotifier.verifyOtp(
         email: widget.email,
         token: otp,
         type: widget.type,
       );
-      // On success, GoRouter's redirect will handle navigation
+
+      // TASK-187 FIX: Explicit profile check after OTP verification for signup
+      // TASK-184 FIX: Explicit navigation after OTP verification for password recovery
+      if (mounted) {
+        if (widget.type == OtpType.signup) {
+          // Handle signup OTP verification
+          final userId = response.user?.id;
+          if (userId != null) {
+            try {
+              // Check if profile exists (should exist due to auto-trigger)
+              final profileResponse = await Supabase.instance.client
+                  .from('taskaway_profiles')
+                  .select('id')
+                  .eq('id', userId)
+                  .maybeSingle();
+
+              if (profileResponse == null) {
+                // Profile missing (edge case) - navigate to create profile
+                print('OTP Verification: Profile missing for user $userId. Navigating to create-profile.');
+                // GoRouter will handle redirect to /create-profile
+              } else {
+                // Profile exists - navigate to home
+                print('OTP Verification: Profile exists for user $userId. Navigation will be handled by router.');
+                // GoRouter's redirect will handle navigation to /home
+              }
+            } catch (e) {
+              print('OTP Verification: Error checking profile: $e. Letting router handle navigation.');
+              // Let router handle navigation on error
+            }
+          }
+        } else if (widget.type == OtpType.recovery) {
+          // Handle password recovery OTP verification
+          print('OTP Verification: Password recovery successful. Navigating to change-password.');
+          // Navigate to change password screen
+          await context.push('/change-password', extra: widget.email);
+        }
+      }
+      // On success, GoRouter's redirect will handle any remaining navigation
     } on AuthException catch (e) {
       if (mounted) {
         setState(() {

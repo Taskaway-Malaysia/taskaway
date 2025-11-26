@@ -548,10 +548,15 @@ class _CreateProfileScreenState extends ConsumerState<CreateProfileScreen> {
                                   // Convert to JSON. Fields like date_of_birth, postcode are NOT in taskaway_profiles table.
                                   final Map<String, dynamic> profileData = profile.toJson();
 
-                                  // Insert profile into Supabase
-                                  await Supabase.instance.client.from(DbConstants.profilesTable).insert(profileData);
+                                  // TASK-NEW: Update existing profile instead of insert
+                                  // The auto-profile trigger already created a basic profile on signup
+                                  // Now we just need to update it with the user's additional details
+                                  await Supabase.instance.client
+                                      .from(DbConstants.profilesTable)
+                                      .update(profileData)
+                                      .eq('id', currentUser.id);
 
-                                  print('Profile created successfully for user: ${currentUser.id}');
+                                  print('Profile updated successfully for user: ${currentUser.id}');
 
                                   if (mounted) {
                                     // Navigate to success screen using go() instead of push()

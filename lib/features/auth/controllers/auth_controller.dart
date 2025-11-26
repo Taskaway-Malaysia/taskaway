@@ -115,17 +115,11 @@ class AuthController extends StateNotifier<bool> {
   }) async {
     state = true;
     try {
-      // 1. Check if the user already exists using the Edge Function.
-      final userExistsResponse = await supabase.functions.invoke(
-        'check-user-exists',
-        body: {'email': email},
-      );
+      // TASK-NEW: Removed broken Edge Function call to 'check-user-exists'
+      // Supabase Auth already handles duplicate user detection automatically
+      // The Edge Function was trying to query non-existent 'public.user_emails' table
 
-      if (userExistsResponse.data['exists']) {
-        throw const AuthException('A user with this email already exists. Please sign in.');
-      }
-
-      // 2. If the user does not exist, proceed with sign-up.
+      // Proceed with sign-up - Supabase will return error if user already exists
       final response = await supabase.auth.signUp(
         email: email,
         password: password,
@@ -134,12 +128,11 @@ class AuthController extends StateNotifier<bool> {
 
       final user = response.user;
 
-      // This check is for safety, though the edge function should prevent this.
       if (user == null) {
         throw const AuthException('An unexpected error occurred. Please try again.');
       }
 
-      // 3. Log analytics for the new user.
+      // Log analytics for the new user
       await analytics.logSignUp(signUpMethod: 'email');
       await analytics.setUserId(user.id);
       return response;

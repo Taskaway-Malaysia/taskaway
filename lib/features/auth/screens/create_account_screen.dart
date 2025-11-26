@@ -37,7 +37,35 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
   }
 
   Future<void> _handleSignUp() async {
+    // DEBUG: Log signup attempt
+    print('[SIGNUP DEBUG] ===== Create Account Button Tapped =====');
+    print('[SIGNUP DEBUG] Email: ${_emailController.text.trim()}');
+    print('[SIGNUP DEBUG] Password length: ${_passwordController.text.length}');
+    print('[SIGNUP DEBUG] Confirm Password length: ${_confirmPasswordController.text.length}');
+    print('[SIGNUP DEBUG] Password value: ${_passwordController.text.replaceAll(RegExp(r'.'), '*')}');
+    print('[SIGNUP DEBUG] Confirm Password value: ${_confirmPasswordController.text.replaceAll(RegExp(r'.'), '*')}');
+    print('[SIGNUP DEBUG] Passwords match: ${_passwordController.text == _confirmPasswordController.text}');
+    print('[SIGNUP DEBUG] Terms agreed: $_agreedToTerms');
+
+    // DEBUG: Log individual field validation
+    final emailValid = _emailController.text.trim().isNotEmpty &&
+                       _emailController.text.trim().contains('@');
+    final passwordValid = _passwordController.text.isNotEmpty &&
+                         _passwordController.text.length >= 8;
+    final confirmPasswordValid = _confirmPasswordController.text.isNotEmpty &&
+                                _confirmPasswordController.text == _passwordController.text;
+
+    print('[SIGNUP DEBUG] Email valid: $emailValid');
+    print('[SIGNUP DEBUG] Password valid (8+ chars): $passwordValid');
+    print('[SIGNUP DEBUG] Confirm password valid (matches): $confirmPasswordValid');
+
+    // Test form validation
+    final formValid = _formKey.currentState!.validate();
+    print('[SIGNUP DEBUG] Form validation result: $formValid');
+    print('[SIGNUP DEBUG] =====================================');
+
     if (_formKey.currentState!.validate() && _agreedToTerms) {
+      print('[SIGNUP DEBUG] ✅ Form validation passed, proceeding with signup');
       setState(() {
         _isLoading = true;
       });
@@ -46,13 +74,21 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
       final router = GoRouter.of(context);
 
       try {
+        print('[SIGNUP DEBUG] 🔄 Calling auth controller signup...');
         final authController = ref.read(authControllerProvider.notifier);
+        print('[SIGNUP DEBUG] 🔄 Auth controller obtained, making signup API call...');
+
         final response = await authController.signUp(
           email: _emailController.text.trim(),
           password: _passwordController.text,
         );
 
+        print('[SIGNUP DEBUG] ✅ Signup API call completed');
+        print('[SIGNUP DEBUG] Response user: ${response.user?.id}');
+        print('[SIGNUP DEBUG] Response session: ${response.session != null}');
+
         if (mounted && response.user != null) {
+          print('[SIGNUP DEBUG] 🎯 Navigating to OTP verification screen');
           router.go(
             '/otp-verification',
             extra: {
@@ -60,8 +96,12 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
               'type': OtpType.signup
             },
           );
+          print('[SIGNUP DEBUG] ✅ Navigation command sent');
+        } else {
+          print('[SIGNUP DEBUG] ⚠️ Mounted: $mounted, User null: ${response.user == null}');
         }
       } on AuthException catch (e) {
+        print('[SIGNUP DEBUG] ❌ AuthException caught: ${e.message}');
         if (mounted) {
           scaffoldMessenger.showSnackBar(
             SnackBar(
@@ -70,10 +110,13 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
             ),
           );
           if (e.message.contains('already exists') || e.message.contains('have an account')) {
+            print('[SIGNUP DEBUG] 🔄 Redirecting to login due to existing user');
             router.go('/login');
           }
         }
       } catch (e) {
+        print('[SIGNUP DEBUG] ❌ Generic exception caught: $e');
+        print('[SIGNUP DEBUG] ❌ Exception type: ${e.runtimeType}');
         if (mounted) {
           scaffoldMessenger.showSnackBar(
             const SnackBar(

@@ -108,12 +108,68 @@ class _CreateTaskSinglePageScreenState extends ConsumerState<CreateTaskSinglePag
 
     final taskData = ref.read(createTaskSinglePageDataProvider);
 
+    // TASK-185 FIX: Comprehensive validation before task creation
+
+    // Validate category selection
+    final category = taskData['category'];
+    if (category == null || category.toString().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select a task category'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     // Validate price
     final price = taskData['price'];
     if (price == null || price <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please set the task price'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // Validate location for physical tasks
+    final locationType = taskData['locationType'] ?? 'physical';
+    if (locationType == 'physical') {
+      final latitude = taskData['latitude'];
+      final longitude = taskData['longitude'];
+      final location = taskData['location'];
+
+      if (latitude == null || longitude == null || location == null || location.toString().isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please select a location on the map'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+    }
+
+    // Validate date selection
+    final dateOption = taskData['dateOption'];
+    if (dateOption == null || dateOption.toString().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select when you need the task done'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // Validate scheduled time for specific date/time options
+    final scheduledTime = taskData['scheduledTime'];
+    if ((dateOption == 'specific' || dateOption == 'flexible_week') && scheduledTime == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select a date and time'),
           backgroundColor: Colors.red,
         ),
       );

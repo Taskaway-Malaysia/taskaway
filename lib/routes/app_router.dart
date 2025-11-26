@@ -169,14 +169,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           hasProfile = true;
         }
 
-        // DISABLED: Profile check redirect - causing issues
-        // if (!hasProfile &&
-        //     !profileCreationRoutes.contains(location) &&
-        //     location != '/login') {
-        //   print(
-        //       'GoRouter Redirect: Logged in, no profile. Redirecting to /create-profile.');
-        //   return '/create-profile';
-        // }
+        // TASK-187 FIX: Re-enabled profile check after implementing auto-profile trigger
+        // The trigger ensures all users have profiles, so this check now safely handles edge cases
+        if (!hasProfile &&
+            !profileCreationRoutes.contains(location) &&
+            location != '/login') {
+          print(
+              'GoRouter Redirect: Logged in, no profile. Redirecting to /create-profile.');
+          return '/create-profile';
+        }
 
         // If logged in and has profile, but on a public route (like /login) or profile creation route
         // (excluding '/', which is LandingScreen, and auth in-progress routes like OTP)

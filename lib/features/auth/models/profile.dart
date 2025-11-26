@@ -2,7 +2,7 @@ class Profile {
   final String id;
   final String? username;
   final String fullName;
-  final String role;
+  final String? role; // TASK-NEW: Nullable to support auto-profile creation with NULL role
   final String? phone;
   final String? avatarUrl;
   final double rating;
@@ -32,7 +32,7 @@ class Profile {
     required this.id,
     this.username,
     required this.fullName,
-    required this.role,
+    this.role, // Nullable - auto-profile creates with NULL, user fills later
     this.phone,
     this.avatarUrl,
     this.rating = 0.0,
@@ -64,7 +64,7 @@ class Profile {
       id: json['id'] as String,
       username: json['username'] as String?,
       fullName: json['full_name'] as String,
-      role: json['role'] as String,
+      role: json['role'] as String?, // TASK-NEW: Handle null role from auto-profile creation
       phone: json['phone'] as String?,
       avatarUrl: json['avatar_url'] as String?,
       rating: json['rating'] != null ? (json['rating'] as num).toDouble() : 0.0,

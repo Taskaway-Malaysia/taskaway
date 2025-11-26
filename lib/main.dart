@@ -69,9 +69,15 @@ void main() async {
       url: ApiConstants.supabaseUrl,
       anonKey: ApiConstants.supabaseAnonKey,
       debug: true, // Enable debug mode to see detailed logs
+      // TASK-183: Explicit session persistence configuration
+      // Note: Session persistence is enabled by default in Supabase Flutter
+      authOptions: const FlutterAuthClientOptions(
+        authFlowType: AuthFlowType.pkce, // Use PKCE flow for better security
+        autoRefreshToken: true, // Auto-refresh tokens before expiry
+      ),
     );
     // ignore: avoid_print
-    print('[MAIN] Supabase initialized successfully');
+    print('[MAIN] Supabase initialized successfully with session persistence');
 
     // Initialize FCM Service (only on mobile platforms)
     if (!kIsWeb) {

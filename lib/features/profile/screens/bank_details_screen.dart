@@ -118,14 +118,16 @@ class _BankDetailsScreenState extends ConsumerState<BankDetailsScreen> {
         newStatus = 'pending';
       }
 
-      // Update bank details in database
-      await supabase.from('taskaway_profiles').update({
+      // TASK-182 FIX: Update bank details in database using upsert
+      // Upsert ensures the profile exists even if auto-trigger failed
+      await supabase.from('taskaway_profiles').upsert({
+        'id': profile.id, // Required for upsert to know which row to update
         'bank_name': _selectedBank,
         'bank_account_number': _accountNumberController.text.trim(),
         'bank_account_holder_name': _accountHolderNameController.text.trim(),
         'bank_verification_status': newStatus,
         'updated_at': DateTime.now().toIso8601String(),
-      }).eq('id', profile.id);
+      });
 
       // Invalidate profile provider to refresh data
       ref.invalidate(currentProfileProvider);
