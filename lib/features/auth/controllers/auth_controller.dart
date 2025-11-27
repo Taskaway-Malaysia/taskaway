@@ -223,31 +223,63 @@ class AuthController extends StateNotifier<bool> {
         await analytics.setUserId(response.user!.id);
 
         // Apple only provides the user's full name on the first sign-in
-        // Save it to user metadata if available
+        // Save it to user metadata AND auto-create profile to skip Create Profile screen
+        String fullName = '';
         if (credential.givenName != null || credential.familyName != null) {
           final nameParts = <String>[];
           if (credential.givenName != null) nameParts.add(credential.givenName!);
           if (credential.familyName != null) nameParts.add(credential.familyName!);
-          final fullName = nameParts.join(' ');
+          fullName = nameParts.join(' ');
 
+          // Save to user metadata
           await supabase.auth.updateUser(
             UserAttributes(
               data: {
                 'full_name': fullName,
                 'given_name': credential.givenName,
                 'family_name': credential.familyName,
+                'auth_provider': 'apple', // Track that this is an Apple user
               },
             ),
           );
+        } else {
+          // On subsequent sign-ins, Apple doesn't provide name
+          // Get it from user metadata or use email as fallback
+          fullName = response.user!.userMetadata?['full_name'] as String? ??
+                     response.user!.email?.split('@').first ??
+                     'Apple User';
         }
 
-        // Update profile with last sign-in time
+        // Auto-create/update profile with Apple data to skip Create Profile screen
+        // This fixes App Store rejection: users shouldn't re-enter info Apple already provided
         try {
-          await supabase.from('taskaway_profiles').update({
-            'last_sign_in_at': DateTime.now().toIso8601String(),
-          }).eq('id', response.user!.id);
+          // Check if profile exists
+          final profileResponse = await supabase
+              .from('taskaway_profiles')
+              .select()
+              .eq('id', response.user!.id)
+              .maybeSingle();
+
+          if (profileResponse == null) {
+            // Profile doesn't exist - create it with Apple data
+            await supabase.from('taskaway_profiles').insert({
+              'id': response.user!.id,
+              'full_name': fullName,
+              'last_sign_in_at': DateTime.now().toIso8601String(),
+              // role, dateOfBirth, postcode are NULL - optional for Apple users
+            });
+            print('[Apple Sign In] Created profile for ${response.user!.id}');
+          } else {
+            // Profile exists - just update last sign-in time and ensure name is set
+            await supabase.from('taskaway_profiles').update({
+              'full_name': fullName, // Ensure name is always set
+              'last_sign_in_at': DateTime.now().toIso8601String(),
+            }).eq('id', response.user!.id);
+            print('[Apple Sign In] Updated profile for ${response.user!.id}');
+          }
         } catch (e) {
-          print('Failed to update last_sign_in_at: $e');
+          print('[Apple Sign In] Failed to create/update profile: $e');
+          // Don't throw - let user continue even if profile update fails
         }
       }
 
