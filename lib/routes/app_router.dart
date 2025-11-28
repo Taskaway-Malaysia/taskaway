@@ -124,16 +124,41 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         // Redirect will re-run due to authState change or next navigation attempt.
         // For this run, let it proceed; the state will be updated for the next evaluation.
       } else if (isGuest && !isLoggedIn) {
+        // APPLE-REVIEW: Allow guests to browse home page
+        // Only prompt login when they try to add/view tasks
+
+        // Define guest-allowed routes
+        final guestAllowedRoutes = [
+          ...basePublicRoutes, // Landing, login, signup, etc.
+          '/home/browse', // Browse/map home screen
+        ];
+
+        // Routes that require login (show guest prompt)
+        final loginRequiredRoutes = [
+          '/create-task', // Creating a task requires login
+        ];
+
         // Check if guest is trying to access an allowed location
-        if (basePublicRoutes.contains(location) ||
-            location.startsWith('/home/browse')) {
+        if (guestAllowedRoutes.contains(location)) {
           print('GoRouter Redirect: Guest accessing allowed area $location.');
           return null; // Allow access
-        } else {
-          print(
-              'GoRouter Redirect: Guest trying to access restricted area $location. Redirecting to /guest-prompt.');
-          return '/guest-prompt'; // Redirect to guest prompt
         }
+
+        // Block task details (any path like /home/browse/123 or /home/tasks/456)
+        if (location.startsWith('/home/browse/') || location.startsWith('/home/tasks/')) {
+          print('GoRouter Redirect: Guest trying to view task details $location. Redirecting to /guest-prompt.');
+          return '/guest-prompt';
+        }
+
+        // Block explicit login-required routes
+        if (loginRequiredRoutes.any((route) => location.startsWith(route))) {
+          print('GoRouter Redirect: Guest trying to create task $location. Redirecting to /guest-prompt.');
+          return '/guest-prompt';
+        }
+
+        // Any other restricted area
+        print('GoRouter Redirect: Guest trying to access restricted area $location. Redirecting to /guest-prompt.');
+        return '/guest-prompt';
       }
 
       // ---- If not a guest (or guest mode was just turned off and isGuest will be false on next run) ----

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
@@ -791,6 +792,36 @@ class _ProfileScreenNewState extends ConsumerState<ProfileScreenNew> {
                         ],
                       ),
                       SizedBox(height: AppSpacing.xl),
+                      // APPLE-REVIEW: Delete Account Button (Guideline 5.1.1(v))
+                      // Must provide account deletion option that links to support page
+                      Center(
+                        child: TextButton(
+                          onPressed: () async {
+                            final url = Uri.parse('https://support.taskawayasia.com/delete-account');
+                            if (await canLaunchUrl(url)) {
+                              await launchUrl(url, mode: LaunchMode.externalApplication);
+                            } else {
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Could not open support page'),
+                                    backgroundColor: AppColors.error,
+                                  ),
+                                );
+                              }
+                            }
+                          },
+                          child: Text(
+                            'Delete Account',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.error,
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: AppSpacing.md),
                       // Logout Button
                       Center(
                         child: TextButton(

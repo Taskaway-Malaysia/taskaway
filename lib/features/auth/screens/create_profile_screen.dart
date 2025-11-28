@@ -38,6 +38,25 @@ class _CreateProfileScreenState extends ConsumerState<CreateProfileScreen> {
   bool _termsConsent = false;
   bool _isLoading = false;
 
+  // APPLE-REVIEW: Check if user signed in with Apple
+  bool _isAppleUser = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkIfAppleUser();
+  }
+
+  void _checkIfAppleUser() {
+    final currentUser = Supabase.instance.client.auth.currentUser;
+    if (currentUser != null) {
+      final authProvider = currentUser.userMetadata?['auth_provider'] as String?;
+      setState(() {
+        _isAppleUser = authProvider == 'apple';
+      });
+    }
+  }
+
   @override
   void dispose() {
     _firstNameController.dispose();
@@ -209,116 +228,118 @@ class _CreateProfileScreenState extends ConsumerState<CreateProfileScreen> {
                         ),
                   ),
                   SizedBox(height: AppSpacing.xxl),
-                  // Correctly place the calls to field builder methods
-
-                  // First name
-                  Text(
-                    'First name',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                  SizedBox(height: AppSpacing.sm),
-                  GestureDetector(
-                    onTap: () {
-                      _firstNameFocusNode.requestFocus();
-                      _showQwertyForFirstName(context);
-                    },
-                    child: AbsorbPointer(
-                      child: TextFormField(
-                        controller: _firstNameController,
-                        focusNode: _firstNameFocusNode,
-                        decoration: const InputDecoration(
-                          hintText: 'First name',
+                  // APPLE-REVIEW: Hide name/DOB/postcode fields for Apple Sign In users
+                  // Apple already provides name via Authentication Services
+                  if (!_isAppleUser) ...[
+                    // First name
+                    Text(
+                      'First name',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                    SizedBox(height: AppSpacing.sm),
+                    GestureDetector(
+                      onTap: () {
+                        _firstNameFocusNode.requestFocus();
+                        _showQwertyForFirstName(context);
+                      },
+                      child: AbsorbPointer(
+                        child: TextFormField(
+                          controller: _firstNameController,
+                          focusNode: _firstNameFocusNode,
+                          decoration: const InputDecoration(
+                            hintText: 'First name',
+                          ),
+                          readOnly: true,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter your first name';
+                            }
+                            return null;
+                          },
                         ),
-                        readOnly: true,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter your first name';
-                          }
-                          return null;
-                        },
                       ),
                     ),
-                  ),
-                  SizedBox(height: AppSpacing.lg),
-                  // Last name
-                  Text(
-                    'Last name',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                  SizedBox(height: AppSpacing.sm),
-                  GestureDetector(
-                    onTap: () {
-                      _lastNameFocusNode.requestFocus();
-                      _showQwertyForLastName(context);
-                    },
-                    child: AbsorbPointer(
-                      child: TextFormField(
-                        controller: _lastNameController,
-                        focusNode: _lastNameFocusNode,
-                        decoration: const InputDecoration(
-                          hintText: 'Last name',
+                    SizedBox(height: AppSpacing.lg),
+                    // Last name
+                    Text(
+                      'Last name',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                    SizedBox(height: AppSpacing.sm),
+                    GestureDetector(
+                      onTap: () {
+                        _lastNameFocusNode.requestFocus();
+                        _showQwertyForLastName(context);
+                      },
+                      child: AbsorbPointer(
+                        child: TextFormField(
+                          controller: _lastNameController,
+                          focusNode: _lastNameFocusNode,
+                          decoration: const InputDecoration(
+                            hintText: 'Last name',
+                          ),
+                          readOnly: true,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter your last name';
+                            }
+                            return null;
+                          },
                         ),
-                        readOnly: true,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter your last name';
-                          }
-                          return null;
-                        },
                       ),
                     ),
-                  ),
-                  SizedBox(height: AppSpacing.lg),
-                  // Date of birth
-                  Text(
-                    'Date of birth',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                  SizedBox(height: AppSpacing.sm),
-                  TextFormField(
-                    controller: _dobController,
-                    decoration: const InputDecoration(
-                      hintText: 'DD/MM/YY',
+                    SizedBox(height: AppSpacing.lg),
+                    // Date of birth
+                    Text(
+                      'Date of birth',
+                      style: Theme.of(context).textTheme.bodyMedium,
                     ),
-                    readOnly: true,
-                    onTap: () => _selectDate(context),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter your date of birth';
-                      }
-                      return null;
-                    },
-                  ),
-                  SizedBox(height: AppSpacing.lg),
-                  // Postcode
-                  Text(
-                    'Postcode',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                  SizedBox(height: AppSpacing.sm),
-                  GestureDetector(
-                    onTap: () {
-                      _postcodeFocusNode.requestFocus();
-                      _showNumpadForPostcode(context);
-                    },
-                    child: AbsorbPointer(
-                      child: TextFormField(
-                        controller: _postcodeController,
-                        focusNode: _postcodeFocusNode,
-                        decoration: const InputDecoration(
-                          hintText: 'Postcode',
+                    SizedBox(height: AppSpacing.sm),
+                    TextFormField(
+                      controller: _dobController,
+                      decoration: const InputDecoration(
+                        hintText: 'DD/MM/YY',
+                      ),
+                      readOnly: true,
+                      onTap: () => _selectDate(context),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter your date of birth';
+                        }
+                        return null;
+                      },
+                    ),
+                    SizedBox(height: AppSpacing.lg),
+                    // Postcode
+                    Text(
+                      'Postcode',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                    SizedBox(height: AppSpacing.sm),
+                    GestureDetector(
+                      onTap: () {
+                        _postcodeFocusNode.requestFocus();
+                        _showNumpadForPostcode(context);
+                      },
+                      child: AbsorbPointer(
+                        child: TextFormField(
+                          controller: _postcodeController,
+                          focusNode: _postcodeFocusNode,
+                          decoration: const InputDecoration(
+                            hintText: 'Postcode',
+                          ),
+                          readOnly: true,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter your postcode';
+                            }
+                            return null;
+                          },
                         ),
-                        readOnly: true,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter your postcode';
-                          }
-                          return null;
-                        },
                       ),
                     ),
-                  ),
-                  SizedBox(height: AppSpacing.xxl),
+                    SizedBox(height: AppSpacing.xxl),
+                  ],
                   // What is your goal
                   Text(
                     'What is your goal here on Taskaway?',
@@ -508,55 +529,77 @@ class _CreateProfileScreenState extends ConsumerState<CreateProfileScreen> {
                     child: ElevatedButton(
                       onPressed: (_termsConsent && _selectedRole.isNotEmpty && !_isLoading)
                           ? () async {
-                              if (_formKey.currentState!.validate()) {
-                                setState(() {
-                                  _isLoading = true;
-                                });
+                              // APPLE-REVIEW: Skip form validation for Apple users
+                              // Apple users don't have name/DOB/postcode fields to validate
+                              if (!_isAppleUser && !_formKey.currentState!.validate()) {
+                                return;
+                              }
 
-                                // Capture context-dependent objects before the async gap.
-                                final scaffoldMessenger = ScaffoldMessenger.of(context);
-                                final router = GoRouter.of(context);
+                              setState(() {
+                                _isLoading = true;
+                              });
 
-                                try {
-                                  final authController = ref.read(authControllerProvider.notifier);
-                                  final currentUser = authController.currentUser;
+                              // Capture context-dependent objects before the async gap.
+                              final scaffoldMessenger = ScaffoldMessenger.of(context);
+                              final router = GoRouter.of(context);
 
-                                  if (currentUser == null) {
-                                    throw Exception('User not authenticated');
-                                  }
+                              try {
+                                final authController = ref.read(authControllerProvider.notifier);
+                                final currentUser = authController.currentUser;
 
-                                  final now = DateTime.now().toUtc();
+                                if (currentUser == null) {
+                                  throw Exception('User not authenticated');
+                                }
 
-                                  // Parse date and postcode safely
+                                final now = DateTime.now().toUtc();
+
+                                // APPLE-REVIEW: Different handling for Apple users vs regular users
+                                String fullName;
+                                DateTime? dateOfBirth;
+                                int? postcode;
+
+                                if (_isAppleUser) {
+                                  // Apple users: Use existing fullName from profile created by signInWithApple()
+                                  // dateOfBirth and postcode remain NULL (not required for Apple users)
+                                  fullName = currentUser.userMetadata?['full_name'] as String? ??
+                                             currentUser.email?.split('@').first ??
+                                             'Apple User';
+                                  dateOfBirth = null;
+                                  postcode = null;
+                                  print('[Create Profile] Apple user: Using existing fullName: $fullName');
+                                } else {
+                                  // Regular users: Parse from form fields
+                                  fullName = '${_firstNameController.text.trim()} ${_lastNameController.text.trim()}';
                                   final dobText = _dobController.text.trim();
-                                  final DateTime? dateOfBirth = dobText.isNotEmpty
+                                  dateOfBirth = dobText.isNotEmpty
                                       ? DateFormat('dd/MM/yy').parse(dobText)
                                       : null;
-                                  final int? postcode = int.tryParse(_postcodeController.text.trim());
+                                  postcode = int.tryParse(_postcodeController.text.trim());
+                                }
 
-                                  final Profile profile = Profile(
-                                    id: currentUser.id,
-                                    username: null, // Username is no longer collected in UI
-                                    fullName: '${_firstNameController.text.trim()} ${_lastNameController.text.trim()}',
-                                    role: _selectedRole,
-                                    dateOfBirth: dateOfBirth,
-                                    postcode: postcode,
-                                    createdAt: now,
-                                    updatedAt: now,
-                                  );
+                                final Profile profile = Profile(
+                                  id: currentUser.id,
+                                  username: null, // Username is no longer collected in UI
+                                  fullName: fullName,
+                                  role: _selectedRole,
+                                  dateOfBirth: dateOfBirth,
+                                  postcode: postcode,
+                                  createdAt: now,
+                                  updatedAt: now,
+                                );
 
-                                  // Convert to JSON. Fields like date_of_birth, postcode are NOT in taskaway_profiles table.
-                                  final Map<String, dynamic> profileData = profile.toJson();
+                                // Convert to JSON. Fields like date_of_birth, postcode are NOT in taskaway_profiles table.
+                                final Map<String, dynamic> profileData = profile.toJson();
 
-                                  // TASK-NEW: Update existing profile instead of insert
-                                  // The auto-profile trigger already created a basic profile on signup
-                                  // Now we just need to update it with the user's additional details
-                                  await Supabase.instance.client
-                                      .from(DbConstants.profilesTable)
-                                      .update(profileData)
-                                      .eq('id', currentUser.id);
+                                // TASK-NEW: Update existing profile instead of insert
+                                // The auto-profile trigger already created a basic profile on signup
+                                // Now we just need to update it with the user's additional details
+                                await Supabase.instance.client
+                                    .from(DbConstants.profilesTable)
+                                    .update(profileData)
+                                    .eq('id', currentUser.id);
 
-                                  print('Profile updated successfully for user: ${currentUser.id}');
+                                print('Profile updated successfully for user: ${currentUser.id}');
 
                                   if (mounted) {
                                     // Navigate to success screen using go() instead of push()
