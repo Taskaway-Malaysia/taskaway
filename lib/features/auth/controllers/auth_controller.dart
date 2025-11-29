@@ -231,14 +231,13 @@ class AuthController extends StateNotifier<bool> {
           if (credential.familyName != null) nameParts.add(credential.familyName!);
           fullName = nameParts.join(' ');
 
-          // Save to user metadata
+          // Save name to user metadata
           await supabase.auth.updateUser(
             UserAttributes(
               data: {
                 'full_name': fullName,
                 'given_name': credential.givenName,
                 'family_name': credential.familyName,
-                'auth_provider': 'apple', // Track that this is an Apple user
               },
             ),
           );
@@ -249,6 +248,16 @@ class AuthController extends StateNotifier<bool> {
                      response.user!.email?.split('@').first ??
                      'Apple User';
         }
+
+        // CRITICAL FIX: Always set auth_provider='apple' regardless of whether name was provided
+        // This ensures Create Profile screen can detect Apple users and hide unnecessary fields
+        await supabase.auth.updateUser(
+          UserAttributes(
+            data: {
+              'auth_provider': 'apple',
+            },
+          ),
+        );
 
         // Auto-create/update profile with Apple data to skip Create Profile screen
         // This fixes App Store rejection: users shouldn't re-enter info Apple already provided

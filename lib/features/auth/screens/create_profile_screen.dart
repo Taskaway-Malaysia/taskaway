@@ -624,7 +624,6 @@ class _CreateProfileScreenState extends ConsumerState<CreateProfileScreen> {
                                   }
                                 }
                               }
-                            }
                           : null,
                       child: _isLoading
                           ? const SizedBox(

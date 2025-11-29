@@ -144,10 +144,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           return null; // Allow access
         }
 
-        // Block task details (any path like /home/browse/123 or /home/tasks/456)
+        // GUEST-FIX: Allow guests to VIEW task details (browse and read)
+        // They just can't interact (apply, message, etc.) - those will prompt login in the UI
         if (location.startsWith('/home/browse/') || location.startsWith('/home/tasks/')) {
-          print('GoRouter Redirect: Guest trying to view task details $location. Redirecting to /guest-prompt.');
-          return '/guest-prompt';
+          print('GoRouter Redirect: Guest viewing task details $location - ALLOWED');
+          return null; // Allow viewing task details
         }
 
         // Block explicit login-required routes

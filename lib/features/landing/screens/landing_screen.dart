@@ -128,25 +128,25 @@ class LandingScreen extends ConsumerWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 19),
-
-                    // Explore as guest
-                    GestureDetector(
-                      onTap: () {
-                        // Set guest mode and navigate to home
-                        ref.read(isGuestModeProvider.notifier).state = true;
-                        context.go('/home');
-                      },
-                      child: Text(
-                        'Explore as guest',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFFFFC333),
-                          letterSpacing: 0.14,
-                        ),
-                      ),
-                    ),
+                    // APPLE-REVIEW: Removed "Explore as guest" button
+                    // Reason: Guest mode not fully functional (RLS blocking or empty data)
+                    // Better UX: Require sign up/login to use the app
+                    // const SizedBox(height: 19),
+                    // GestureDetector(
+                    //   onTap: () {
+                    //     ref.read(isGuestModeProvider.notifier).state = true;
+                    //     context.go('/home');
+                    //   },
+                    //   child: Text(
+                    //     'Explore as guest',
+                    //     style: TextStyle(
+                    //       fontSize: 14,
+                    //       fontWeight: FontWeight.w600,
+                    //       color: Color(0xFFFFC333),
+                    //       letterSpacing: 0.14,
+                    //     ),
+                    //   ),
+                    // ),
                   ],
               ),
             ),

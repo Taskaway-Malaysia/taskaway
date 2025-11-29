@@ -285,17 +285,18 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                       : Text('Login', style: AppTypography.labelLarge),
                 ),
 
-                SizedBox(height: AppSpacing.lg),
-
-                // Explore as guest
-                OutlinedButton(
-                  onPressed: () {
-                    ref.read(isGuestModeProvider.notifier).state = true;
-                    context.go('/home/browse');
-                    print('Explore as Guest pressed, guest mode activated');
-                  },
-                  child: Text('Explore as Guest', style: AppTypography.labelLarge),
-                ),
+                // APPLE-REVIEW: Removed "Explore as guest" button
+                // Reason: Guest mode not fully functional (RLS blocking or empty data)
+                // Better UX: Require sign up/login to use the app
+                // SizedBox(height: AppSpacing.lg),
+                // OutlinedButton(
+                //   onPressed: () {
+                //     ref.read(isGuestModeProvider.notifier).state = true;
+                //     context.go('/home/browse');
+                //     print('Explore as Guest pressed, guest mode activated');
+                //   },
+                //   child: Text('Explore as Guest', style: AppTypography.labelLarge),
+                // ),
 
                 SizedBox(height: AppSpacing.massive),
 
